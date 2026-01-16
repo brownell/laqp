@@ -1,0 +1,4 @@
+sqlalchemy
+flask
+pandas 
+python-dateutil

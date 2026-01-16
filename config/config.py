@@ -10,8 +10,8 @@ from datetime import datetime
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Contest timing (UTC)
-CONTEST_START_DAY1 = "2025-04-05 1400"
-CONTEST_END_DAY1 = "2025-04-06 0200"
+CONTEST_START_DAY1 = "202-04-06 1400"
+CONTEST_END_DAY1 = "2024-04-07 0200"
 # LAQP is a single session contest (unlike TQP's two sessions)
 CONTEST_START_DAY2 = None
 CONTEST_END_DAY2 = None
@@ -22,8 +22,8 @@ DATE_FORMAT = "%Y-%m-%d"
 
 # Directory structure
 DATA_DIR = BASE_DIR / 'data'
-LOGS_DIR = BASE_DIR / 'logs'
-OUTPUT_DIR = BASE_DIR / 'output'
+LOGS_DIR = DATA_DIR / 'logs'
+OUTPUT_DIR = DATA_DIR / 'output'
 
 # Log processing directories
 INCOMING_LOGS = LOGS_DIR / 'incoming'
