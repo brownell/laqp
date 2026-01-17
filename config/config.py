@@ -10,7 +10,7 @@ from datetime import datetime
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Contest timing (UTC)
-CONTEST_START_DAY1 = "202-04-06 1400"
+CONTEST_START_DAY1 = "2024-04-06 1400"
 CONTEST_END_DAY1 = "2024-04-07 0200"
 # LAQP is a single session contest (unlike TQP's two sessions)
 CONTEST_START_DAY2 = None

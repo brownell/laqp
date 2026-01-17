@@ -101,11 +101,17 @@ class LogProcessor:
         for log_path in incoming_logs:
             print(f"Validating {log_path.name}...", end=" ")
             
+            # Validate the log
             result = validate_single_log(
                 log_path,
                 LA_PARISHES_FILE,
-                WVE_ABBREVS_FILE,
-                output_dir=PROBLEM_REPORTS
+                WVE_ABBREVS_FILE
+            )
+            # Validate the log
+            result = validate_single_log(
+                log_path,
+                LA_PARISHES_FILE,
+                WVE_ABBREVS_FILE
             )
             
             self.stats['total_logs'] += 1
@@ -128,7 +134,7 @@ class LogProcessor:
                 dest = PROBLEM_LOGS / log_path.name
                 shutil.move(str(log_path), str(dest))
                 
-                # Write error report
+                # Write error report to problems/reports directory
                 report_path = PROBLEM_REPORTS / f"{log_path.stem}-errors.txt"
                 with open(report_path, 'w', encoding='utf-8') as f:
                     f.write('\n'.join(result.to_report()))
