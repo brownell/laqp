@@ -1,0 +1,5 @@
+Validation Report for K5ZZR
+============================================================
+Total QSOs: 2
+Invalid QSOs: 0
+Overall Status: VALID

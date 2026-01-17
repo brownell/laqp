@@ -1,0 +1,5 @@
+Validation Report for RV1CC
+============================================================
+Total QSOs: 2
+Invalid QSOs: 0
+Overall Status: VALID

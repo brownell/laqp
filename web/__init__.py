@@ -1,7 +1,11 @@
 # ============================================================
-# tests/__init__.py
+# web/__init__.py
 # ============================================================
 """
-Test suite for LAQP processor
+Flask web application for LAQP
 """
+# TODO: Add when Flask app is created
+# from .app import create_app
+
 __all__ = []
+

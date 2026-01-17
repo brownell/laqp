@@ -1,0 +1,5 @@
+Validation Report for K0RJK
+============================================================
+Total QSOs: 4
+Invalid QSOs: 0
+Overall Status: VALID

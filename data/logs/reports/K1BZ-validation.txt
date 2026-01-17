@@ -1,0 +1,5 @@
+Validation Report for K1BZ
+============================================================
+Total QSOs: 6
+Invalid QSOs: 0
+Overall Status: VALID

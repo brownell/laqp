@@ -1,0 +1,44 @@
+Validation Report for KC5DI
+============================================================
+Total QSOs: 670
+Invalid QSOs: 37
+Overall Status: INVALID
+
+Errors:
+  - Line 14: Invalid received QTH: TX
+  - Line 73: Invalid received QTH: TX
+  - Line 77: Invalid received QTH: TX
+  - Line 78: Invalid received QTH: TX
+  - Line 158: Invalid received QTH: TX
+  - Line 172: Invalid received QTH: TX
+  - Line 185: Invalid received QTH: TX
+  - Line 186: Invalid received QTH: TX
+  - Line 187: Invalid received QTH: TX
+  - Line 188: Invalid received QTH: TX
+  - Line 190: Invalid received QTH: TX
+  - Line 198: Invalid received QTH: TX
+  - Line 199: Invalid received QTH: TX
+  - Line 201: Invalid received QTH: TX
+  - Line 207: Invalid received QTH: TX
+  - Line 213: Invalid received QTH: TX
+  - Line 215: Invalid received QTH: TX
+  - Line 217: Invalid received QTH: TX
+  - Line 222: Invalid received QTH: TX
+  - Line 225: Invalid received QTH: TX
+  - Line 227: Invalid received QTH: TX
+  - Line 240: Invalid received QTH: TX
+  - Line 241: Invalid received QTH: TX
+  - Line 263: Invalid received QTH: TX
+  - Line 264: Invalid received QTH: TX
+  - Line 265: Invalid received QTH: TX
+  - Line 310: Invalid received QTH: TX
+  - Line 315: Invalid received QTH: TX
+  - Line 323: Invalid received QTH: TX
+  - Line 330: Invalid received QTH: TX
+  - Line 373: Invalid received QTH: TX
+  - Line 414: Invalid received QTH: TX
+  - Line 458: Invalid received QTH: TX
+  - Line 555: Invalid received QTH: TX
+  - Line 558: Invalid received QTH: TX
+  - Line 584: Invalid received QTH: TX
+  - Line 612: Invalid received QTH: TX

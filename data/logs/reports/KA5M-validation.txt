@@ -1,0 +1,16 @@
+Validation Report for KA5M
+============================================================
+Total QSOs: 112
+Invalid QSOs: 9
+Overall Status: INVALID
+
+Errors:
+  - Line 55: Invalid received QTH: TX
+  - Line 59: Invalid received QTH: TX
+  - Line 60: Invalid received QTH: TX
+  - Line 86: Invalid received QTH: TX
+  - Line 92: Invalid received QTH: TX
+  - Line 94: Invalid received QTH: TX
+  - Line 97: Invalid received QTH: TX
+  - Line 104: Invalid received QTH: TX
+  - Line 112: Invalid received QTH: TX

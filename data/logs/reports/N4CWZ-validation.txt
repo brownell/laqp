@@ -1,0 +1,5 @@
+Validation Report for N4CWZ
+============================================================
+Total QSOs: 3
+Invalid QSOs: 0
+Overall Status: VALID

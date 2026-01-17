@@ -1,0 +1,15 @@
+Validation Report for N9NM
+============================================================
+Total QSOs: 8
+Invalid QSOs: 8
+Overall Status: INVALID
+
+Errors:
+  - Line 1: Invalid sent QTH: TX
+  - Line 2: Invalid sent QTH: TX
+  - Line 3: Invalid sent QTH: TX
+  - Line 4: Invalid sent QTH: TX
+  - Line 5: Invalid sent QTH: TX
+  - Line 6: Invalid sent QTH: TX
+  - Line 7: Invalid sent QTH: TX
+  - Line 8: Invalid sent QTH: TX

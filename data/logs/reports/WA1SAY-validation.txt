@@ -1,0 +1,5 @@
+Validation Report for WA1SAY
+============================================================
+Total QSOs: 7
+Invalid QSOs: 0
+Overall Status: VALID

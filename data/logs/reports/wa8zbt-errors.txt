@@ -1,0 +1,11 @@
+Validation Report for WA8ZBT
+============================================================
+Total QSOs: 4
+Invalid QSOs: 4
+Overall Status: INVALID
+
+Errors:
+  - Line 1: Invalid sent QTH: TX
+  - Line 2: Invalid sent QTH: TX
+  - Line 3: Invalid sent QTH: TX
+  - Line 4: Invalid sent QTH: TX

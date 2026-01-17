@@ -1,0 +1,5 @@
+Validation Report for W2LC
+============================================================
+Total QSOs: 16
+Invalid QSOs: 0
+Overall Status: VALID

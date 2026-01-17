@@ -1,0 +1,5 @@
+Validation Report for KB4CG
+============================================================
+Total QSOs: 10
+Invalid QSOs: 0
+Overall Status: VALID

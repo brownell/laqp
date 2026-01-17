@@ -1,0 +1,5 @@
+Validation Report for KN7Y
+============================================================
+Total QSOs: 15
+Invalid QSOs: 0
+Overall Status: VALID

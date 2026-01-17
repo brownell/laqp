@@ -1,0 +1,5 @@
+Validation Report for WA3ENQ
+============================================================
+Total QSOs: 1
+Invalid QSOs: 0
+Overall Status: VALID

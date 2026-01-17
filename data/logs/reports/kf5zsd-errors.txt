@@ -1,0 +1,8 @@
+Validation Report for KF5ZSD
+============================================================
+Total QSOs: 1
+Invalid QSOs: 1
+Overall Status: INVALID
+
+Errors:
+  - Line 1: Invalid sent QTH: AUSTIN/TEXAS/USA

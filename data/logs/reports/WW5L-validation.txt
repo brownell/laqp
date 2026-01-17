@@ -1,0 +1,45 @@
+Validation Report for WW5L
+============================================================
+Total QSOs: 605
+Invalid QSOs: 38
+Overall Status: INVALID
+
+Errors:
+  - Line 2: Invalid received QTH: TX
+  - Line 5: Invalid received QTH: TX
+  - Line 13: Invalid received QTH: TX
+  - Line 16: Invalid received QTH: TX
+  - Line 21: Invalid received QTH: TX
+  - Line 23: Invalid received QTH: TX
+  - Line 24: Invalid received QTH: TX
+  - Line 215: Invalid received QTH: TX
+  - Line 221: Invalid received QTH: TX
+  - Line 236: Invalid received QTH: TX
+  - Line 238: Invalid received QTH: TX
+  - Line 269: Invalid received QTH: TX
+  - Line 298: Invalid received QTH: TX
+  - Line 324: Invalid received QTH: TX
+  - Line 385: Invalid received QTH: TX
+  - Line 458: Invalid received QTH: TX
+  - Line 461: Invalid received QTH: TX
+  - Line 462: Invalid received QTH: TX
+  - Line 465: Invalid received QTH: TX
+  - Line 474: Invalid received QTH: TX
+  - Line 479: Invalid received QTH: TX
+  - Line 486: Invalid received QTH: TX
+  - Line 488: Invalid received QTH: TX
+  - Line 505: Invalid received QTH: TX
+  - Line 506: Invalid received QTH: TX
+  - Line 555: Invalid received QTH: TX
+  - Line 557: Invalid received QTH: TX
+  - Line 559: Invalid received QTH: TX
+  - Line 560: Invalid received QTH: TX
+  - Line 563: Invalid received QTH: TX
+  - Line 564: Invalid received QTH: TX
+  - Line 570: Invalid received QTH: TX
+  - Line 574: Invalid received QTH: TX
+  - Line 577: Invalid received QTH: TX
+  - Line 578: Invalid received QTH: TX
+  - Line 585: Invalid received QTH: TX
+  - Line 603: Invalid received QTH: TX
+  - Line 604: Invalid received QTH: TX

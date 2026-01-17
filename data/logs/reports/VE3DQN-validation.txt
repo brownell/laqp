@@ -1,0 +1,5 @@
+Validation Report for VE3DQN
+============================================================
+Total QSOs: 1
+Invalid QSOs: 0
+Overall Status: VALID

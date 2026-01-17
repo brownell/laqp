@@ -1,0 +1,22 @@
+Validation Report for KZ5D
+============================================================
+Total QSOs: 314
+Invalid QSOs: 15
+Overall Status: INVALID
+
+Errors:
+  - Line 16: Invalid received QTH: TX
+  - Line 18: Invalid received QTH: TX
+  - Line 50: Invalid received QTH: TX
+  - Line 65: Invalid received QTH: TX
+  - Line 66: Invalid received QTH: TX
+  - Line 75: Invalid received QTH: TX
+  - Line 97: Invalid received QTH: TX
+  - Line 99: Invalid received QTH: TX
+  - Line 107: Invalid received QTH: TX
+  - Line 117: Invalid received QTH: TX
+  - Line 230: Invalid received QTH: TX
+  - Line 266: Invalid received QTH: TX
+  - Line 269: Invalid received QTH: TX
+  - Line 297: Invalid received QTH: TX
+  - Line 310: Invalid received QTH: TX

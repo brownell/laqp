@@ -1,0 +1,5 @@
+Validation Report for W3LL
+============================================================
+Total QSOs: 11
+Invalid QSOs: 0
+Overall Status: VALID

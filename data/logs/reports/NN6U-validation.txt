@@ -1,0 +1,5 @@
+Validation Report for NN6U
+============================================================
+Total QSOs: 3
+Invalid QSOs: 0
+Overall Status: VALID
