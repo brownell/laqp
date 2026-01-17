@@ -31,7 +31,7 @@ from laqp.core.validator import validate_single_log
 from laqp.core.preparation import prepare_single_log
 from laqp.core.scoring import score_single_log, generate_score_report
 from laqp.core.statistics import generate_statistics_from_logs
-from laqp.models.database import Database, Contestant
+# from laqp.models.database import Database, Contestant
 
 
 class LogProcessor:
