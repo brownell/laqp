@@ -1,0 +1,5 @@
+Validation Report for KD9GDY
+============================================================
+Total QSOs: 7
+Invalid QSOs: 0
+Overall Status: VALID

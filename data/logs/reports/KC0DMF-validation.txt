@@ -1,0 +1,5 @@
+Validation Report for KC0DMF
+============================================================
+Total QSOs: 2
+Invalid QSOs: 0
+Overall Status: VALID

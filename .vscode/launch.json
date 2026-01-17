@@ -9,8 +9,10 @@
             "name": "Python: Current File",
             "request": "launch",
             "program": "process_all_logs.py",
-            "console": "integratedTerminal",
-            "args": ["--validate-only"]
+            "console": "integratedTerminal"
         }
     ]
 }
+
+// ,
+// "args": ["--validate-only"]

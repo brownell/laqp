@@ -1,0 +1,5 @@
+Validation Report for KJ9C
+============================================================
+Total QSOs: 13
+Invalid QSOs: 0
+Overall Status: VALID

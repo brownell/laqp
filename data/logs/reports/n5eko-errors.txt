@@ -1,0 +1,14 @@
+Validation Report for N5EKO
+============================================================
+Total QSOs: 7
+Invalid QSOs: 7
+Overall Status: INVALID
+
+Errors:
+  - Line 1: Invalid sent QTH: TX
+  - Line 2: Invalid sent QTH: TX
+  - Line 3: Invalid sent QTH: TX
+  - Line 4: Invalid sent QTH: TX
+  - Line 5: Invalid sent QTH: TX
+  - Line 6: Invalid sent QTH: TX
+  - Line 7: Invalid sent QTH: TX

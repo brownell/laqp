@@ -1,0 +1,8 @@
+Validation Report for DL3DXX
+============================================================
+Total QSOs: 8
+Invalid QSOs: 0
+Overall Status: VALID
+
+Warnings:
+  - Missing CATEGORY-OPERATOR (not critical for LA rules)

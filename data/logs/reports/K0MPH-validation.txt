@@ -1,0 +1,5 @@
+Validation Report for K0MPH
+============================================================
+Total QSOs: 3
+Invalid QSOs: 0
+Overall Status: VALID

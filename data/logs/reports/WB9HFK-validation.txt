@@ -1,0 +1,5 @@
+Validation Report for WB9HFK
+============================================================
+Total QSOs: 15
+Invalid QSOs: 0
+Overall Status: VALID

@@ -1,0 +1,5 @@
+Validation Report for KA6BIM
+============================================================
+Total QSOs: 19
+Invalid QSOs: 0
+Overall Status: VALID

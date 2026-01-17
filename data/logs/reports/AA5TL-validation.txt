@@ -1,0 +1,5 @@
+Validation Report for AA5TL
+============================================================
+Total QSOs: 11
+Invalid QSOs: 0
+Overall Status: VALID

@@ -1,0 +1,5 @@
+Validation Report for K4BAI
+============================================================
+Total QSOs: 12
+Invalid QSOs: 0
+Overall Status: VALID

@@ -1,0 +1,5 @@
+Validation Report for VA3PC
+============================================================
+Total QSOs: 6
+Invalid QSOs: 0
+Overall Status: VALID

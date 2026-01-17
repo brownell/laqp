@@ -1,0 +1,9 @@
+Validation Report for W5GAD
+============================================================
+Total QSOs: 64
+Invalid QSOs: 2
+Overall Status: INVALID
+
+Errors:
+  - Line 26: Invalid received QTH: TX
+  - Line 57: Invalid received QTH: TX

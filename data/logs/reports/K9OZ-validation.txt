@@ -1,0 +1,5 @@
+Validation Report for K9OZ
+============================================================
+Total QSOs: 5
+Invalid QSOs: 0
+Overall Status: VALID
