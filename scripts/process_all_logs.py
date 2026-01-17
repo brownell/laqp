@@ -28,10 +28,9 @@ from config.config import (
     OUTPUT_DIR, ensure_directories
 )
 from laqp.core.validator import validate_single_log
-# TODO: Import preparation, scoring, statistics modules when created
-# from laqp.core.preparation import prepare_log
-# from laqp.core.scoring import score_log
-# from laqp.core.statistics import generate_statistics
+from laqp.core.preparation import prepare_single_log
+from laqp.core.scoring import score_single_log, generate_score_report
+from laqp.core.statistics import generate_statistics_from_logs
 from laqp.models.database import Database, Contestant
 
 
@@ -101,11 +100,17 @@ class LogProcessor:
         for log_path in incoming_logs:
             print(f"Validating {log_path.name}...", end=" ")
             
+            # Validate the log
             result = validate_single_log(
                 log_path,
                 LA_PARISHES_FILE,
-                WVE_ABBREVS_FILE,
-                output_dir=PROBLEM_REPORTS
+                WVE_ABBREVS_FILE
+            )
+            # Validate the log
+            result = validate_single_log(
+                log_path,
+                LA_PARISHES_FILE,
+                WVE_ABBREVS_FILE
             )
             
             self.stats['total_logs'] += 1
@@ -128,7 +133,7 @@ class LogProcessor:
                 dest = PROBLEM_LOGS / log_path.name
                 shutil.move(str(log_path), str(dest))
                 
-                # Write error report
+                # Write error report to problems/reports directory
                 report_path = PROBLEM_REPORTS / f"{log_path.stem}-errors.txt"
                 with open(report_path, 'w', encoding='utf-8') as f:
                     f.write('\n'.join(result.to_report()))
@@ -155,15 +160,37 @@ class LogProcessor:
         print("\n" + "=" * 60)
         print("STEP 2: PREPARATION")
         print("=" * 60)
-        print("TODO: Implement preparation module")
-        print("This will adapt preparation.py for LA rules\n")
         
-        # For now, just copy to prepared directory
+        if not validated_logs:
+            print("No validated logs to prepare")
+            return []
+        
+        print(f"Preparing {len(validated_logs)} validated logs\n")
+        
         prepared_logs = []
+        
         for log_path in validated_logs:
-            dest = PREPARED_LOGS / f"{log_path.stem}-prep.log"
-            shutil.copy(str(log_path), str(dest))
-            prepared_logs.append(dest)
+            print(f"Preparing {log_path.name}...", end=" ")
+            
+            # Prepare the log
+            output_path = PREPARED_LOGS / f"{log_path.stem}-prep.log"
+            
+            try:
+                category_info = prepare_single_log(
+                    log_path,
+                    output_path,
+                    LA_PARISHES_FILE,
+                    WVE_ABBREVS_FILE
+                )
+                
+                print(f"✓ {category_info['category_name']}")
+                prepared_logs.append(output_path)
+                
+            except Exception as e:
+                print(f"✗ ERROR: {e}")
+                continue
+        
+        print(f"\nPreparation complete: {len(prepared_logs)} logs prepared")
         
         return prepared_logs
     
@@ -180,11 +207,71 @@ class LogProcessor:
         print("\n" + "=" * 60)
         print("STEP 3: SCORING")
         print("=" * 60)
-        print("TODO: Implement scoring module")
-        print("This will adapt scoring.py for LA rules\n")
         
-        # Placeholder
-        print(f"Would score {len(prepared_logs)} logs")
+        if not prepared_logs:
+            print("No prepared logs to score")
+            return
+        
+        print(f"Scoring {len(prepared_logs)} prepared logs\n")
+        
+        # Create output directory for score reports
+        scores_dir = OUTPUT_DIR / 'scores'
+        scores_dir.mkdir(parents=True, exist_ok=True)
+        
+        # CSV header for summary
+        summary_lines = []
+        summary_lines.append("Callsign,Email,Category,Club,Operators,ClaimedScore,CW_QSOs,Phone_QSOs,Digital_QSOs,QSO_Points,Multipliers,Score_Before_Bonus,N5LCC_Bonus,Rover_Bonus,Total_Bonus,Final_Score,Score_Reduction")
+        
+        for log_path in prepared_logs:
+            print(f"Scoring {log_path.stem}...", end=" ")
+            
+            try:
+                score_result = score_single_log(
+                    log_path,
+                    LA_PARISHES_FILE,
+                    WVE_ABBREVS_FILE
+                )
+                
+                print(f"✓ {score_result['final_score']} points")
+                
+                # Write individual score report
+                report_path = scores_dir / f"{score_result['callsign']}-score.txt"
+                with open(report_path, 'w', encoding='utf-8') as f:
+                    f.write('\n'.join(generate_score_report(score_result)))
+                
+                # Add to summary CSV
+                summary_lines.append(
+                    f"{score_result['callsign']},"
+                    f"{score_result['email']},"
+                    f"{score_result['category']},"
+                    f"{score_result['club']},"
+                    f"{score_result['operators']},"
+                    f"{score_result['claimed_score']},"
+                    f"{score_result['cw_qsos']},"
+                    f"{score_result['phone_qsos']},"
+                    f"{score_result['digital_qsos']},"
+                    f"{score_result['raw_qso_points']},"
+                    f"{score_result['total_multipliers']},"
+                    f"{score_result['score_before_bonus']},"
+                    f"{score_result['n5lcc_bonus']},"
+                    f"{score_result['rover_bonus']},"
+                    f"{score_result['total_bonus']},"
+                    f"{score_result['final_score']},"
+                    f"{score_result['score_reduction']}"
+                )
+                
+            except Exception as e:
+                print(f"✗ ERROR: {e}")
+                continue
+        
+        # Write summary CSV
+        summary_path = scores_dir / "scores_summary.csv"
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(summary_lines))
+        
+        print(f"\nScoring complete!")
+        print(f"Individual reports: {scores_dir}")
+        print(f"Summary CSV: {summary_path}")
     
     def generate_statistics(self, prepared_logs: List[Path]):
         """
@@ -194,16 +281,37 @@ class LogProcessor:
         - Logs by category
         - QSOs by band/mode
         - Parish activity
-        - Hourly QSO distribution
+        - Participation breakdown
         """
         print("\n" + "=" * 60)
         print("STEP 4: STATISTICS")
         print("=" * 60)
-        print("TODO: Implement statistics module")
-        print("This will adapt statistics.py for LA rules\n")
         
-        # Placeholder
-        print(f"Would generate statistics from {len(prepared_logs)} logs")
+        if not prepared_logs:
+            print("No prepared logs for statistics")
+            return
+        
+        print(f"Generating statistics from {len(prepared_logs)} logs\n")
+        
+        stats_dir = OUTPUT_DIR / 'statistics'
+        
+        try:
+            stats, parishes = generate_statistics_from_logs(
+                prepared_logs,
+                LA_PARISHES_FILE,
+                stats_dir
+            )
+            
+            print("✓ Statistics generated!")
+            print(f"  Total logs: {stats['total_logs']}")
+            print(f"  Total QSOs: {stats['total_qsos']}")
+            print(f"  Parishes with activity: {stats['parishes_with_activity']}")
+            print(f"\nReports written to: {stats_dir}")
+            
+        except Exception as e:
+            print(f"✗ ERROR generating statistics: {e}")
+            import traceback
+            traceback.print_exc()
     
     def store_to_database(self):
         """
