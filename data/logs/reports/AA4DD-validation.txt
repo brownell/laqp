@@ -1,5 +1,0 @@
-Validation Report for AA4DD
-============================================================
-Total QSOs: 3
-Invalid QSOs: 0
-Overall Status: VALID

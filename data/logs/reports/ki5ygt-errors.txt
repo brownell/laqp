@@ -1,9 +1,0 @@
-Validation Report for KI5YGT
-============================================================
-Total QSOs: 2
-Invalid QSOs: 2
-Overall Status: INVALID
-
-Errors:
-  - Line 1: Invalid sent QTH: TX
-  - Line 2: Invalid sent QTH: TX

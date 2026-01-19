@@ -1,5 +1,0 @@
-Validation Report for WA3AAN
-============================================================
-Total QSOs: 4
-Invalid QSOs: 0
-Overall Status: VALID

@@ -1,5 +1,0 @@
-Validation Report for N8II
-============================================================
-Total QSOs: 27
-Invalid QSOs: 0
-Overall Status: VALID

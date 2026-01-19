@@ -1,8 +1,0 @@
-Validation Report for KE6GFI
-============================================================
-Total QSOs: 2
-Invalid QSOs: 0
-Overall Status: VALID
-
-Warnings:
-  - Missing CATEGORY-OPERATOR (not critical for LA rules)
