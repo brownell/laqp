@@ -8,7 +8,7 @@
             "type": "debugpy",
             "name": "Python: Current File",
             "request": "launch",
-            "program": "process_all_logs.py",
+            "program": "scripts/process_all_logs.py",
             "console": "integratedTerminal"
         }
     ]

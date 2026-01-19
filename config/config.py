@@ -23,7 +23,7 @@ DATE_FORMAT = "%Y-%m-%d"
 # Directory structure
 DATA_DIR = BASE_DIR / 'data'
 LOGS_DIR = DATA_DIR / 'logs'
-OUTPUT_DIR = BASE_DIR / 'output'
+OUTPUT_DIR = LOGS_DIR / 'output'
 
 # Log processing directories
 INCOMING_LOGS = LOGS_DIR / 'incoming'
