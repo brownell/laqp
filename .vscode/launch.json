@@ -5,11 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Batch app",
             "type": "debugpy",
-            "name": "Python: Current File",
             "request": "launch",
-            "program": "scripts/process_all_logs.py",
-            "console": "integratedTerminal"
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
+        },
+        {
+            "type": "debugpy",
+            "name": "Web app",
+            "request": "launch",
+            "program": "web/app.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
         }
     ]
 }
