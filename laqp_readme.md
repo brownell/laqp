@@ -136,17 +136,6 @@ python scripts/process_all_logs.py --validate-only
 python scripts/process_all_logs.py --skip-db
 ```
 
-**Important Notes**:
-- **Incoming logs are preserved**: Files in `logs/incoming/` are copied (not moved), so they remain there for reference
-- **Output directories are cleaned**: On each run, the following directories are emptied before processing:
-  - `logs/validated/`
-  - `logs/prepared/`
-  - `logs/problems/`
-  - `logs/reports/`
-  - `output/scores/`
-  - `output/statistics/`
-- This ensures you're always looking at results from the current run, not mixed with previous runs
-
 ### Web Application (Future)
 
 ```bash

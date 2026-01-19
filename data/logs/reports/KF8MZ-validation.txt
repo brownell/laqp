@@ -1,5 +1,0 @@
-Validation Report for KF8MZ
-============================================================
-Total QSOs: 2
-Invalid QSOs: 0
-Overall Status: VALID

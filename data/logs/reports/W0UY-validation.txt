@@ -1,5 +1,0 @@
-Validation Report for W0UY
-============================================================
-Total QSOs: 5
-Invalid QSOs: 0
-Overall Status: VALID

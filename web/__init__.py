@@ -8,4 +8,3 @@ Flask web application for LAQP
 # from .app import create_app
 
 __all__ = []
-

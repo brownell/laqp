@@ -1,5 +1,0 @@
-Validation Report for KB3FW
-============================================================
-Total QSOs: 7
-Invalid QSOs: 0
-Overall Status: VALID

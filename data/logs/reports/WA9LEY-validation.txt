@@ -1,5 +1,0 @@
-Validation Report for WA9LEY
-============================================================
-Total QSOs: 8
-Invalid QSOs: 0
-Overall Status: VALID

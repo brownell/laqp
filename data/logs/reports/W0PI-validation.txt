@@ -1,5 +1,0 @@
-Validation Report for W0PI
-============================================================
-Total QSOs: 9
-Invalid QSOs: 0
-Overall Status: VALID
