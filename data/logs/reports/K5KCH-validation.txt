@@ -1,5 +1,0 @@
-Validation Report for K5KCH
-============================================================
-Total QSOs: 15
-Invalid QSOs: 0
-Overall Status: VALID

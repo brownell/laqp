@@ -90,16 +90,6 @@ class LogValidator:
         has_digit = any(c.isdigit() for c in call)
         return only_alphanum and has_digit
     
-    def is_valid_qth(self, qth: str) -> bool:
-        """Check if QTH format is valid"""
-        if not qth or qth == "TX":  # Legacy from TQP
-            return False
-        if len(qth) > 4:
-            return False
-        if qth.isdigit():  # All digits not allowed
-            return False
-        return True
-    
     def has_slash_in_qth(self, qth: str) -> bool:
         """Check if QTH has slash (multi-parish indicator)"""
         return "/" in qth
@@ -170,6 +160,14 @@ class LogValidator:
         """Check if QTH is non-LA state or province"""
         return qth in self.state_province_list
     
+    def is_valid_qth(self, qth: str) -> bool:
+        """Check if QTH format is valid"""
+        # if len(qth) :
+        #     return False
+        if qth.isdigit():  # All digits not allowed
+            return False
+        return True
+    
     def validate_qso_line(self, line: str) -> Tuple[int, str]:
         """
         Validate a QSO line.
@@ -224,6 +222,10 @@ class LogValidator:
             return (6, f"Invalid received callsign: {rcvd_call}")
         
         # Check QTH
+        # if sent_qth == "TX":
+        #     print("sent QTH TX")
+        # if rcvd_qth == "TX":
+        #     print("rcvd QTH TX")    
         if not self.is_valid_qth(sent_qth):
             return (5, f"Invalid sent QTH: {sent_qth}")
         

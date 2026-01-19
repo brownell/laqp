@@ -1,5 +1,0 @@
-Validation Report for KC1G
-============================================================
-Total QSOs: 1
-Invalid QSOs: 0
-Overall Status: VALID

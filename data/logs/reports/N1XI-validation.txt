@@ -1,5 +1,0 @@
-Validation Report for N1XI
-============================================================
-Total QSOs: 4
-Invalid QSOs: 0
-Overall Status: VALID

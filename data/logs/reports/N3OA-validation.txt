@@ -1,5 +1,0 @@
-Validation Report for N3OA
-============================================================
-Total QSOs: 3
-Invalid QSOs: 0
-Overall Status: VALID

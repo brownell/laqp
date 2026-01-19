@@ -1,5 +1,0 @@
-Validation Report for AA3R
-============================================================
-Total QSOs: 13
-Invalid QSOs: 0
-Overall Status: VALID

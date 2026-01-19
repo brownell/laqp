@@ -3,12 +3,10 @@ Database models for Louisiana QSO Party
 Uses SQLAlchemy ORM for database abstraction
 """
 from datetime import datetime
-# from sqlalchemy import (
-#     create_engine, Column, Integer, String, Float, 
-#     DateTime, Boolean, Text, ForeignKey, Enum as SQLEnum
-# )
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy.orm import relationship, sessionmaker
+from SQLAlchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, Enum as SQLEnum
+
+from SQLAlchemy.ext.declarative import declarative_base
+from SQLAlchemy.orm import relationship, sessionmake r
 import enum
 
 Base = declarative_base()

@@ -1,5 +1,0 @@
-Validation Report for VA3IJK
-============================================================
-Total QSOs: 2
-Invalid QSOs: 0
-Overall Status: VALID

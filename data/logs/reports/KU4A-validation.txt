@@ -1,5 +1,0 @@
-Validation Report for KU4A
-============================================================
-Total QSOs: 4
-Invalid QSOs: 0
-Overall Status: VALID

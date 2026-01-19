@@ -1,5 +1,0 @@
-Validation Report for KV0I
-============================================================
-Total QSOs: 21
-Invalid QSOs: 0
-Overall Status: VALID

@@ -1,5 +1,0 @@
-Validation Report for KW4GF
-============================================================
-Total QSOs: 1
-Invalid QSOs: 0
-Overall Status: VALID

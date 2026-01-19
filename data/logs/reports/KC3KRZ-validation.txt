@@ -1,5 +1,0 @@
-Validation Report for KC3KRZ
-============================================================
-Total QSOs: 5
-Invalid QSOs: 0
-Overall Status: VALID

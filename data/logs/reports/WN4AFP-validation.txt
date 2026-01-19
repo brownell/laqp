@@ -1,5 +1,0 @@
-Validation Report for WN4AFP
-============================================================
-Total QSOs: 20
-Invalid QSOs: 0
-Overall Status: VALID

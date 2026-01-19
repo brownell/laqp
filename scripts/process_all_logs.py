@@ -41,13 +41,16 @@ class LogProcessor:
         self.use_database = use_database
         self.db = None
         
-        if use_database:
-            from config.config import DATABASE_URL
-            self.db = Database(DATABASE_URL)
-            self.db.create_tables()
+        # if use_database:
+        #     from config.config import DATABASE_URL
+        #     self.db = Database(DATABASE_URL)
+        #     self.db.create_tables()
         
         # Ensure all directories exist
         ensure_directories()
+        
+        # Clean output directories from previous runs
+        self.clean_output_directories()
         
         # Load reference data
         self.load_reference_data()
@@ -60,6 +63,28 @@ class LogProcessor:
             'total_qsos': 0,
             'invalid_qsos': 0
         }
+    
+    def clean_output_directories(self):
+        """Clean output directories from previous runs"""
+        print("Cleaning output directories from previous run...")
+        
+        dirs_to_clean = [
+            VALIDATED_LOGS,
+            PREPARED_LOGS,
+            PROBLEM_LOGS,
+            PROBLEM_REPORTS,
+            OUTPUT_DIR / 'scores',
+            OUTPUT_DIR / 'statistics'
+        ]
+        
+        for directory in dirs_to_clean:
+            if directory.exists():
+                for file in directory.glob('*'):
+                    if file.is_file():
+                        file.unlink()
+                print(f"  Cleaned: {directory}")
+        
+        print("Output directories cleaned.\n")
     
     def load_reference_data(self):
         """Load parish and state/province lists"""
@@ -121,17 +146,17 @@ class LogProcessor:
                 print("✓ VALID")
                 self.stats['valid_logs'] += 1
                 
-                # Move to validated directory
+                # Copy (not move) to validated directory
                 dest = VALIDATED_LOGS / log_path.name
-                shutil.move(str(log_path), str(dest))
+                shutil.copy(str(log_path), str(dest))
                 valid_logs.append(dest)
             else:
                 print("✗ INVALID")
                 self.stats['invalid_logs'] += 1
                 
-                # Move to problems directory
+                # Copy (not move) to problems directory
                 dest = PROBLEM_LOGS / log_path.name
-                shutil.move(str(log_path), str(dest))
+                shutil.copy(str(log_path), str(dest))
                 
                 # Write error report to problems/reports directory
                 report_path = PROBLEM_REPORTS / f"{log_path.stem}-errors.txt"
@@ -313,19 +338,19 @@ class LogProcessor:
             import traceback
             traceback.print_exc()
     
-    def store_to_database(self):
-        """
-        Store processed data to database.
-        """
-        if not self.use_database:
-            print("\nDatabase storage skipped (--skip-db)")
-            return
+    # def store_to_database(self):
+    #     """
+    #     Store processed data to database.
+    #     """
+    #     if not self.use_database:
+    #         print("\nDatabase storage skipped (--skip-db)")
+    #         return
         
-        print("\n" + "=" * 60)
-        print("STEP 5: DATABASE STORAGE")
-        print("=" * 60)
-        print("TODO: Implement database storage")
-        print("This will populate the database from scored logs\n")
+    #     print("\n" + "=" * 60)
+    #     print("STEP 5: DATABASE STORAGE")
+    #     print("=" * 60)
+    #     print("TODO: Implement database storage")
+    #     print("This will populate the database from scored logs\n")
     
     def print_summary(self):
         """Print processing summary"""
@@ -398,7 +423,7 @@ Examples:
         processor.generate_statistics(prepared_logs)
         
         # Step 5: Database
-        processor.store_to_database()
+        # processor.store_to_database()
         
         # Summary
         processor.print_summary()

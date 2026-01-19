@@ -1,5 +1,0 @@
-Validation Report for OM2VL
-============================================================
-Total QSOs: 16
-Invalid QSOs: 0
-Overall Status: VALID

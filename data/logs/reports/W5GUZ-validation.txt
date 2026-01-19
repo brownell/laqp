@@ -1,5 +1,0 @@
-Validation Report for W5GUZ
-============================================================
-Total QSOs: 8
-Invalid QSOs: 0
-Overall Status: VALID
