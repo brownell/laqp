@@ -1,0 +1,23 @@
+Score Report for 
+============================================================
+Category: NON-LA MIXED MODE (HIGH POWER (≤1500W))
+Email: hgrudolphs@yahoo.com
+Operators: WX8C
+
+QSO Counts:
+  Total QSOs: 2
+  CW: 1
+  Phone: 1
+  Digital: 0
+
+QSOs by Band:
+  20m: 2
+
+Scoring:
+  Raw QSO Points: 6
+  Total Multipliers: 2
+  Score (before bonus): 12
+
+FINAL SCORE: 12
+
+Claimed Score: 12
