@@ -9,6 +9,8 @@ from datetime import datetime
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Sqlite3 database directory
+
 # Contest timing (UTC)
 CONTEST_START_DAY1 = "2024-04-06 1400"
 CONTEST_END_DAY1 = "2024-04-07 0200"
@@ -23,7 +25,7 @@ DATE_FORMAT = "%Y-%m-%d"
 # Directory structure
 DATA_DIR = BASE_DIR / 'data'
 LOGS_DIR = DATA_DIR / 'logs'
-OUTPUT_DIR = BASE_DIR / 'output'
+OUTPUT_DIR = LOGS_DIR / 'output'
 
 # Log processing directories
 INCOMING_LOGS = LOGS_DIR / 'incoming'
@@ -171,7 +173,11 @@ CANADIAN_PREFIXES = {
 }
 
 # Database configuration
-DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{BASE_DIR}/laqp.db')
+HOME_DIR = Path(__file__).resolve().parent.parent.parent
+DATABASE_DIR = HOME_DIR / 'Documents' / 'laqp'
+
+# Sqlite3 database directory
+DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_DIR}/laqp.db')
 
 # Web application configuration
 FLASK_SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'change-this-in-production')
