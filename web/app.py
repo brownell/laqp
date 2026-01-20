@@ -166,5 +166,8 @@ def upload_log():
 
 
 if __name__ == '__main__':
-    # Development server
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Development mode (testing only)
+    # app.run(host='0.0.0.0', port=5000, debug=True)
+    
+    # Production mode
+    app.run(host='0.0.0.0', port=5000, debug=False)
