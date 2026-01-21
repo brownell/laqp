@@ -26,6 +26,11 @@ DATE_FORMAT = "%Y-%m-%d"
 DATA_DIR = BASE_DIR / 'data'
 LOGS_DIR = DATA_DIR / 'logs'
 OUTPUT_DIR = LOGS_DIR / 'output'
+INDIVIDUAL_RESULTS_DIR = OUTPUT_DIR / 'scores' / 'individual_results'
+REPORT_TXT = """
+This file shows, for each category where there was activity, the top scorers (leaderboard)
+and some other statistics, such as total operators, total QSOs, etc.
+"""
 
 # Log processing directories
 INCOMING_LOGS = LOGS_DIR / 'incoming'
