@@ -1,223 +1,223 @@
 """
-Louisiana QSO Party Configuration
-All contest-specific settings and constants
+Louisiana QSO Party - Configuration
+Updated with new output directory structure and categories
 """
-import os
 from pathlib import Path
-from datetime import datetime
+from datetime import date, time
 
-# Base directory
-BASE_DIR = Path(__file__).resolve().parent.parent
+# ============================================================
+# BASE PATHS
+# ============================================================
 
-# Sqlite3 database directory
+BASE_DIR = Path(__file__).parent.parent
+CONFIG_DIR = BASE_DIR / 'config'
 
-# Contest timing (UTC)
-CONTEST_START_DAY1 = "2024-04-06 1400"
-CONTEST_END_DAY1 = "2024-04-07 0200"
-# LAQP is a single session contest (unlike TQP's two sessions)
-CONTEST_START_DAY2 = None
-CONTEST_END_DAY2 = None
+# ============================================================
+# CONTEST INFORMATION
+# ============================================================
 
-# Time format
-TIME_FORMAT = "%Y-%m-%d %H%M"
+CONTEST_NAME = "Louisiana QSO Party"
+CONTEST_YEAR = 2026  # Update each year
+SPONSOR_NAME = "Jefferson Amateur Radio Club"
+SPONSOR_WEBSITE = "w5gad.org"
+
+# Contest dates (update each year)
+CONTEST_START_DAY1 = date(2026, 4, 4)  # April 4, 2026
+CONTEST_END_DAY1 = date(2026, 4, 5)    # April 5, 2026
+
+# Contest times (UTC)
+CONTEST_START_TIME = time(14, 0)  # 14:00 UTC
+CONTEST_END_TIME = time(2, 0)     # 02:00 UTC (next day)
+
+# Date and time formats
 DATE_FORMAT = "%Y-%m-%d"
+TIME_FORMAT = "%H%M"
 
-# Directory structure
+# ============================================================
+# LOG DIRECTORIES
+# ============================================================
+
+# Input logs
 DATA_DIR = BASE_DIR / 'data'
-LOGS_DIR = DATA_DIR / 'logs'
-OUTPUT_DIR = LOGS_DIR / 'output'
-INDIVIDUAL_RESULTS_DIR = OUTPUT_DIR / 'scores' / 'individual_results'
-REPORT_TXT = """
-This file shows, for each category where there was activity, the top scorers (leaderboard)
-and some other statistics, such as total operators, total QSOs, etc.
-"""
+INCOMING_LOGS = DATA_DIR / 'logs' / 'incoming'
+VALIDATED_LOGS = DATA_DIR / 'logs' / 'validated'
+PREPARED_LOGS = DATA_DIR / 'logs' / 'prepared'
+PROBLEM_LOGS = DATA_DIR / 'logs' / 'problems'
 
-# Log processing directories
-INCOMING_LOGS = LOGS_DIR / 'incoming'
-VALIDATED_LOGS = LOGS_DIR / 'validated'
-PREPARED_LOGS = LOGS_DIR / 'prepared'
-PROBLEM_LOGS = LOGS_DIR / 'problems'
-PROBLEM_REPORTS = LOGS_DIR / 'reports'
+# Output directory structure (NEW)
+DATA_OUTPUT_DIR = DATA_DIR / 'output'
+INDIVIDUAL_RESULTS_DIR = DATA_OUTPUT_DIR / 'individual_results'
 
-# Reference data files
-LA_PARISHES_FILE = DATA_DIR / 'LA_Parish_Abbrevs.txt'
-WVE_ABBREVS_FILE = DATA_DIR / 'WVE_Abbrevs.txt'
-CANADIAN_PROVINCES_FILE = DATA_DIR / 'Canadian_Provinces.txt'
+# Legacy directories (to be removed)
+OLD_SCORES_DIR = DATA_DIR / 'output' / 'scores'
+OLD_STATISTICS_DIR = DATA_DIR / 'output' / 'statistics'
 
-# Scoring constants
+# Keep for compatibility during transition
+SCORES_DIR = OLD_SCORES_DIR
+STATISTICS_DIR = OLD_STATISTICS_DIR
+
+# ============================================================
+# REFERENCE DATA FILES
+# ============================================================
+
+REFERENCE_DATA_DIR = DATA_DIR / 'reference_data'
+LA_PARISHES_FILE = REFERENCE_DATA_DIR / 'la_parishes.txt'
+WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
+
+# ============================================================
+# BAND AND MODE DEFINITIONS
+# ============================================================
+
+# Valid bands (meters)
+VALID_BANDS = [160, 80, 40, 20, 15, 10, 6, 2]
+
+# Frequency ranges for band determination (in kHz)
+BAND_RANGES = {
+    1800: 160,   1900: 160,
+    3500: 80,    4000: 80,
+    7000: 40,    7300: 40,
+    14000: 20,   14350: 20,
+    21000: 15,   21450: 15,
+    28000: 10,   29700: 10,
+    50000: 6,    54000: 6,
+    144000: 2,   148000: 2,
+}
+
+# Valid modes
+VALID_MODES = ['CW', 'PH', 'RY', 'DIG', 'FM', 'SSB', 'LSB', 'USB', 'RTTY', 'FT8', 'FT4']
+
+# Phone modes (for scoring)
+PHONE_MODES = ['PH', 'FM', 'SSB', 'LSB', 'USB']
+
+# CW/Digital modes (for scoring)
+CW_DIGITAL_MODES = ['CW', 'RY', 'DIG', 'RTTY', 'FT8', 'FT4']
+
+# ============================================================
+# SCORING PARAMETERS
+# ============================================================
+
+# QSO Points
 PHONE_QSO_POINTS = 2
 CW_DIGITAL_QSO_POINTS = 4
 
 # Bonus points
-N5LCC_BONUS = 100  # Bonus for working Louisiana Contest Club station
-ROVER_PARISH_ACTIVATION_BONUS = 50  # Points per parish activated by rover
+N5LCC_BONUS = 100  # Bonus for working N5LCC (Louisiana Contest Club)
+ROVER_PARISH_BONUS = 50  # Bonus per parish activated (rovers only)
 
-# Bands (no WARC bands per rules)
-VALID_BANDS = [160, 80, 40, 20, 15, 10, 6, 2]
+# ============================================================
+# CATEGORY DEFINITIONS
+# ============================================================
 
-# Band frequency ranges (in kHz)
-BAND_RANGES = {
-    160: (1800, 2000),
-    80: (3500, 4000),
-    40: (7000, 7300),
-    20: (14000, 14350),
-    15: (21000, 21450),
-    10: (28000, 29700),
-    6: (50000, 54000),
-    2: (144000, 148000)
-}
-
-# Modes
-VALID_MODES = ['CW', 'PH', 'DG', 'RY', 'FM']
-CW_DIGITAL_MODES = ['CW', 'DG', 'RY']
-PHONE_MODES = ['PH', 'FM']
-
-# Categories
 # Location types
-LOC_DX = 0
-LOC_NON_LA = 1  # Non-Louisiana (US/VE)
-LOC_LA_FIXED = 2
-LOC_LA_ROVER = 3
+LOC_DX = 0           # DX (outside North America)
+LOC_NON_LA = 1       # Non-Louisiana (US/Canada, not LA)
+LOC_LA_FIXED = 2     # Louisiana Fixed station
+LOC_LA_ROVER = 3     # Louisiana Rover/Mobile
 
-LOCATION_NAMES = {
-    LOC_DX: "DX",
-    LOC_NON_LA: "Non-LA",
-    LOC_LA_FIXED: "LA Fixed",
-    LOC_LA_ROVER: "LA Rover"
-}
-
-# Mode categories (for scoring categories)
+# Mode categories
 MODE_PHONE_ONLY = 0
 MODE_CW_DIGITAL_ONLY = 1
 MODE_MIXED = 2
 
-MODE_CATEGORY_NAMES = {
-    MODE_PHONE_ONLY: "Phone Only",
-    MODE_CW_DIGITAL_ONLY: "CW/Digital Only",
-    MODE_MIXED: "Mixed Mode"
-}
-
-# Power levels (stored but not used for categories per LA rules)
-POWER_QRP = 0
-POWER_LOW = 1
-POWER_HIGH = 2
-
-POWER_NAMES = {
-    POWER_QRP: "QRP (≤5W)",
-    POWER_LOW: "Low Power (≤100W)",
-    POWER_HIGH: "High Power (≤1500W)"
-}
+# Power levels
+POWER_QRP = 0    # 5W or less
+POWER_LOW = 1    # 100W or less
+POWER_HIGH = 2   # 1500W or less
 
 # Overlay categories
 OVERLAY_NONE = 0
-OVERLAY_WIRES = 1
-OVERLAY_TB_WIRES = 2
-OVERLAY_POTA = 3
+OVERLAY_WIRES = 1        # Wires only antennas
+OVERLAY_TB_WIRES = 2     # Tribander + wires
+OVERLAY_POTA = 3         # Parks on the Air
 
-OVERLAY_NAMES = {
-    OVERLAY_NONE: "None",
-    OVERLAY_WIRES: "WIRES",
-    OVERLAY_TB_WIRES: "TB-WIRES",
-    OVERLAY_POTA: "POTA"
-}
+# ============================================================
+# US AND CANADIAN PREFIXES
+# ============================================================
 
-# Category construction
-# LA categories: 3 mode categories × 2 station types (fixed/rover)
-# Non-LA categories: 3 mode categories × 1 station type
-# Each can have 3 power levels and 4 overlay options
+US_PREFIXES = [
+    'K', 'W', 'N', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK',
+    'KA', 'KB', 'KC', 'KD', 'KE', 'KF', 'KG', 'KH', 'KI', 'KJ', 'KK', 'KL', 'KM', 'KN', 'KO', 'KP', 'KQ', 'KR', 'KS', 'KT', 'KU', 'KV', 'KW', 'KX', 'KY', 'KZ',
+    'NA', 'NB', 'NC', 'ND', 'NE', 'NF', 'NG', 'NH', 'NI', 'NJ', 'NK', 'NL', 'NM', 'NN', 'NO', 'NP', 'NQ', 'NR', 'NS', 'NT', 'NU', 'NV', 'NW', 'NX', 'NY', 'NZ',
+    'WA', 'WB', 'WC', 'WD', 'WE', 'WF', 'WG', 'WH', 'WI', 'WJ', 'WK', 'WL', 'WM', 'WN', 'WO', 'WP', 'WQ', 'WR', 'WS', 'WT', 'WU', 'WV', 'WW', 'WX', 'WY', 'WZ'
+]
 
-def get_category_name(location, mode_category, is_rover=False, power=None, overlay=None):
-    """
-    Generate a human-readable category name.
-    
-    In LA rules:
-    - Power doesn't affect category (unlike TX)
-    - Number of operators doesn't affect category (unlike TX)
-    - Overlay is a separate award category
-    """
-    parts = []
-    
-    # Location prefix
-    if location == LOC_DX:
-        parts.append("DX")
-    elif location == LOC_NON_LA:
-        parts.append("Non-LA")
-    elif location == LOC_LA_FIXED or location == LOC_LA_ROVER:
-        parts.append("LA")
-        if is_rover:
-            parts.append("Rover")
-    
-    # Mode category
-    parts.append(MODE_CATEGORY_NAMES[mode_category])
-    
-    # Power (informational only, not a category divider in LA)
-    if power is not None:
-        parts.append(f"({POWER_NAMES[power]})")
-    
-    # Overlay (separate award category)
-    if overlay and overlay != OVERLAY_NONE:
-        parts.append(f"[{OVERLAY_NAMES[overlay]}]")
-    
-    return " ".join(parts)
+CANADIAN_PREFIXES = [
+    'VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ',
+    'XJ', 'XK', 'XL', 'XM', 'XN', 'XO'
+]
 
-# Canadian provinces recognized (13 per LA rules, no maritime regions)
-CANADIAN_PROVINCES = {
-    'AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'
-}
+# ============================================================
+# FLASK WEB APPLICATION
+# ============================================================
 
-# US prefixes
-US_PREFIXES = {
-    "K", "N", "W", "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL"
-}
-
-# Canadian prefixes
-CANADIAN_PREFIXES = {
-    "CF", "CG", "CH", "CI", "CJ", "CK", "CY", "CZ", 
-    "VA", "VB", "VC", "VD", "VE", "VF", "VG", "VO", 
-    "VX", "VY", "XJ", "XK", "XL", "XM", "XN", "XO"
-}
-
-# Database configuration
-HOME_DIR = Path(__file__).resolve().parent.parent.parent
-DATABASE_DIR = HOME_DIR / 'Documents' / 'laqp'
-
-# Sqlite3 database directory
-DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_DIR}/laqp.db')
-
-# Web application configuration
-FLASK_SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'change-this-in-production')
-UPLOAD_FOLDER = INCOMING_LOGS
+FLASK_SECRET_KEY = 'change-this-in-production-use-secrets'
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
 
-# Logging
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-LOG_FILE = BASE_DIR / 'laqp_processor.log'
+# ============================================================
+# REPORT TEXT
+# ============================================================
+
+REPORT_TXT = """
+The Louisiana QSO Party is an annual amateur radio contest held on the first 
+weekend of April. Participants make contacts with Louisiana stations and earn 
+points based on QSO count and multipliers (parishes, states, provinces, and DX).
+
+Awards are given in multiple categories based on location (Non-Louisiana, 
+Louisiana Fixed, Louisiana Rover), mode (Phone, CW/Digital, Mixed), and power 
+level (QRP, Low, High). Additional overlay categories recognize special 
+operating conditions (Wires Only, Tribander+Wires, POTA).
+
+Thank you to all participants for making this year's Louisiana QSO Party a success!
+"""
+
+# ============================================================
+# DATABASE CONFIGURATION
+# ============================================================
+
+DATABASE_FILE = BASE_DIR / 'data' / 'laqp.db'
+DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
+
+# ============================================================
+# UTILITY FUNCTIONS
+# ============================================================
 
 def ensure_directories():
-    """Create all necessary directories if they don't exist."""
-    dirs = [
-        DATA_DIR,
-        LOGS_DIR,
+    """Ensure all required directories exist"""
+    directories = [
+        # Log directories
         INCOMING_LOGS,
         VALIDATED_LOGS,
         PREPARED_LOGS,
         PROBLEM_LOGS,
-        PROBLEM_REPORTS,
-        OUTPUT_DIR,
-        OUTPUT_DIR / 'scores',
-        OUTPUT_DIR / 'statistics'
+        
+        # Output directories (NEW structure)
+        DATA_OUTPUT_DIR,
+        INDIVIDUAL_RESULTS_DIR,
+        
+        # Legacy directories (will be removed later)
+        SCORES_DIR,
+        STATISTICS_DIR,
+        
+        # Reference data
+        REFERENCE_DATA_DIR,
+        
+        # Database directory
+        DATABASE_FILE.parent,
     ]
-    for directory in dirs:
+    
+    for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
 
-if __name__ == "__main__":
-    # Test configuration
-    ensure_directories()
-    print("LAQP Configuration Test")
-    print(f"Contest dates: {CONTEST_START_DAY1} to {CONTEST_END_DAY1}")
-    print(f"Base directory: {BASE_DIR}")
-    print(f"\nSample categories:")
-    print(f"  {get_category_name(LOC_NON_LA, MODE_MIXED)}")
-    print(f"  {get_category_name(LOC_LA_FIXED, MODE_PHONE_ONLY, power=POWER_LOW)}")
-    print(f"  {get_category_name(LOC_LA_ROVER, MODE_CW_DIGITAL_ONLY, is_rover=True)}")
-    print(f"  {get_category_name(LOC_LA_FIXED, MODE_MIXED, overlay=OVERLAY_WIRES)}")
+
+def get_contest_year():
+    """Get the current contest year"""
+    return CONTEST_YEAR
+
+
+def get_contest_name():
+    """Get the full contest name with year"""
+    return f"{CONTEST_NAME} {CONTEST_YEAR}"
+
+
+# Ensure directories exist on import
+ensure_directories()

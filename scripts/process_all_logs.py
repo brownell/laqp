@@ -1,444 +1,277 @@
 #!/usr/bin/env python3
 """
-Louisiana QSO Party - Batch Log Processor
+Louisiana QSO Party - Process All Logs Script (Updated)
 
-Main command-line script to process all contest logs through:
-1. Validation
-2. Preparation
-3. Scoring
-4. Statistics generation
-5. Database storage
+Complete pipeline: Validate → Prepare → Score → Generate Reports
 
-Usage:
-    python process_all_logs.py [--validate-only] [--skip-db]
+Updated to work with:
+- New 36-category system
+- Individual DOCX result files
+- Summary Report DOCX generation
 """
 import sys
-import argparse
-import shutil
 from pathlib import Path
-from typing import List
 
-# Add project root to path
+# Add project to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.config import (
-    INCOMING_LOGS, VALIDATED_LOGS, PREPARED_LOGS,
-    PROBLEM_LOGS, PROBLEM_REPORTS,
-    LA_PARISHES_FILE, WVE_ABBREVS_FILE,
-    OUTPUT_DIR, ensure_directories
+    INCOMING_LOGS,
+    VALIDATED_LOGS,
+    PREPARED_LOGS,
+    PROBLEM_LOGS,
+    LA_PARISHES_FILE,
+    WVE_ABBREVS_FILE,
+    INDIVIDUAL_RESULTS_DIR,
+    DATA_OUTPUT_DIR,
+    ensure_directories,
 )
+
+# Import processing modules
 from laqp.core.validator import validate_single_log
 from laqp.core.preparation import prepare_single_log
-from laqp.core.scoring import score_single_log, generate_score_report
-from laqp.core.statistics import generate_statistics_from_logs
-# from laqp.models.database import Database, Contestant
+from laqp.core.scoring import score_all_logs, generate_score_report
+
+# Individual results (will be available after we update __init__.py)
+try:
+    from laqp.core.individual_results import generate_all_individual_results
+    HAS_INDIVIDUAL_RESULTS = True
+except ImportError:
+    print("Warning: individual_results module not yet in __init__.py")
+    HAS_INDIVIDUAL_RESULTS = False
 
 
 class LogProcessor:
-    """Orchestrates the complete log processing pipeline"""
+    """Process LAQP logs through complete pipeline"""
     
-    def __init__(self, use_database: bool = True):
-        self.use_database = use_database
-        self.db = None
-        
-        # if use_database:
-        #     from config.config import DATABASE_URL
-        #     self.db = Database(DATABASE_URL)
-        #     self.db.create_tables()
-        
-        # Ensure all directories exist
+    def __init__(self):
+        """Initialize processor"""
         ensure_directories()
-        
-        # Clean output directories from previous runs
-        self.clean_output_directories()
-        
-        # Load reference data
-        self.load_reference_data()
-        
-        # Processing statistics
         self.stats = {
-            'total_logs': 0,
-            'valid_logs': 0,
-            'invalid_logs': 0,
-            'total_qsos': 0,
-            'invalid_qsos': 0
+            'total_incoming': 0,
+            'validated': 0,
+            'validation_failed': 0,
+            'prepared': 0,
+            'scored': 0,
         }
     
-    def clean_output_directories(self):
-        """Clean output directories from previous runs"""
-        print("Cleaning output directories from previous run...")
-        
-        dirs_to_clean = [
-            VALIDATED_LOGS,
-            PREPARED_LOGS,
-            PROBLEM_LOGS,
-            PROBLEM_REPORTS,
-            OUTPUT_DIR / 'scores',
-            OUTPUT_DIR / 'statistics'
-        ]
-        
-        for directory in dirs_to_clean:
-            if directory.exists():
-                for file in directory.glob('*'):
-                    if file.is_file():
-                        file.unlink()
-                print(f"  Cleaned: {directory}")
-        
-        print("Output directories cleaned.\n")
-    
-    def load_reference_data(self):
-        """Load parish and state/province lists"""
-        with open(LA_PARISHES_FILE, 'r') as f:
-            self.parishes = [line.strip().upper() for line in f if line.strip()]
-        
-        with open(WVE_ABBREVS_FILE, 'r') as f:
-            self.states_provinces = [line.strip().upper() for line in f if line.strip()]
-    
-    def get_log_files(self, directory: Path) -> List[Path]:
-        """Get all log files from directory"""
-        log_files = []
-        for ext in ['*.log', '*.LOG', '*.txt', '*.TXT', '*.cbr', '*.CBR']:
-            log_files.extend(directory.glob(ext))
-        return sorted(log_files)
-    
-    def validate_logs(self) -> List[Path]:
+    def process_all(self, validate_only=False):
         """
-        Validate all logs in incoming directory.
-        Move valid logs to validated directory, invalid to problems.
+        Process all logs through the pipeline.
         
-        Returns list of valid log paths.
+        Args:
+            validate_only: If True, only run validation step
         """
-        print("\n" + "=" * 60)
+        print("=" * 80)
+        print("LOUISIANA QSO PARTY - LOG PROCESSING")
+        print("=" * 80)
+        print()
+        
+        # Step 1: Validation
+        self.validate_logs()
+        
+        if validate_only:
+            print("\nValidation-only mode. Stopping here.")
+            return
+        
+        # Step 2: Preparation
+        self.prepare_logs()
+        
+        # Step 3: Scoring
+        all_scores, category_scores = self.score_logs()
+        
+        # Step 4: Individual Results
+        if HAS_INDIVIDUAL_RESULTS:
+            self.generate_individual_results(all_scores, category_scores)
+        else:
+            print("\nSkipping individual results (module not yet imported)")
+        
+        # Step 5: Summary Report
+        # TODO: Will add in next step
+        print("\nSummary Report generation: Coming in next step")
+        
+        # Final summary
+        self.print_summary()
+    
+    def validate_logs(self):
+        """Step 1: Validate incoming logs"""
+        print("=" * 80)
         print("STEP 1: VALIDATION")
-        print("=" * 60)
+        print("=" * 80)
         
-        incoming_logs = self.get_log_files(INCOMING_LOGS)
+        log_files = sorted(INCOMING_LOGS.glob('*.log'))
+        self.stats['total_incoming'] = len(log_files)
         
-        if not incoming_logs:
-            print(f"No logs found in {INCOMING_LOGS}")
-            return []
+        if not log_files:
+            print("No logs found in incoming directory")
+            return
         
-        print(f"Found {len(incoming_logs)} log files to validate\n")
+        print(f"Found {len(log_files)} log files to validate\n")
         
-        valid_logs = []
-        
-        for log_path in incoming_logs:
-            print(f"Validating {log_path.name}...", end=" ")
+        for log_file in log_files:
+            print(f"Validating {log_file.name}...", end=" ")
             
-            # Validate the log
-            result = validate_single_log(
-                log_path,
-                LA_PARISHES_FILE,
-                WVE_ABBREVS_FILE
-            )
-            # Validate the log
-            result = validate_single_log(
-                log_path,
-                LA_PARISHES_FILE,
-                WVE_ABBREVS_FILE
-            )
+            try:
+                result = validate_single_log(
+                    log_file,
+                    LA_PARISHES_FILE,
+                    WVE_ABBREVS_FILE
+                )
+                
+                if result.is_valid:
+                    # Move to validated directory
+                    dest = VALIDATED_LOGS / log_file.name
+                    log_file.rename(dest)
+                    self.stats['validated'] += 1
+                    print("✓ VALID")
+                else:
+                    # Move to problems directory
+                    dest = PROBLEM_LOGS / log_file.name
+                    log_file.rename(dest)
+                    self.stats['validation_failed'] += 1
+                    print(f"✗ INVALID ({len(result.errors)} errors)")
+                    
+                    # Show first few errors
+                    for error in result.errors[:3]:
+                        print(f"    - {error}")
+                    if len(result.errors) > 3:
+                        print(f"    ... and {len(result.errors) - 3} more errors")
             
-            self.stats['total_logs'] += 1
-            self.stats['total_qsos'] += result.qso_count
-            self.stats['invalid_qsos'] += result.invalid_qso_count
-            
-            if result.is_valid:
-                print("✓ VALID")
-                self.stats['valid_logs'] += 1
-                
-                # Copy (not move) to validated directory
-                dest = VALIDATED_LOGS / log_path.name
-                shutil.copy(str(log_path), str(dest))
-                valid_logs.append(dest)
-            else:
-                print("✗ INVALID")
-                self.stats['invalid_logs'] += 1
-                
-                # Copy (not move) to problems directory
-                dest = PROBLEM_LOGS / log_path.name
-                shutil.copy(str(log_path), str(dest))
-                
-                # Write error report to problems/reports directory
-                report_path = PROBLEM_REPORTS / f"{log_path.stem}-errors.txt"
-                with open(report_path, 'w', encoding='utf-8') as f:
-                    f.write('\n'.join(result.to_report()))
-                
-                print(f"  Error report: {report_path}")
+            except Exception as e:
+                print(f"✗ ERROR: {e}")
+                self.stats['validation_failed'] += 1
         
-        print(f"\nValidation complete: {self.stats['valid_logs']} valid, {self.stats['invalid_logs']} invalid")
-        
-        return valid_logs
+        print(f"\nValidation complete: {self.stats['validated']} valid, " +
+              f"{self.stats['validation_failed']} invalid\n")
     
-    def prepare_logs(self, validated_logs: List[Path]) -> List[Path]:
-        """
-        Prepare validated logs for scoring.
-        
-        Preparation includes:
-        - Convert frequency to band
-        - Remove slashes from callsigns
-        - Split multi-parish QSOs into separate lines
-        - Mark DX QTH indicators
-        - Determine contest category
-        
-        Returns list of prepared log paths.
-        """
-        print("\n" + "=" * 60)
+    def prepare_logs(self):
+        """Step 2: Prepare validated logs"""
+        print("=" * 80)
         print("STEP 2: PREPARATION")
-        print("=" * 60)
+        print("=" * 80)
         
-        if not validated_logs:
+        log_files = sorted(VALIDATED_LOGS.glob('*.log'))
+        
+        if not log_files:
             print("No validated logs to prepare")
-            return []
+            return
         
-        print(f"Preparing {len(validated_logs)} validated logs\n")
+        print(f"Found {len(log_files)} validated logs to prepare\n")
         
-        prepared_logs = []
-        
-        for log_path in validated_logs:
-            print(f"Preparing {log_path.name}...", end=" ")
-            
-            # Prepare the log
-            output_path = PREPARED_LOGS / f"{log_path.stem}-prep.log"
+        for log_file in log_files:
+            print(f"Preparing {log_file.name}...", end=" ")
             
             try:
-                category_info = prepare_single_log(
-                    log_path,
-                    output_path,
+                output_path = PREPARED_LOGS / log_file.name
+                
+                result = prepare_single_log(
+                    log_file,
                     LA_PARISHES_FILE,
-                    WVE_ABBREVS_FILE
+                    WVE_ABBREVS_FILE,
+                    output_path
                 )
                 
-                print(f"✓ {category_info['category_name']}")
-                prepared_logs.append(output_path)
-                
+                self.stats['prepared'] += 1
+                print(f"✓ Category: {result.get('category', 'Unknown')}")
+            
             except Exception as e:
                 print(f"✗ ERROR: {e}")
-                continue
         
-        print(f"\nPreparation complete: {len(prepared_logs)} logs prepared")
-        
-        return prepared_logs
+        print(f"\nPreparation complete: {self.stats['prepared']} logs prepared\n")
     
-    def score_logs(self, prepared_logs: List[Path]):
-        """
-        Score all prepared logs.
-        
-        Calculates:
-        - QSO points (2 for phone, 4 for CW/digital)
-        - Multipliers (parishes per band/mode for Non-LA, parishes + states + provinces + DXCC for LA)
-        - Bonuses (N5LCC, rover parish activation)
-        - Final scores
-        """
-        print("\n" + "=" * 60)
+    def score_logs(self):
+        """Step 3: Score prepared logs"""
+        print("=" * 80)
         print("STEP 3: SCORING")
-        print("=" * 60)
-        
-        if not prepared_logs:
-            print("No prepared logs to score")
-            return
-        
-        print(f"Scoring {len(prepared_logs)} prepared logs\n")
-        
-        # Create output directory for score reports
-        scores_dir = OUTPUT_DIR / 'scores'
-        scores_dir.mkdir(parents=True, exist_ok=True)
-        
-        # CSV header for summary
-        summary_lines = []
-        summary_lines.append("Callsign,Email,Category,Club,Operators,ClaimedScore,CW_QSOs,Phone_QSOs,Digital_QSOs,QSO_Points,Multipliers,Score_Before_Bonus,N5LCC_Bonus,Rover_Bonus,Total_Bonus,Final_Score,Score_Reduction")
-        
-        for log_path in prepared_logs:
-            print(f"Scoring {log_path.stem}...", end=" ")
-            
-            try:
-                score_result = score_single_log(
-                    log_path,
-                    LA_PARISHES_FILE,
-                    WVE_ABBREVS_FILE
-                )
-                
-                print(f"✓ {score_result['final_score']} points")
-                
-                # Write individual score report
-                report_path = scores_dir / f"{score_result['callsign']}-score.txt"
-                with open(report_path, 'w', encoding='utf-8') as f:
-                    f.write('\n'.join(generate_score_report(score_result)))
-                
-                # Add to summary CSV
-                summary_lines.append(
-                    f"{score_result['callsign']},"
-                    f"{score_result['email']},"
-                    f"{score_result['category']},"
-                    f"{score_result['club']},"
-                    f"{score_result['operators']},"
-                    f"{score_result['claimed_score']},"
-                    f"{score_result['cw_qsos']},"
-                    f"{score_result['phone_qsos']},"
-                    f"{score_result['digital_qsos']},"
-                    f"{score_result['raw_qso_points']},"
-                    f"{score_result['total_multipliers']},"
-                    f"{score_result['score_before_bonus']},"
-                    f"{score_result['n5lcc_bonus']},"
-                    f"{score_result['rover_bonus']},"
-                    f"{score_result['total_bonus']},"
-                    f"{score_result['final_score']},"
-                    f"{score_result['score_reduction']}"
-                )
-                
-            except Exception as e:
-                print(f"✗ ERROR: {e}")
-                continue
-        
-        # Write summary CSV
-        summary_path = scores_dir / "scores_summary.csv"
-        with open(summary_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(summary_lines))
-        
-        print(f"\nScoring complete!")
-        print(f"Individual reports: {scores_dir}")
-        print(f"Summary CSV: {summary_path}")
-    
-    def generate_statistics(self, prepared_logs: List[Path]):
-        """
-        Generate contest statistics.
-        
-        Statistics include:
-        - Logs by category
-        - QSOs by band/mode
-        - Parish activity
-        - Participation breakdown
-        """
-        print("\n" + "=" * 60)
-        print("STEP 4: STATISTICS")
-        print("=" * 60)
-        
-        if not prepared_logs:
-            print("No prepared logs for statistics")
-            return
-        
-        print(f"Generating statistics from {len(prepared_logs)} logs\n")
-        
-        stats_dir = OUTPUT_DIR / 'statistics'
+        print("=" * 80)
         
         try:
-            stats, parishes = generate_statistics_from_logs(
-                prepared_logs,
+            all_scores, category_scores = score_all_logs(
+                PREPARED_LOGS,
                 LA_PARISHES_FILE,
-                stats_dir
+                WVE_ABBREVS_FILE
             )
             
-            print("✓ Statistics generated!")
-            print(f"  Total logs: {stats['total_logs']}")
-            print(f"  Total QSOs: {stats['total_qsos']}")
-            print(f"  Parishes with activity: {stats['parishes_with_activity']}")
-            print(f"\nReports written to: {stats_dir}")
+            self.stats['scored'] = len(all_scores)
             
+            print()
+            print(f"Scoring complete: {len(all_scores)} logs scored")
+            print(f"Active categories: {len(category_scores)}")
+            print()
+            
+            # Generate simple text report
+            report = generate_score_report(all_scores, category_scores)
+            print(report)
+            
+            return all_scores, category_scores
+        
         except Exception as e:
-            print(f"✗ ERROR generating statistics: {e}")
+            print(f"ERROR during scoring: {e}")
+            import traceback
+            traceback.print_exc()
+            return [], {}
+    
+    def generate_individual_results(self, all_scores, category_scores):
+        """Step 4: Generate individual DOCX files"""
+        print("=" * 80)
+        print("STEP 4: INDIVIDUAL RESULTS")
+        print("=" * 80)
+        
+        if not all_scores:
+            print("No scores to generate results for")
+            return
+        
+        try:
+            print(f"Generating individual DOCX files for {len(all_scores)} contestants...")
+            print()
+            
+            files = generate_all_individual_results(
+                all_scores,
+                category_scores,
+                INDIVIDUAL_RESULTS_DIR
+            )
+            
+            print()
+            print(f"✓ Generated {len(files)} individual result files")
+            print(f"  Location: {INDIVIDUAL_RESULTS_DIR}")
+            print()
+        
+        except Exception as e:
+            print(f"ERROR generating individual results: {e}")
             import traceback
             traceback.print_exc()
     
-    # def store_to_database(self):
-    #     """
-    #     Store processed data to database.
-    #     """
-    #     if not self.use_database:
-    #         print("\nDatabase storage skipped (--skip-db)")
-    #         return
-        
-    #     print("\n" + "=" * 60)
-    #     print("STEP 5: DATABASE STORAGE")
-    #     print("=" * 60)
-    #     print("TODO: Implement database storage")
-    #     print("This will populate the database from scored logs\n")
-    
     def print_summary(self):
-        """Print processing summary"""
-        print("\n" + "=" * 60)
-        print("PROCESSING SUMMARY")
-        print("=" * 60)
-        print(f"Total logs processed: {self.stats['total_logs']}")
-        print(f"Valid logs: {self.stats['valid_logs']}")
-        print(f"Invalid logs: {self.stats['invalid_logs']}")
-        print(f"Total QSOs: {self.stats['total_qsos']}")
-        print(f"Invalid QSOs: {self.stats['invalid_qsos']}")
-        print("=" * 60)
+        """Print final summary"""
+        print("=" * 80)
+        print("PROCESSING COMPLETE")
+        print("=" * 80)
+        print()
+        print(f"  Incoming logs: {self.stats['total_incoming']}")
+        print(f"  Validated: {self.stats['validated']}")
+        print(f"  Failed validation: {self.stats['validation_failed']}")
+        print(f"  Prepared: {self.stats['prepared']}")
+        print(f"  Scored: {self.stats['scored']}")
+        print()
 
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(
-        description='Louisiana QSO Party Log Processor',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Process all logs (validate, prepare, score, statistics, database)
-  python process_all_logs.py
-  
-  # Only validate logs
-  python process_all_logs.py --validate-only
-  
-  # Process logs but skip database storage
-  python process_all_logs.py --skip-db
-        """
-    )
+    import argparse
     
+    parser = argparse.ArgumentParser(
+        description='Process Louisiana QSO Party logs'
+    )
     parser.add_argument(
         '--validate-only',
         action='store_true',
-        help='Only validate logs, do not prepare or score'
-    )
-    
-    parser.add_argument(
-        '--skip-db',
-        action='store_true',
-        help='Skip database storage'
+        help='Only run validation step'
     )
     
     args = parser.parse_args()
     
-    # Create processor
-    processor = LogProcessor(use_database=not args.skip_db)
-    
-    try:
-        # Step 1: Validate
-        valid_logs = processor.validate_logs()
-        
-        if not valid_logs:
-            print("\nNo valid logs to process. Exiting.")
-            return
-        
-        if args.validate_only:
-            print("\nValidation complete (--validate-only specified)")
-            processor.print_summary()
-            return
-        
-        # Step 2: Prepare
-        prepared_logs = processor.prepare_logs(valid_logs)
-        
-        # Step 3: Score
-        processor.score_logs(prepared_logs)
-        
-        # Step 4: Statistics
-        processor.generate_statistics(prepared_logs)
-        
-        # Step 5: Database
-        # processor.store_to_database()
-        
-        # Summary
-        processor.print_summary()
-        
-        print("\nProcessing complete!")
-        print(f"Results in: {OUTPUT_DIR}")
-        
-    except KeyboardInterrupt:
-        print("\n\nProcessing interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n\nError during processing: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    processor = LogProcessor()
+    processor.process_all(validate_only=args.validate_only)
 
 
 if __name__ == "__main__":

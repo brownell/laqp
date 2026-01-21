@@ -1,13 +1,20 @@
 """
-Louisiana QSO Party Log Validator
+Louisiana QSO Party Log Validator - Enhanced Version
 
-Validates Cabrillo log files for LAQP compliance.
-Refactored from TQP validation.py with LA-specific rules.
+Validates Cabrillo log files for LAQP compliance AND checks that the log
+matches the web form submission data.
+
+This version extends the base validator to cross-check:
+- Email address in log vs. web form
+- Mode category (Phone/CW-Digital/Mixed) in log vs. web form
+- Power level (QRP/Low/High) in log vs. web form  
+- Station type (Fixed/Rover) in log vs. web form
+- Overlay category (None/Wires/TB-Wires/POTA) in log vs. web form
 """
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 # Import configuration and utilities
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -31,6 +38,13 @@ class ValidationResult:
         self.has_valid_power = True
         self.has_valid_operator = True
         self.has_email = False
+        
+        # Log header fields
+        self.log_email = ""
+        self.log_mode_category = ""  # PHONE-ONLY, CW/DIGITAL-ONLY, MIXED
+        self.log_power = ""  # QRP, LOW, HIGH
+        self.log_station = ""  # FIXED, ROVER
+        self.log_overlay = ""  # WIRES, TB-WIRES, POTA, or empty
         
     def add_error(self, message: str):
         self.errors.append(message)
@@ -68,282 +82,330 @@ class LogValidator:
     """Validates LAQP Cabrillo log files"""
     
     def __init__(self, parish_list: List[str], state_province_list: List[str]):
-        self.parish_list = [p.strip().upper() for p in parish_list]
-        self.state_province_list = [s.strip().upper() for s in state_province_list]
+        self.parishes = set(p.upper() for p in parish_list)
+        self.states_provinces = set(s.upper() for s in state_province_list)
         
-        # Convert contest times to timestamps
-        self.start_timestamp = self._parse_timestamp(CONTEST_START_DAY1)
-        self.end_timestamp = self._parse_timestamp(CONTEST_END_DAY1)
-        
-    def _parse_timestamp(self, time_string: str) -> int:
-        """Convert time string to Unix timestamp"""
-        dt = datetime.strptime(time_string, TIME_FORMAT)
-        return int(dt.timestamp())
-    
-    # Validation helper functions
-    def is_valid_callsign(self, call: str) -> bool:
-        """Check if callsign format is valid"""
-        if not call or len(call) < 3:
-            return False
-        has_slash = "/" in call
-        only_alphanum = call.replace("/", "").isalnum()
-        has_digit = any(c.isdigit() for c in call)
-        return only_alphanum and has_digit
-    
-    def has_slash_in_qth(self, qth: str) -> bool:
-        """Check if QTH has slash (multi-parish indicator)"""
-        return "/" in qth
-    
-    def is_valid_band(self, freq_khz: int) -> bool:
-        """Check if frequency is in valid LAQP band"""
-        for band, (low, high) in BAND_RANGES.items():
-            if low <= freq_khz <= high:
-                return True
-        return False
-    
-    def is_valid_mode(self, mode: str) -> bool:
-        """Check if mode is valid"""
-        return mode in VALID_MODES
-    
-    def is_valid_datetime(self, date_str: str, time_str: str) -> bool:
-        """Check if date/time is within contest period"""
-        try:
-            dt_string = f"{date_str} {time_str}"
-            dt = datetime.strptime(dt_string, TIME_FORMAT)
-            timestamp = int(dt.timestamp())
-            return self.start_timestamp <= timestamp <= self.end_timestamp
-        except ValueError:
-            return False
-    
-    def is_valid_date_format(self, date_str: str) -> bool:
-        """Check if date format is correct"""
-        try:
-            datetime.strptime(date_str, DATE_FORMAT)
-            return True
-        except ValueError:
-            return False
-    
-    def is_valid_time_format(self, time_str: str) -> bool:
-        """Check if time format is correct (4 digits)"""
-        return len(time_str) == 4 and time_str.isdigit()
-    
-    def get_callsign_prefix(self, call: str) -> str:
-        """Extract prefix from callsign"""
-        for i, char in enumerate(call):
-            if char.isdigit():
-                return call[:i]
-        return call
-    
-    def is_us_callsign(self, call: str) -> bool:
-        """Check if callsign is US"""
-        prefix = self.get_callsign_prefix(call)
-        if not prefix:
-            return False
-        if prefix[0] in ('K', 'N', 'W'):
-            return True
-        return prefix in US_PREFIXES
-    
-    def is_canadian_callsign(self, call: str) -> bool:
-        """Check if callsign is Canadian"""
-        prefix = self.get_callsign_prefix(call)
-        return prefix in CANADIAN_PREFIXES
-    
-    def is_dx_callsign(self, call: str) -> bool:
-        """Check if callsign is DX (not US or VE)"""
-        return not (self.is_us_callsign(call) or self.is_canadian_callsign(call))
-    
-    def is_la_parish(self, qth: str) -> bool:
-        """Check if QTH is a Louisiana parish"""
-        return qth in self.parish_list
-    
-    def is_non_la_state_province(self, qth: str) -> bool:
-        """Check if QTH is non-LA state or province"""
-        return qth in self.state_province_list
-    
-    def is_valid_qth(self, qth: str) -> bool:
-        """Check if QTH format is valid"""
-        # if len(qth) :
-        #     return False
-        if qth.isdigit():  # All digits not allowed
-            return False
-        return True
-    
-    def validate_qso_line(self, line: str) -> Tuple[int, str]:
+    def validate_log_file(self, log_path: Path, 
+                         form_email: Optional[str] = None,
+                         form_mode: Optional[str] = None,
+                         form_power: Optional[str] = None,
+                         form_station: Optional[str] = None,
+                         form_overlay: Optional[str] = None) -> ValidationResult:
         """
-        Validate a QSO line.
+        Validate a log file and optionally check against web form data.
+        
+        Args:
+            log_path: Path to the Cabrillo log file
+            form_email: Email from web form (optional)
+            form_mode: Mode category from web form: 'mixed', 'cw_digital', 'phone' (optional)
+            form_power: Power level from web form: 'qrp', 'low', 'high' (optional)
+            form_station: Station type from web form: 'fixed', 'rover' (optional)
+            form_overlay: Overlay category from web form: 'none', 'wires', 'tb_wires', 'pota' (optional)
         
         Returns:
-            (error_code, error_message)
-            error_code: 0 = valid, negative = not a QSO line, positive = specific error
+            ValidationResult object with validation status and any errors
         """
-        parts = line.split()
+        result = ValidationResult("")
         
-        if not parts or parts[0] != "QSO:":
-            return (0, "")  # Not a QSO line
-        
-        # LA QSO lines have 11 elements
-        if len(parts) != 11:
-            return (-1, "Missing or excess data in QSO line")
-        
-        # Validate each field
-        freq_khz = int(parts[1])
-        mode = parts[2]
-        date = parts[3]
-        time = parts[4]
-        sent_call = parts[5]
-        sent_qth = parts[7]
-        rcvd_call = parts[8]
-        rcvd_qth = parts[10]
-        
-        # Check frequency
-        if not self.is_valid_band(freq_khz):
-            return (1, f"Invalid frequency: {freq_khz} kHz")
-        
-        # Check mode
-        if not self.is_valid_mode(mode):
-            return (2, f"Invalid mode: {mode}")
-        
-        # Check date/time format
-        if not self.is_valid_date_format(date):
-            return (3, f"Invalid date format: {date}")
-        
-        if not self.is_valid_time_format(time):
-            return (3, f"Invalid time format: {time}")
-        
-        # Check if within contest period
-        if not self.is_valid_datetime(date, time):
-            return (3, f"QSO outside contest period: {date} {time}")
-        
-        # Check callsigns
-        if not self.is_valid_callsign(sent_call):
-            return (4, f"Invalid sent callsign: {sent_call}")
-        
-        if not self.is_valid_callsign(rcvd_call):
-            return (6, f"Invalid received callsign: {rcvd_call}")
-        
-        # Check QTH
-        # if sent_qth == "TX":
-        #     print("sent QTH TX")
-        # if rcvd_qth == "TX":
-        #     print("rcvd QTH TX")    
-        if not self.is_valid_qth(sent_qth):
-            return (5, f"Invalid sent QTH: {sent_qth}")
-        
-        if not self.is_valid_qth(rcvd_qth):
-            return (7, f"Invalid received QTH: {rcvd_qth}")
-        
-        # Check for slash in rcvd QTH (multi-parish, will be split in preparation)
-        if self.has_slash_in_qth(rcvd_qth):
-            return (8, f"Received QTH has slash (multi-parish): {rcvd_qth} - will be split during preparation")
-        
-        return (0, "")  # Valid
-    
-    def validate_log_file(self, filepath: Path) -> ValidationResult:
-        """
-        Validate a complete log file.
-        
-        Returns ValidationResult object with validation status and details.
-        """
-        result = ValidationResult(filepath.stem)
-        
-        try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-        except Exception as e:
-            result.add_error(f"Could not read file: {str(e)}")
-            return result
-        
-        # Track required headers
+        has_start = False
+        has_end = False
         has_power = False
         has_operator = False
         
-        for line in lines:
-            line = line.strip().upper()
-            if not line:
-                continue
-            
-            parts = line.split()
-            if not parts:
-                continue
-            
-            tag = parts[0]
-            
-            # Check for required tags
-            if tag == "CALLSIGN:":
-                if len(parts) > 1:
-                    result.callsign = parts[1]
-            
-            elif tag == "EMAIL:":
-                if len(parts) > 1:
-                    result.has_email = True
-                else:
-                    result.add_warning("EMAIL tag present but empty")
-            
-            elif tag == "CATEGORY-POWER:":
-                if len(parts) > 1 and parts[1] in ('QRP', 'LOW', 'HIGH'):
-                    has_power = True
-                else:
-                    result.add_error("CATEGORY-POWER missing or invalid (should be QRP, LOW, or HIGH)")
-            
-            elif tag == "CATEGORY-OPERATOR:":
-                # LA rules: operator category is ignored, everyone lumped together
-                if len(parts) > 1:
-                    has_operator = True
-                else:
-                    result.add_warning("CATEGORY-OPERATOR missing")
-            
-            elif tag == "CATEGORY-STATION:":
-                # Check for FIXED, MOBILE, ROVER, PORTABLE
-                if len(parts) < 2 or parts[1] not in ('FIXED', 'MOBILE', 'ROVER', 'PORTABLE'):
-                    result.add_warning("CATEGORY-STATION missing or invalid")
-            
-            elif tag == "CERTIFICATE:":
-                # Check if contestant wants certificate
-                pass
-            
-            elif tag == "QSO:":
-                result.qso_count += 1
-                error_code, error_msg = self.validate_qso_line(line)
-                
-                if error_code < 0:  # Malformed line
-                    result.invalid_qso_count += 1
-                    result.add_error(f"Line {result.qso_count}: {error_msg}")
-                elif error_code > 0 and error_code < 8:  # Invalid but parseable
-                    result.invalid_qso_count += 1
-                    result.add_error(f"Line {result.qso_count}: {error_msg}")
-                elif error_code == 8:  # Multi-parish (warning only)
-                    result.add_warning(f"Line {result.qso_count}: {error_msg}")
+        qso_modes = set()  # Track which modes are actually used
         
-        # Check required fields
-        result.has_valid_power = has_power
-        result.has_valid_operator = has_operator
+        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip().upper()
+                if not line:
+                    continue
+                
+                parts = line.split()
+                if not parts:
+                    continue
+                
+                tag = parts[0]
+                
+                # ===== HEADER VALIDATION =====
+                
+                if tag == "START-OF-LOG:":
+                    has_start = True
+                    if len(parts) < 2 or parts[1] != "3.0":
+                        result.add_warning(f"Line {line_num}: Expected START-OF-LOG: 3.0")
+                
+                elif tag == "END-OF-LOG:":
+                    has_end = True
+                
+                elif tag == "CALLSIGN:":
+                    if len(parts) < 2:
+                        result.add_error(f"Line {line_num}: Missing callsign")
+                    else:
+                        result.callsign = parts[1]
+                
+                elif tag == "EMAIL:":
+                    if len(parts) >= 2:
+                        result.log_email = parts[1]
+                        result.has_email = True
+                
+                elif tag == "CONTEST:":
+                    if len(parts) < 2 or parts[1] != "LA-QSO-PARTY":
+                        result.add_error(f"Line {line_num}: CONTEST must be LA-QSO-PARTY")
+                
+                elif tag == "CATEGORY-POWER:":
+                    if len(parts) >= 2:
+                        has_power = True
+                        result.log_power = parts[1]
+                        if parts[1] not in ["QRP", "LOW", "HIGH"]:
+                            result.add_error(f"Line {line_num}: CATEGORY-POWER must be QRP, LOW, or HIGH")
+                
+                elif tag == "CATEGORY-OPERATOR:":
+                    has_operator = True
+                
+                elif tag == "CATEGORY-STATION:":
+                    if len(parts) >= 2:
+                        result.log_station = parts[1]
+                        if parts[1] not in ["FIXED", "ROVER", "MOBILE"]:
+                            result.add_warning(f"Line {line_num}: CATEGORY-STATION should be FIXED or ROVER")
+                
+                elif tag == "CATEGORY-OVERLAY:":
+                    if len(parts) >= 2:
+                        result.log_overlay = parts[1]
+                        if parts[1] not in ["WIRES", "TB-WIRES", "POTA"]:
+                            result.add_warning(f"Line {line_num}: CATEGORY-OVERLAY should be WIRES, TB-WIRES, or POTA")
+                
+                # ===== QSO LINE VALIDATION =====
+                
+                elif tag == "QSO:":
+                    result.qso_count += 1
+                    error_code, error_msg = self._validate_qso_line(line, line_num)
+                    
+                    # Track which modes are used
+                    if len(parts) >= 3:
+                        mode = parts[2]
+                        qso_modes.add(mode)
+                    
+                    if error_code == -1:  # Fatal error
+                        result.invalid_qso_count += 1
+                        result.add_error(f"Line {result.qso_count}: {error_msg}")
+                    elif error_code > 0 and error_code < 8:  # Invalid but parseable
+                        result.invalid_qso_count += 1
+                        result.add_error(f"Line {result.qso_count}: {error_msg}")
+                    elif error_code == 8:  # Multi-parish (warning only)
+                        result.add_warning(f"Line {result.qso_count}: {error_msg}")
+        
+        # ===== CHECK REQUIRED FIELDS =====
+        
+        if not has_start:
+            result.add_error("Missing START-OF-LOG: 3.0")
+        
+        if not has_end:
+            result.add_error("Missing END-OF-LOG:")
+        
+        if not result.callsign:
+            result.add_error("Missing CALLSIGN:")
         
         if not has_power:
-            result.add_error("Missing CATEGORY-POWER")
+            result.add_error("Missing CATEGORY-POWER:")
+            result.has_valid_power = False
         
         if not has_operator:
-            result.add_warning("Missing CATEGORY-OPERATOR (not critical for LA rules)")
+            result.add_warning("Missing CATEGORY-OPERATOR: (not critical for LA rules)")
+            result.has_valid_operator = False
+        
+        if not result.has_email:
+            result.add_error("Missing EMAIL:")
         
         if result.qso_count == 0:
             result.add_error("No QSOs found in log")
         
-        # Final validation
+        # ===== DETERMINE ACTUAL MODE CATEGORY FROM QSOs =====
+        
+        has_phone = any(mode in qso_modes for mode in ['PH', 'FM', 'SSB', 'LSB', 'USB'])
+        has_cw_digital = any(mode in qso_modes for mode in ['CW', 'RY', 'RTTY', 'DIG', 'FT8', 'FT4'])
+        
+        if has_phone and has_cw_digital:
+            result.log_mode_category = "MIXED"
+        elif has_phone:
+            result.log_mode_category = "PHONE-ONLY"
+        elif has_cw_digital:
+            result.log_mode_category = "CW/DIGITAL-ONLY"
+        else:
+            result.log_mode_category = "UNKNOWN"
+        
+        # ===== CROSS-CHECK WITH WEB FORM DATA =====
+        
+        if form_email is not None and result.log_email:
+            if result.log_email.lower() != form_email.lower():
+                result.add_error(
+                    f"Email mismatch: Log has '{result.log_email}' but form has '{form_email}'"
+                )
+        
+        if form_mode is not None:
+            # Convert form mode to log format
+            form_mode_map = {
+                'mixed': 'MIXED',
+                'cw_digital': 'CW/DIGITAL-ONLY',
+                'phone': 'PHONE-ONLY'
+            }
+            expected_mode = form_mode_map.get(form_mode, '')
+            
+            if expected_mode and result.log_mode_category != expected_mode:
+                result.add_error(
+                    f"Mode category mismatch: Your log contains {result.log_mode_category} QSOs "
+                    f"but you selected '{expected_mode}' on the form. "
+                    f"Please select the correct category."
+                )
+        
+        if form_power is not None and result.log_power:
+            form_power_upper = form_power.upper()
+            if result.log_power != form_power_upper:
+                result.add_error(
+                    f"Power level mismatch: Log has CATEGORY-POWER: {result.log_power} "
+                    f"but you selected '{form_power_upper}' on the form"
+                )
+        
+        if form_station is not None and result.log_station:
+            form_station_upper = form_station.upper()
+            if result.log_station != form_station_upper and result.log_station != "MOBILE":
+                result.add_error(
+                    f"Station type mismatch: Log has CATEGORY-STATION: {result.log_station} "
+                    f"but you selected '{form_station_upper}' on the form"
+                )
+        
+        if form_overlay is not None:
+            # Convert form overlay to log format
+            form_overlay_map = {
+                'none': '',
+                'wires': 'WIRES',
+                'tb_wires': 'TB-WIRES',
+                'pota': 'POTA'
+            }
+            expected_overlay = form_overlay_map.get(form_overlay, '')
+            
+            if form_overlay != 'none' and result.log_overlay != expected_overlay:
+                result.add_error(
+                    f"Overlay category mismatch: Log has CATEGORY-OVERLAY: {result.log_overlay or '(none)'} "
+                    f"but you selected '{expected_overlay}' on the form"
+                )
+            elif form_overlay == 'none' and result.log_overlay:
+                result.add_error(
+                    f"Overlay category mismatch: Log has CATEGORY-OVERLAY: {result.log_overlay} "
+                    f"but you selected 'None' on the form"
+                )
+        
+        # ===== FINAL VALIDATION =====
+        
         if result.invalid_qso_count > 0:
             result.is_valid = False
         
         return result
+    
+    def _validate_qso_line(self, line: str, line_num: int) -> Tuple[int, str]:
+        """
+        Validate a single QSO line.
+        
+        Returns:
+            (error_code, error_message)
+            error_code: -1 = fatal, 0 = OK, 1-7 = invalid field, 8 = warning
+        """
+        parts = line.split()
+        
+        # QSO line format:
+        # QSO: freq mo date time call rst-sent qth-sent call-rcvd rst-rcvd qth-rcvd [tx#]
+        
+        if len(parts) < 11:
+            return (-1, f"QSO line too short (need at least 11 fields)")
+        
+        freq_str = parts[1]
+        mode = parts[2]
+        date_str = parts[3]
+        time_str = parts[4]
+        call_sent = parts[5]
+        rst_sent = parts[6]
+        qth_sent = parts[7]
+        call_rcvd = parts[8]
+        rst_rcvd = parts[9]
+        qth_rcvd = parts[10]
+        
+        # Validate frequency
+        try:
+            freq = int(freq_str)
+            if freq not in BAND_RANGES:
+                return (1, f"Invalid frequency {freq} kHz (not in a valid contest band)")
+        except ValueError:
+            return (1, f"Invalid frequency '{freq_str}'")
+        
+        # Validate mode
+        if mode not in VALID_MODES:
+            return (2, f"Invalid mode '{mode}' (valid: {', '.join(VALID_MODES)})")
+        
+        # Validate date
+        try:
+            qso_date = datetime.strptime(date_str, DATE_FORMAT).date()
+            if not (CONTEST_START_DAY1 <= qso_date <= CONTEST_END_DAY1):
+                return (3, f"Date {date_str} outside contest period")
+        except ValueError:
+            return (3, f"Invalid date format '{date_str}' (use YYYY-MM-DD)")
+        
+        # Validate time
+        try:
+            qso_time = datetime.strptime(time_str, TIME_FORMAT).time()
+        except ValueError:
+            return (4, f"Invalid time format '{time_str}' (use HHMM)")
+        
+        # Validate callsigns
+        if not call_sent or not call_rcvd:
+            return (5, f"Missing callsign")
+        
+        # Validate RST
+        if not rst_sent or not rst_rcvd:
+            return (6, f"Missing RST")
+        
+        # Validate QTH
+        if not qth_sent or not qth_rcvd:
+            return (7, f"Missing QTH exchange")
+        
+        # Check if QTH is valid parish or state/province
+        qth_sent_upper = qth_sent.upper()
+        qth_rcvd_upper = qth_rcvd.upper()
+        
+        # Check for multi-parish (e.g., "ORLE/JEFF")
+        if '/' in qth_sent_upper or '/' in qth_rcvd_upper:
+            return (8, f"Multi-parish QTH detected: {qth_sent} / {qth_rcvd} (will be split during processing)")
+        
+        # Validate sent QTH
+        if qth_sent_upper not in self.parishes and qth_sent_upper not in self.states_provinces:
+            return (7, f"Invalid QTH-sent '{qth_sent}' (not a valid parish or state/province)")
+        
+        # Validate received QTH  
+        if qth_rcvd_upper not in self.parishes and qth_rcvd_upper not in self.states_provinces:
+            return (7, f"Invalid QTH-rcvd '{qth_rcvd}' (not a valid parish or state/province)")
+        
+        return (0, "OK")
 
 
-def validate_single_log(log_path: Path, parish_file: Path, state_province_file: Path, 
-                       output_dir: Path = None) -> ValidationResult:
+def validate_single_log(log_path: Path, 
+                       parish_file: Path, 
+                       state_province_file: Path,
+                       output_dir: Path = None,
+                       form_email: str = None,
+                       form_mode: str = None,
+                       form_power: str = None,
+                       form_station: str = None,
+                       form_overlay: str = None) -> ValidationResult:
     """
-    Validate a single log file.
+    Validate a single log file with optional web form cross-checking.
     
     Args:
         log_path: Path to log file
         parish_file: Path to parish abbreviations file
         state_province_file: Path to state/province abbreviations file
         output_dir: Optional directory to write validation report
+        form_email: Email from web form (optional)
+        form_mode: Mode category from web form (optional)
+        form_power: Power level from web form (optional)
+        form_station: Station type from web form (optional)
+        form_overlay: Overlay category from web form (optional)
     
     Returns:
         ValidationResult object
@@ -358,8 +420,15 @@ def validate_single_log(log_path: Path, parish_file: Path, state_province_file: 
     # Create validator
     validator = LogValidator(parishes, states_provinces)
     
-    # Validate
-    result = validator.validate_log_file(log_path)
+    # Validate (with optional form data)
+    result = validator.validate_log_file(
+        log_path,
+        form_email=form_email,
+        form_mode=form_mode,
+        form_power=form_power,
+        form_station=form_station,
+        form_overlay=form_overlay
+    )
     
     # Write report if output directory specified
     if output_dir:
@@ -373,6 +442,7 @@ def validate_single_log(log_path: Path, parish_file: Path, state_province_file: 
 
 if __name__ == "__main__":
     # Test the validator
-    print("LAQP Log Validator Test")
+    print("LAQP Log Validator - Enhanced Version")
     print("This module should be imported, not run directly.")
     print("Use scripts/process_all_logs.py for batch processing.")
+    print("Or import validate_single_log() in your Flask app.")
