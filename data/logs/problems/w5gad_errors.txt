@@ -1,6 +1,0 @@
-Validation errors for w5gad.log
-============================================================
-
-- Line 8: Invalid QTH-rcvd 'F' (not a valid parish or state/province)
-- Line 20: Invalid QTH-rcvd 'HA' (not a valid parish or state/province)
-- Line 44: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)

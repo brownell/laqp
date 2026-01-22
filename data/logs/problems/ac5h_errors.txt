@@ -1,4 +1,0 @@
-Validation errors for ac5h.log
-============================================================
-
-- Line 1: Invalid QTH-rcvd 'OUA' (not a valid parish or state/province)

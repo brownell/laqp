@@ -1,4 +1,0 @@
-Validation errors for kd4s.log
-============================================================
-
-- Line 7: Invalid QTH-rcvd 'FORR' (not a valid parish or state/province)
