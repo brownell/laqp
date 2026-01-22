@@ -19,7 +19,9 @@ from config.config import (
 from laqp.core.validator import validate_single_log
 
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, 
+    static_folder='/var/www/laqp/static',
+    static_url_path='/static')
 app.config['SECRET_KEY'] = FLASK_SECRET_KEY
 app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
 
@@ -38,6 +40,10 @@ def allowed_file(filename):
 def index():
     """Main upload page"""
     return render_template('upload.html')
+
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
 
 @app.route('/upload', methods=['POST'])
