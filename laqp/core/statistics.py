@@ -7,7 +7,9 @@ Generates overall contest statistics from all logs:
 - Parish activity
 - Participation statistics
 
-Adapted from TQP statistics.py for LA rules.
+Adapted from TQP statistics.py for LA rules created by Charles Sanders, NO5W
+
+"""
 """
 import sys
 from pathlib import Path
@@ -102,7 +104,7 @@ class StatisticsGenerator:
                     tag = parts[0]
                     
                     # Track categories
-                    if tag == "TQP-CATEGORY:":
+                    if tag == "LAQP-CATEGORY:":
                         current_category = ' '.join(parts[1:])
                         stats['category_counts'][current_category] += 1
                         stats['total_logs'] += 1

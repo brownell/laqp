@@ -8,7 +8,8 @@ Prepares validated logs for scoring by:
 4. Marking DX QTH indicators
 5. Determining contest category from log contents
 
-Adapted from TQP preparation.py for LA rules.
+Adapted from TQP preparation.py for LA rules created by Charles Sanders, NO5W
+
 """
 import sys
 from pathlib import Path
@@ -16,13 +17,14 @@ from typing import List, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config.config import (
-    BAND_RANGES,
+    freq_to_band,
     LA_PARISHES_FILE, WVE_ABBREVS_FILE,
     US_PREFIXES, CANADIAN_PREFIXES,
     LOC_DX, LOC_NON_LA, LOC_LA_FIXED, LOC_LA_ROVER,
     MODE_PHONE_ONLY, MODE_CW_DIGITAL_ONLY, MODE_MIXED,
     POWER_QRP, POWER_LOW, POWER_HIGH,
-    OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA
+    OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA,
+    get_category_name
 )
 
 
@@ -39,19 +41,6 @@ class LogPreparation:
         
         # Set of ambiguous QTH that need DX suffix when from DX station
         self.ambiguous_dx_qth = {"ON", "PA", "CT", "TN", "LA", "HI", "OK", "CO", "OH"}
-    
-    def convert_khz_to_band(self, freq_khz: int) -> int:
-        """Convert frequency in kHz to band number"""
-        # First check if already a band number
-        if freq_khz in [160, 80, 40, 20, 15, 10, 6, 2]:
-            return freq_khz
-        
-        # Otherwise convert from frequency
-        for band, (low, high) in BAND_RANGES.items():
-            if low <= freq_khz <= high:
-                return band
-        
-        return 0  # Invalid
     
     def get_callsign_prefix(self, call: str) -> str:
         """Extract prefix from callsign"""
@@ -132,7 +121,7 @@ class LogPreparation:
             return [qso_line + "    [ERROR: Missing QSO elements]"]
         
         # Convert frequency to band
-        band = str(self.convert_khz_to_band(int(parts[1])))
+        band = str(freq_to_band(int(parts[1])))
         
         # Remove slashes from callsigns (mobile indicators)
         sent_call = parts[5].split("/")[0]
@@ -306,22 +295,25 @@ class LogPreparation:
                 parts = line.split()
                 if not parts:
                     continue
-                
                 tag = parts[0]
                 
                 if tag == "CALLSIGN:":
                     callsign = parts[1] if len(parts) > 1 else ""
+                    prepared_lines.append(line)
                 
                 elif tag == "CATEGORY-POWER:":
                     header_power = parts[1] if len(parts) > 1 else "LOW"
+                    prepared_lines.append(line)
                 
                 elif tag == "CATEGORY-STATION:":
                     header_station = parts[1] if len(parts) > 1 else "FIXED"
+                    prepared_lines.append(line)
                     if header_station in ("FIXED", "PORTABLE"):
                         header_fixed = True
                 
                 elif tag == "CATEGORY-OVERLAY:":
                     header_overlay = parts[1] if len(parts) > 1 else ""
+                    prepared_lines.append(line)
                 
                 elif tag == "QSO:":
                     qso_lines.append(line)
@@ -346,7 +338,7 @@ class LogPreparation:
         category_name = get_category_name(location_type, mode_category, is_rover, power_level, overlay)
         
         # Insert category line after header
-        prepared_lines.insert(1, f"TQP-CATEGORY: {category_name}")
+        prepared_lines.insert(1, f"LAQP-CATEGORY: {category_name}")
         
         # Write prepared log
         with open(output_path, 'w', encoding='utf-8') as f:

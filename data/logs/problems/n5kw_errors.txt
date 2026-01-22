@@ -1,0 +1,4 @@
+Validation errors for n5kw.log
+============================================================
+
+- Line 7: Invalid QTH-rcvd 'FORR' (not a valid parish or state/province)

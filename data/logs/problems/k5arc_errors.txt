@@ -1,0 +1,5 @@
+Validation errors for k5arc.log
+============================================================
+
+- Line 149: Invalid QTH-rcvd 'OM2' (not a valid parish or state/province)
+- Line 224: Invalid QTH-rcvd 'XE1' (not a valid parish or state/province)

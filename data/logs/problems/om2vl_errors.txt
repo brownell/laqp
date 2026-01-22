@@ -1,0 +1,19 @@
+Validation errors for om2vl.log
+============================================================
+
+- Line 1: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 2: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 3: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 4: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 5: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 6: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 7: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 8: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 9: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 10: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 11: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 12: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 13: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 14: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 15: Invalid QTH-sent 'OM' (not a valid parish or state/province)
+- Line 16: Invalid QTH-sent 'OM' (not a valid parish or state/province)

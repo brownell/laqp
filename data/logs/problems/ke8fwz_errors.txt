@@ -1,0 +1,6 @@
+Validation errors for ke8fwz.log
+============================================================
+
+- Line 1: Invalid QTH-sent 'OHIO' (not a valid parish or state/province)
+- Line 2: Invalid QTH-sent 'OHIO' (not a valid parish or state/province)
+- Line 3: Invalid QTH-sent 'OHIO' (not a valid parish or state/province)

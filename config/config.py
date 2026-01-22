@@ -4,6 +4,7 @@ Updated with new output directory structure and categories
 """
 from pathlib import Path
 from datetime import date, time
+import shutil
 
 # ============================================================
 # BASE PATHS
@@ -22,8 +23,8 @@ SPONSOR_NAME = "Jefferson Amateur Radio Club"
 SPONSOR_WEBSITE = "w5gad.org"
 
 # Contest dates (update each year)
-CONTEST_START_DAY1 = date(2026, 4, 4)  # April 4, 2026
-CONTEST_END_DAY1 = date(2026, 4, 5)    # April 5, 2026
+CONTEST_START_DAY1 = date(2024, 4, 6)  # April 6, 2024
+CONTEST_END_DAY1 = date(2024, 4, 7)    # April 7, 2024
 
 # Contest times (UTC)
 CONTEST_START_TIME = time(14, 0)  # 14:00 UTC
@@ -42,7 +43,7 @@ DATA_DIR = BASE_DIR / 'data'
 INCOMING_LOGS = DATA_DIR / 'logs' / 'incoming'
 VALIDATED_LOGS = DATA_DIR / 'logs' / 'validated'
 PREPARED_LOGS = DATA_DIR / 'logs' / 'prepared'
-PROBLEM_LOGS = DATA_DIR / 'logs' / 'problems'
+PROBLEMS_LOGS = DATA_DIR / 'logs' / 'problems'
 
 # Output directory structure (NEW)
 DATA_OUTPUT_DIR = DATA_DIR / 'output'
@@ -68,20 +69,33 @@ WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
 # BAND AND MODE DEFINITIONS
 # ============================================================
 
-# Valid bands (meters)
-VALID_BANDS = [160, 80, 40, 20, 15, 10, 6, 2]
-
-# Frequency ranges for band determination (in kHz)
+# need to convert freq in KHz to band
+# Band frequency ranges (in kHz) - tuples of (min, max) for each band
 BAND_RANGES = {
-    1800: 160,   1900: 160,
-    3500: 80,    4000: 80,
-    7000: 40,    7300: 40,
-    14000: 20,   14350: 20,
-    21000: 15,   21450: 15,
-    28000: 10,   29700: 10,
-    50000: 6,    54000: 6,
-    144000: 2,   148000: 2,
+    160: (1800, 2000),      # 160m: 1.8 - 2.0 MHz
+    80:  (3500, 4000),      # 80m:  3.5 - 4.0 MHz
+    40:  (7000, 7300),      # 40m:  7.0 - 7.3 MHz
+    20:  (14000, 14350),    # 20m:  14.0 - 14.35 MHz
+    15:  (21000, 21450),    # 15m:  21.0 - 21.45 MHz
+    10:  (28000, 29700),    # 10m:  28.0 - 29.7 MHz
+    6:   (50000, 54000),    # 6m:   50.0 - 54.0 MHz
+    2:   (144000, 148000),  # 2m:   144.0 - 148.0 MHz
 }
+
+def freq_to_band(freq_khz: int) -> int:
+    """
+    Convert frequency in kHz to band in meters.
+    
+    Args:
+        freq_khz: Frequency in kHz
+    
+    Returns:
+        Band in meters (e.g., 20, 40, 80) or None if not in a valid band
+    """
+    for band, (min_freq, max_freq) in BAND_RANGES.items():
+        if min_freq <= freq_khz <= max_freq:
+            return band
+    return None
 
 # Valid modes
 VALID_MODES = ['CW', 'PH', 'RY', 'DIG', 'FM', 'SSB', 'LSB', 'USB', 'RTTY', 'FT8', 'FT4']
@@ -181,32 +195,24 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # UTILITY FUNCTIONS
 # ============================================================
 
-def ensure_directories():
+def ensure_initial_directories():
     """Ensure all required directories exist"""
-    directories = [
+    initial_directories = [
         # Log directories
-        INCOMING_LOGS,
         VALIDATED_LOGS,
         PREPARED_LOGS,
-        PROBLEM_LOGS,
+        PROBLEMS_LOGS,
         
         # Output directories (NEW structure)
         DATA_OUTPUT_DIR,
-        INDIVIDUAL_RESULTS_DIR,
-        
-        # Legacy directories (will be removed later)
-        SCORES_DIR,
-        STATISTICS_DIR,
-        
-        # Reference data
-        REFERENCE_DATA_DIR,
-        
-        # Database directory
-        DATABASE_FILE.parent,
+        INDIVIDUAL_RESULTS_DIR
     ]
     
-    for directory in directories:
-        directory.mkdir(parents=True, exist_ok=True)
+    for directory in initial_directories:
+        path = Path(directory)
+        if path.exists():
+            shutil.rmtree(path)
+        path.mkdir(parents=True, exist_ok=True)
 
 
 def get_contest_year():
@@ -220,4 +226,34 @@ def get_contest_name():
 
 
 # Ensure directories exist on import
-ensure_directories()
+ensure_initial_directories()
+
+def get_category_name(location_type, mode_category, is_rover, power_level, overlay):
+    """Get category name - compatibility function"""
+    # Location prefix
+    if location_type in [0, 1]:  # DX or NON-LA
+        loc = 'nl'
+    elif location_type == 2:  # LA Fixed
+        loc = 'lf'
+    else:  # LA Rover
+        loc = 'lr'
+    
+    # Mode suffix
+    if mode_category == 0:  # Phone only
+        mode = 'ph'
+    elif mode_category == 1:  # CW/Digital only
+        mode = 'cw'
+    else:  # Mixed
+        mode = 'mx'
+    
+    # Power suffix (overlay uses 'ol')
+    if overlay > 0:  # Has overlay
+        power = 'ol'
+    elif power_level == 0:  # QRP
+        power = 'qp'
+    elif power_level == 1:  # Low
+        power = 'lo'
+    else:  # High
+        power = 'hi'
+    
+    return f"{loc}_{mode}_{power}"

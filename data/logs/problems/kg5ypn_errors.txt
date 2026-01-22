@@ -1,0 +1,9 @@
+Validation errors for kg5ypn.log
+============================================================
+
+- Line 40: Invalid QTH-rcvd 'MEXICO' (not a valid parish or state/province)
+- Line 47: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 48: Invalid QTH-rcvd 'SPAIN' (not a valid parish or state/province)
+- Line 49: Invalid QTH-rcvd 'ITALY' (not a valid parish or state/province)
+- Line 50: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 52: Invalid QTH-rcvd 'EA' (not a valid parish or state/province)

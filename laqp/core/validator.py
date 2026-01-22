@@ -4,6 +4,9 @@ Louisiana QSO Party Log Validator - Enhanced Version
 Validates Cabrillo log files for LAQP compliance AND checks that the log
 matches the web form submission data.
 
+
+Adapted from TQP statistics.py for LA rules created by Charles Sanders, NO5W
+
 This version extends the base validator to cross-check:
 - Email address in log vs. web form
 - Mode category (Phone/CW-Digital/Mixed) in log vs. web form
@@ -21,8 +24,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config.config import (
     CONTEST_START_DAY1, CONTEST_END_DAY1,
     TIME_FORMAT, DATE_FORMAT,
-    VALID_BANDS, BAND_RANGES, VALID_MODES,
-    US_PREFIXES, CANADIAN_PREFIXES
+    VALID_MODES,
+    freq_to_band
 )
 
 
@@ -81,11 +84,13 @@ class ValidationResult:
 class LogValidator:
     """Validates LAQP Cabrillo log files"""
     
-    def __init__(self, parish_list: List[str], state_province_list: List[str]):
+    def __init__(self, upload, parish_list: List[str], state_province_list: List[str]):
+        self.upload = upload
         self.parishes = set(p.upper() for p in parish_list)
         self.states_provinces = set(s.upper() for s in state_province_list)
         
-    def validate_log_file(self, log_path: Path, 
+    def validate_log_file(self, upload,
+                         log_path: Path, 
                          form_email: Optional[str] = None,
                          form_mode: Optional[str] = None,
                          form_power: Optional[str] = None,
@@ -192,6 +197,9 @@ class LogValidator:
                         result.add_error(f"Line {result.qso_count}: {error_msg}")
                     elif error_code == 8:  # Multi-parish (warning only)
                         result.add_warning(f"Line {result.qso_count}: {error_msg}")
+
+        # read all lines from the log file
+        # print(result.to_report())
         
         # ===== CHECK REQUIRED FIELDS =====
         
@@ -232,71 +240,71 @@ class LogValidator:
         else:
             result.log_mode_category = "UNKNOWN"
         
-        # ===== CROSS-CHECK WITH WEB FORM DATA =====
-        
-        if form_email is not None and result.log_email:
-            if result.log_email.lower() != form_email.lower():
-                result.add_error(
-                    f"Email mismatch: Log has '{result.log_email}' but form has '{form_email}'"
-                )
-        
-        if form_mode is not None:
-            # Convert form mode to log format
-            form_mode_map = {
-                'mixed': 'MIXED',
-                'cw_digital': 'CW/DIGITAL-ONLY',
-                'phone': 'PHONE-ONLY'
-            }
-            expected_mode = form_mode_map.get(form_mode, '')
+        # ===== CROSS-CHECK WITH WEB FORM DATA IFF this is processing an uploaded file =====
+        if upload:
+            if form_email is not None and result.log_email:
+                if result.log_email.lower() != form_email.lower():
+                    result.add_error(
+                        f"Email mismatch: Log has '{result.log_email}' but form has '{form_email}'"
+                    )
             
-            if expected_mode and result.log_mode_category != expected_mode:
-                result.add_error(
-                    f"Mode category mismatch: Your log contains {result.log_mode_category} QSOs "
-                    f"but you selected '{expected_mode}' on the form. "
-                    f"Please select the correct category."
-                )
-        
-        if form_power is not None and result.log_power:
-            form_power_upper = form_power.upper()
-            if result.log_power != form_power_upper:
-                result.add_error(
-                    f"Power level mismatch: Log has CATEGORY-POWER: {result.log_power} "
-                    f"but you selected '{form_power_upper}' on the form"
-                )
-        
-        if form_station is not None and result.log_station:
-            form_station_upper = form_station.upper()
-            if result.log_station != form_station_upper and result.log_station != "MOBILE":
-                result.add_error(
-                    f"Station type mismatch: Log has CATEGORY-STATION: {result.log_station} "
-                    f"but you selected '{form_station_upper}' on the form"
-                )
-        
-        if form_overlay is not None:
-            # Convert form overlay to log format
-            form_overlay_map = {
-                'none': '',
-                'wires': 'WIRES',
-                'tb_wires': 'TB-WIRES',
-                'pota': 'POTA'
-            }
-            expected_overlay = form_overlay_map.get(form_overlay, '')
+            if form_mode is not None:
+                # Convert form mode to log format
+                form_mode_map = {
+                    'mixed': 'MIXED',
+                    'cw_digital': 'CW/DIGITAL-ONLY',
+                    'phone': 'PHONE-ONLY'
+                }
+                expected_mode = form_mode_map.get(form_mode, '')
+                
+                if expected_mode and result.log_mode_category != expected_mode:
+                    result.add_error(
+                        f"Mode category mismatch: Your log contains {result.log_mode_category} QSOs "
+                        f"but you selected '{expected_mode}' on the form. "
+                        f"Please select the correct category."
+                    )
             
-            if form_overlay != 'none' and result.log_overlay != expected_overlay:
-                result.add_error(
-                    f"Overlay category mismatch: Log has CATEGORY-OVERLAY: {result.log_overlay or '(none)'} "
-                    f"but you selected '{expected_overlay}' on the form"
-                )
-            elif form_overlay == 'none' and result.log_overlay:
-                result.add_error(
-                    f"Overlay category mismatch: Log has CATEGORY-OVERLAY: {result.log_overlay} "
-                    f"but you selected 'None' on the form"
-                )
-        
-        # ===== FINAL VALIDATION =====
-        
-        if result.invalid_qso_count > 0:
-            result.is_valid = False
+            if form_power is not None and result.log_power:
+                form_power_upper = form_power.upper()
+                if result.log_power != form_power_upper:
+                    result.add_error(
+                        f"Power level mismatch: Log has CATEGORY-POWER: {result.log_power} "
+                        f"but you selected '{form_power_upper}' on the form"
+                    )
+            
+            if form_station is not None and result.log_station:
+                form_station_upper = form_station.upper()
+                if result.log_station != form_station_upper and result.log_station != "MOBILE":
+                    result.add_error(
+                        f"Station type mismatch: Log has CATEGORY-STATION: {result.log_station} "
+                        f"but you selected '{form_station_upper}' on the form"
+                    )
+            
+            if form_overlay is not None:
+                # Convert form overlay to log format
+                form_overlay_map = {
+                    'none': '',
+                    'wires': 'WIRES',
+                    'tb_wires': 'TB-WIRES',
+                    'pota': 'POTA'
+                }
+                expected_overlay = form_overlay_map.get(form_overlay, '')
+                
+                if form_overlay != 'none' and result.log_overlay != expected_overlay:
+                    result.add_error(
+                        f"Overlay category mismatch: Log has CATEGORY-OVERLAY: {result.log_overlay or '(none)'} "
+                        f"but you selected '{expected_overlay}' on the form"
+                    )
+                elif form_overlay == 'none' and result.log_overlay:
+                    result.add_error(
+                        f"Overlay category mismatch: Log has CATEGORY-OVERLAY: {result.log_overlay} "
+                        f"but you selected 'None' on the form"
+                    )
+            
+            # ===== FINAL VALIDATION =====
+            
+            if result.invalid_qso_count > 0:
+                result.is_valid = False
         
         return result
     
@@ -330,10 +338,11 @@ class LogValidator:
         # Validate frequency
         try:
             freq = int(freq_str)
-            if freq not in BAND_RANGES:
+            band = freq_to_band(freq)
+            if not band:
                 return (1, f"Invalid frequency {freq} kHz (not in a valid contest band)")
         except ValueError:
-            return (1, f"Invalid frequency '{freq_str}'")
+            return (1, f"Invalid frequency - not an integer: '{freq_str}'")
         
         # Validate mode
         if mode not in VALID_MODES:
@@ -384,7 +393,7 @@ class LogValidator:
         return (0, "OK")
 
 
-def validate_single_log(log_path: Path, 
+def validate_single_log(upload, log_path: Path, 
                        parish_file: Path, 
                        state_province_file: Path,
                        output_dir: Path = None,
@@ -418,10 +427,11 @@ def validate_single_log(log_path: Path,
         states_provinces = [line.strip() for line in f if line.strip()]
     
     # Create validator
-    validator = LogValidator(parishes, states_provinces)
+    validator = LogValidator(upload, parishes, states_provinces)
     
     # Validate (with optional form data)
     result = validator.validate_log_file(
+        upload,
         log_path,
         form_email=form_email,
         form_mode=form_mode,

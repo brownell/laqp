@@ -1,0 +1,19 @@
+Validation errors for k5vv.log
+============================================================
+
+- Line 38: Invalid QTH-rcvd 'GM' (not a valid parish or state/province)
+- Line 39: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 40: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 41: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 80: Invalid QTH-rcvd 'OM' (not a valid parish or state/province)
+- Line 248: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 280: Invalid QTH-rcvd 'XE' (not a valid parish or state/province)
+- Line 307: Invalid QTH-rcvd 'CM' (not a valid parish or state/province)
+- Line 348: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 355: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)
+- Line 379: Invalid QTH-rcvd 'XE' (not a valid parish or state/province)
+- Line 388: Invalid QTH-rcvd 'OM' (not a valid parish or state/province)
+- Line 429: Invalid QTH-rcvd 'CT1' (not a valid parish or state/province)
+- Line 431: Invalid QTH-rcvd 'LY' (not a valid parish or state/province)
+- Line 450: Invalid QTH-rcvd 'REDR' (not a valid parish or state/province)
+- Line 487: Invalid QTH-rcvd 'SP' (not a valid parish or state/province)

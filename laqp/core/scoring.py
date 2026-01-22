@@ -119,7 +119,7 @@ class ScoreCalculator:
                 if tag == 'CALLSIGN:':
                     result['callsign'] = parts[1] if len(parts) > 1 else ''
                 
-                elif tag == 'TQP-CATEGORY:':
+                elif tag == 'LAQP-CATEGORY:':
                     # Format: "location,mode,power,overlay"
                     # Example: "1,2,1,0" = NON_LA, MIXED, LOW, NONE
                     if len(parts) > 1:

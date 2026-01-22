@@ -327,6 +327,8 @@ def generate_all_individual_results(score_data: List[Dict],
                                     output_dir: Path = None) -> List[Path]:
     """
     Generate individual result files for all contestants.
+
+    Adapted from TQP statistics.py for LA rules created by Charles Sanders, NO5W
     
     Args:
         score_data: List of dicts with score info for each log
