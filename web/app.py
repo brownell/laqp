@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.config import (
     INCOMING_LOGS, LA_PARISHES_FILE, WVE_ABBREVS_FILE,
-    FLASK_SECRET_KEY, MAX_UPLOAD_SIZE, ensure_directories
+    FLASK_SECRET_KEY, MAX_UPLOAD_SIZE, ensure_initial_directories
 )
 from laqp.core.validator import validate_single_log
 
@@ -24,7 +24,7 @@ app.config['SECRET_KEY'] = FLASK_SECRET_KEY
 app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
 
 # Ensure directories exist
-ensure_directories()
+ensure_initial_directories()
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'log', 'txt', 'cbr', 'LOG', 'TXT', 'CBR'}
@@ -70,7 +70,7 @@ def upload_log():
     log_text = request.form.get('log_text', '').strip()
     
     if not log_file and not log_text:
-        errors.append("You must either upload a log file or paste your log")
+        errors.append("You must either upload a log file OR paste your log, but not both")
     
     if log_file and log_text:
         errors.append("Please use either file upload OR paste, not both")
@@ -114,6 +114,7 @@ def upload_log():
         
         # Validate the log
         validation_result = validate_single_log(
+            True,
             temp_log_path,
             LA_PARISHES_FILE,
             WVE_ABBREVS_FILE
@@ -123,13 +124,10 @@ def upload_log():
             # Log is valid - rename from temp to final
             final_path = INCOMING_LOGS / filename
             
-            # If file already exists, add number
-            counter = 1
-            while final_path.exists():
-                name_part = filename.rsplit('.', 1)[0]
-                ext_part = filename.rsplit('.', 1)[1] if '.' in filename else 'log'
-                final_path = INCOMING_LOGS / f"{name_part}_{counter}.{ext_part}"
-                counter += 1
+            # overwrite existing files
+            name_part = filename.rsplit('.', 1)[0]
+            ext_part = filename.rsplit('.', 1)[1] if '.' in filename else 'log'
+            final_path = INCOMING_LOGS / f"{name_part}.{ext_part}"
             
             temp_log_path.rename(final_path)
             

@@ -10,7 +10,6 @@ Generates overall contest statistics from all logs:
 Adapted from TQP statistics.py for LA rules created by Charles Sanders, NO5W
 
 """
-"""
 import sys
 from pathlib import Path
 from typing import List, Dict

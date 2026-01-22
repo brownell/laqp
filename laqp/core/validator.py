@@ -393,15 +393,17 @@ class LogValidator:
         return (0, "OK")
 
 
-def validate_single_log(upload, log_path: Path, 
-                       parish_file: Path, 
-                       state_province_file: Path,
-                       output_dir: Path = None,
-                       form_email: str = None,
-                       form_mode: str = None,
-                       form_power: str = None,
-                       form_station: str = None,
-                       form_overlay: str = None) -> ValidationResult:
+def validate_single_log(
+                    upload,
+                    log_path: Path, 
+                    parish_file: Path, 
+                    state_province_file: Path,
+                    output_dir: Path = None,
+                    form_email: str = None,
+                    form_mode: str = None,
+                    form_power: str = None,
+                    form_station: str = None,
+                    form_overlay: str = None) -> ValidationResult:
     """
     Validate a single log file with optional web form cross-checking.
     
