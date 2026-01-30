@@ -1,0 +1,8 @@
+Validation errors for ki5koi.log
+============================================================
+
+- Line 22: Invalid QTH-rcvd 'HA9' (not a valid parish or state/province)
+- Line 44: Invalid QTH-rcvd 'FM4' (not a valid parish or state/province)
+- Line 45: Invalid QTH-rcvd 'TO60' (not a valid parish or state/province)
+- Line 66: Invalid QTH-rcvd 'OM2' (not a valid parish or state/province)
+- Line 111: Invalid QTH-rcvd 'MADEIRA' (not a valid parish or state/province)

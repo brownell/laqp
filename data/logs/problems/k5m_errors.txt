@@ -1,0 +1,20 @@
+Validation errors for k5m.log
+============================================================
+
+- Line 8: Invalid QTH-rcvd 'CT1' (not a valid parish or state/province)
+- Line 11: Invalid QTH-rcvd 'OM2' (not a valid parish or state/province)
+- Line 15: Invalid QTH-rcvd 'OM2' (not a valid parish or state/province)
+- Line 104: Invalid QTH-rcvd 'SQ2' (not a valid parish or state/province)
+- Line 150: Invalid QTH-rcvd 'RN5' (not a valid parish or state/province)
+- Line 454: Invalid QTH-rcvd 'IQ4' (not a valid parish or state/province)
+- Line 487: Invalid QTH-rcvd 'SP8' (not a valid parish or state/province)
+- Line 491: Invalid QTH-rcvd 'SN2' (not a valid parish or state/province)
+- Line 493: Invalid QTH-rcvd 'S51' (not a valid parish or state/province)
+- Line 496: Invalid QTH-rcvd 'SN7' (not a valid parish or state/province)
+- Line 507: Invalid QTH-rcvd 'LY5' (not a valid parish or state/province)
+- Line 532: Invalid QTH-rcvd 'SQ4' (not a valid parish or state/province)
+- Line 541: Invalid QTH-rcvd 'SQ6' (not a valid parish or state/province)
+- Line 554: Invalid QTH-rcvd 'MI0' (not a valid parish or state/province)
+- Line 632: Invalid QTH-rcvd 'OM2' (not a valid parish or state/province)
+- Line 651: Invalid QTH-rcvd '2W0' (not a valid parish or state/province)
+- Line 685: Invalid QTH-rcvd 'UR9' (not a valid parish or state/province)

@@ -1,0 +1,5 @@
+Validation errors for rv1cc.log
+============================================================
+
+- Line 1: Invalid QTH-sent 'DX' (not a valid parish or state/province)
+- Line 2: Invalid QTH-sent 'DX' (not a valid parish or state/province)

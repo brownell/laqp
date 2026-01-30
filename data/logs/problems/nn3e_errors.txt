@@ -1,0 +1,4 @@
+Validation errors for nn3e.log
+============================================================
+
+- Line 2: Invalid QTH-rcvd 'CAL' (not a valid parish or state/province)

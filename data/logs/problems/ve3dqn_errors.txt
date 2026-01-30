@@ -1,0 +1,4 @@
+Validation errors for ve3dqn.log
+============================================================
+
+- Line 1: Invalid QTH-rcvd 'SBND' (not a valid parish or state/province)

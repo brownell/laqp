@@ -1,0 +1,4 @@
+Validation errors for kv0i.log
+============================================================
+
+- Line 16: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
