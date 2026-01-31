@@ -15,6 +15,8 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
+from laqp.categories import get_category_names, get_overlay_name
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config.config import (
     freq_to_band,
@@ -23,8 +25,7 @@ from config.config import (
     LOC_DX, LOC_NON_LA, LOC_LA_FIXED, LOC_LA_ROVER,
     MODE_PHONE_ONLY, MODE_CW_DIGITAL_ONLY, MODE_MIXED,
     POWER_QRP, POWER_LOW, POWER_HIGH,
-    OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA,
-    get_category_name
+    OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA
 )
 
 
@@ -335,10 +336,10 @@ class LogPreparation:
         overlay = self.determine_overlay(header_overlay)
         
         # Generate category name
-        category_name = get_category_name(location_type, mode_category, power_level)
+        category_names = get_category_names(location_type, mode_category, power_level)
         
         # Insert category line after header
-        prepared_lines.insert(1, f"LAQP-CATEGORY: {category_name}")
+        prepared_lines.insert(1, f"LAQP-CATEGORY: {category_names['short']}")
         
         # Write prepared log
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -353,7 +354,7 @@ class LogPreparation:
             'mode_category': mode_category,
             'power_level': power_level,
             'overlay': overlay,
-            'category_name': category_name
+            'category_name': category_names
         }
 
 

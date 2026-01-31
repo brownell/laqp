@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from collections import defaultdict
 
+from laqp.categories import get_category_names, get_overlay_name
+
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -29,8 +31,6 @@ from config.config import (
     OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA,
     PREPARED_LOGS, INDIVIDUAL_RESULTS_DIR
 )
-
-
 
 class ScoreCalculator:
     """Calculate scores for LAQP logs"""
@@ -163,18 +163,14 @@ class ScoreCalculator:
                             overlay_int = int(cat_parts[3])
                             
                             # Determine categories
-                            result['category'] = get_category_short_name(
+                            result['category'] = get_category_names(
                                 result['location_type'],
                                 result['mode_category'],
                                 result['power_level'],
                                 overlay_int
-                            )
+                            )['short']
                             
-                            result['base_category'] = get_base_category(
-                                result['location_type'],
-                                result['mode_category'],
-                                result['power_level']
-                            )
+                            result['base_category'] = get_category_names['short']
                             
                             result['overlay'] = get_overlay_name(overlay_int)
                 

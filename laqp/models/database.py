@@ -6,8 +6,9 @@ from datetime import datetime
 from SQLAlchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey, Enum as SQLEnum
 
 from SQLAlchemy.ext.declarative import declarative_base
-from SQLAlchemy.orm import relationship, sessionmake r
+from SQLAlchemy.orm import relationship, sessionmaker
 import enum
+from laqp.categories import get_category_names, get_overlay_name
 
 Base = declarative_base()
 
@@ -77,16 +78,7 @@ class Contestant(Base):
     score_detail = relationship('ScoreDetail', back_populates='contestant', uselist=False, cascade='all, delete-orphan')
     
     def __repr__(self):
-        return f"<Contestant(callsign='{self.callsign}', category='{self.get_category_name()}')>"
-    
-    def get_category_name(self):
-        """Generate human-readable category name"""
-        from config.config import get_category_name
-        return get_category_name(
-            self.location_type.value,
-            self.mode_category.value,
-            self.power_level.value if self.power_level else None
-        )
+        return f"<Contestant(callsign='{self.callsign}', category='{get_category_names(self.location_type.value, self.mode_category.value, self.power_level.value if self.power_level else None)['full']}')>"
 
 
 class QSO(Base):
