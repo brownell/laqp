@@ -85,9 +85,7 @@ class Contestant(Base):
         return get_category_name(
             self.location_type.value,
             self.mode_category.value,
-            self.is_rover,
-            self.power_level.value if self.power_level else None,
-            self.overlay_category.value if self.overlay_category else None
+            self.power_level.value if self.power_level else None
         )
 
 

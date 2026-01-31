@@ -1,5 +1,0 @@
-Validation errors for dl6kva.log
-============================================================
-
-- Line 1: Invalid QTH-sent 'DL' (not a valid parish or state/province)
-- Line 2: Invalid QTH-sent 'DL' (not a valid parish or state/province)

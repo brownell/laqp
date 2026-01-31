@@ -228,7 +228,43 @@ def get_contest_name():
 # Ensure directories exist on import
 ensure_initial_directories()
 
-def get_category_name(location_type, mode_category, is_rover, power_level, overlay):
+# Category definitions: (short_name, full_name)
+CATEGORIES = {
+    # NON-LA Categories
+    'nl_ph_qp': 'NON-LA - Phone Only - QRP',
+    'nl_ph_lo': 'NON-LA - Phone Only - Low Power',
+    'nl_ph_hi': 'NON-LA - Phone Only - High Power',
+    'nl_cw_qp': 'NON-LA - CW Only - QRP',
+    'nl_cw_lo': 'NON-LA - CW Only - Low Power',
+    'nl_cw_hi': 'NON-LA - CW Only - High Power',
+    'nl_mx_qp': 'NON-LA - Mixed - QRP',
+    'nl_mx_lo': 'NON-LA - Mixed - Low Power',
+    'nl_mx_hi': 'NON-LA - Mixed - High Power',
+    
+    # LA Fixed Categories
+    'lf_ph_qp': 'LA Fixed - Phone Only - QRP',
+    'lf_ph_lo': 'LA Fixed - Phone Only - Low Power',
+    'lf_ph_hi': 'LA Fixed - Phone Only - High Power',
+    'lf_cw_qp': 'LA Fixed - CW Only - QRP',
+    'lf_cw_lo': 'LA Fixed - CW Only - Low Power',
+    'lf_cw_hi': 'LA Fixed - CW Only - High Power',
+    'lf_mx_qp': 'LA Fixed - Mixed - QRP',
+    'lf_mx_lo': 'LA Fixed - Mixed - Low Power',
+    'lf_mx_hi': 'LA Fixed - Mixed - High Power',
+    
+    # LA Rover Categories
+    'lr_ph_qp': 'LA Rover - Phone Only - QRP',
+    'lr_ph_lo': 'LA Rover - Phone Only - Low Power',
+    'lr_ph_hi': 'LA Rover - Phone Only - High Power',
+    'lr_cw_qp': 'LA Rover - CW Only - QRP',
+    'lr_cw_lo': 'LA Rover - CW Only - Low Power',
+    'lr_cw_hi': 'LA Rover - CW Only - High Power',
+    'lr_mx_qp': 'LA Rover - Mixed - QRP',
+    'lr_mx_lo': 'LA Rover - Mixed - Low Power',
+    'lr_mx_hi': 'LA Rover - Mixed - High Power',
+}
+
+def get_category_names(location_type, mode_category, power_level):
     """Get category name - compatibility function"""
     # Location prefix
     if location_type in [0, 1]:  # DX or NON-LA
@@ -246,14 +282,29 @@ def get_category_name(location_type, mode_category, is_rover, power_level, overl
     else:  # Mixed
         mode = 'mx'
     
-    # Power suffix (overlay uses 'ol')
-    if overlay > 0:  # Has overlay
-        power = 'ol'
-    elif power_level == 0:  # QRP
+    # Power suffix 
+    if power_level == 0:  # QRP
         power = 'qp'
     elif power_level == 1:  # Low
         power = 'lo'
     else:  # High
         power = 'hi'
     
-    return f"{loc}_{mode}_{power}"
+    return {'short': f"{loc}_{mode}_{power}", 'full': CATEGORIES[f"{loc}_{mode}_{power}"]}
+
+# Overlay types
+OVERLAYS = {
+    'WIRES': 'Wires Only',
+    'TB-WIRES': 'Tribander + Wires',
+    'POTA': 'Parks on the Air',
+}
+
+def get_overlay_name(overlay: int) -> str:
+    """Get the text name of an overlay category."""
+    overlay_map = {
+        0: None,
+        1: 'WIRES',
+        2: 'TB-WIRES',
+        3: 'POTA',
+    }
+    return overlay_map.get(overlay)

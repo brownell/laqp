@@ -1,8 +1,0 @@
-Validation errors for w6fb.log
-============================================================
-
-- Line 18: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 42: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 44: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 67: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 89: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)

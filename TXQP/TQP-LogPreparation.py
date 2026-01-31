@@ -73,7 +73,7 @@ ValidatedLogs = 'C:\\Users\\18326\\TexasQsoParty\\TQP-2025\\LogProcessing\\Valid
 PreparedLogs = 'C:\\Users\\18326\\TexasQsoParty\\TQP-2025\\LogProcessing\\PreparedLogs'
 #the files in PreparedLogs are named CallSign.LOG and are the only files in that directory
 #
-#-------------------------------Define the set of ambiguous QTHs--------------------------------
+#WHAT IS THIS?-------------------------------Define the set of ambiguous QTHs--------------------------------
 SetOfAmbigDxQth = {"ON","PA", "CT", "TN", "LA","HI", "OK", "CO", "OH"}
 #-----------------------------------------------------------------------------------------------
 #-------------------------------Define the set of Canadian prefixes-----------------------------

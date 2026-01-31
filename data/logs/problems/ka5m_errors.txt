@@ -1,7 +1,0 @@
-Validation errors for ka5m.log
-============================================================
-
-- Line 2: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 6: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 20: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)
-- Line 106: Invalid QTH-rcvd 'DX' (not a valid parish or state/province)

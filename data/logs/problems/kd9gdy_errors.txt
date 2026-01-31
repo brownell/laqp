@@ -1,4 +1,0 @@
-Validation errors for kd9gdy.log
-============================================================
-
-- Line 6: Invalid QTH-rcvd 'RPI' (not a valid parish or state/province)

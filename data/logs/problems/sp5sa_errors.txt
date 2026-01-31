@@ -1,6 +1,0 @@
-Validation errors for sp5sa.log
-============================================================
-
-- Line 1: Invalid QTH-sent 'SP' (not a valid parish or state/province)
-- Line 2: Invalid QTH-sent 'SP' (not a valid parish or state/province)
-- Line 3: Invalid QTH-sent 'SP' (not a valid parish or state/province)

@@ -29,9 +29,7 @@ from config.config import (
     OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA,
     PREPARED_LOGS, INDIVIDUAL_RESULTS_DIR
 )
-from laqp.categories import (
-    get_category_short_name, get_base_category, get_overlay_name
-)
+
 
 
 class ScoreCalculator:
@@ -75,6 +73,11 @@ class ScoreCalculator:
             - qsos_by_mode: Dict of {'Phone': count, 'CW/Digital': count}
             - bands_worked: List of bands worked
             - multipliers_by_band_mode: Detailed multiplier breakdown
+
+            NEW
+            - name
+            - claimed score
+
         """
         # Initialize result
         result = {
@@ -91,16 +94,28 @@ class ScoreCalculator:
             'valid_qsos': 0,
             'multipliers': 0,
             'parishes_worked': set(),
+            'parishes_multiplier': 0,
             'states_worked': set(),
+            'states_multiplier': 0,
             'provinces_worked': set(),
+            'provinces_multiplier': 0,
             'dx_worked': set(),
+            'dx_multiplier': 0,
+            'num_dx_contacts': 0,
             'parishes_activated': 0,
             'worked_n5lcc': False,
-            'qsos_by_band': defaultdict(int),
+            'qsos_by_band': { '160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0 },
             'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
             'bands_worked': [],
             'multipliers_by_band_mode': {},
+            'nanme': '',
+            'claimed_score': 0,
+
         }
+        
+
+        # for allowing duplicate conttacts with same mode, same contact, but different band
+        dups = []
         
         # Parse log file
         with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
@@ -114,10 +129,27 @@ class ScoreCalculator:
                     continue
                 
                 tag = parts[0]
+
+
                 
                 # Get header information
                 if tag == 'CALLSIGN:':
                     result['callsign'] = parts[1] if len(parts) > 1 else ''
+                    if result['callsign'] == '':
+                        raise ValueError(f"Missing callsign in log: {log_path}")
+                    
+                    if result['callsign'] == 'AF5J':
+                        print("AA0FO ")
+
+                elif tag == 'NAME:':
+                    result['name'] = ' '.join(parts[1:]) if len(parts) > 1 else ''
+
+                elif tag == 'CLAIMED-SCORE:':
+                    if len(parts) > 1:
+                        try:
+                            result['claimed_score'] = int(parts[1])
+                        except ValueError:
+                            result['claimed_score'] = 0
                 
                 elif tag == 'LAQP-CATEGORY:':
                     # Format: "location,mode,power,overlay"
@@ -149,20 +181,18 @@ class ScoreCalculator:
                 # Count QSOs and calculate points
                 elif tag == 'QSO:':
                     result['total_qsos'] += 1
+                    print(f'Processing QSO line: {line}')
                     
                     if len(parts) >= 11:
                         # Parse QSO line
-                        freq = int(parts[1])
+                        meters = parts[1]
                         mode = parts[2]
                         call_sent = parts[5]
                         qth_sent = parts[7]
                         call_rcvd = parts[8]
                         qth_rcvd = parts[10]
                         
-                        # Determine band from frequency
-                        band = self._freq_to_band(freq)
-                        if band:
-                            result['qsos_by_band'][band] += 1
+                        result['qsos_by_band'][meters] += 1
                         
                         # Count by mode
                         if mode in PHONE_MODES:
@@ -179,17 +209,29 @@ class ScoreCalculator:
                         
                         # Track multipliers (QTH worked)
                         qth_rcvd_upper = qth_rcvd.upper()
+
+                        #check if duiplicate QSO for multiplier
+                        dup_check = qth_rcvd + mode + str(meters)
+                        if dup_check in dups:
+                            continue  # Skip duplicate multiplier
+                        else:
+                            dups.append(dup_check)
+
                         if qth_rcvd_upper in self.parishes:
                             result['parishes_worked'].add(qth_rcvd_upper)
+                            result['parishes_multiplier'] += 1
                         elif qth_rcvd_upper in self.states_provinces:
                             # Distinguish between states and provinces
                             if qth_rcvd_upper in ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']:
                                 result['provinces_worked'].add(qth_rcvd_upper)
+                                result['provinces_multiplier'] += 1
                             else:
                                 result['states_worked'].add(qth_rcvd_upper)
                         else:
                             # Assume DX
                             result['dx_worked'].add(qth_rcvd_upper)
+                            result['num_dx_contacts'] += 1
+                            result['dx_multiplier'] += 1
                         
                         # Check if worked N5LCC
                         if call_rcvd == 'N5LCC':
@@ -207,15 +249,15 @@ class ScoreCalculator:
         if result['location_type'] in [LOC_DX, LOC_NON_LA]:
             # Non-LA stations: parishes only, per band/mode
             # For now, simplified: total unique parishes
-            result['multipliers'] = len(result['parishes_worked'])
+            result['multipliers'] = result['parishes_multiplier']
         else:
             # LA stations: parishes + states + provinces + DX, per band/mode
             # For now, simplified: total unique entities
             result['multipliers'] = (
-                len(result['parishes_worked']) +
-                len(result['states_worked']) +
-                len(result['provinces_worked']) +
-                len(result['dx_worked'])
+                result['parishes_multiplier'] +
+                result['states_multiplier'] +
+                result['provinces_multiplier'] +
+                result['dx_multiplier']
             )
         
         # Calculate final score
@@ -233,8 +275,23 @@ class ScoreCalculator:
         
         # Get list of bands worked
         result['bands_worked'] = sorted(result['qsos_by_band'].keys())
+
+        if result['claimed_score'] != 0 and result['claimed_score'] != result['final_score']:
+            print(f"***************************************Warning: claimed score {result['claimed_score']} does not match calculated score {result['final_score']}")
         
         return result
+    
+    def _meters_to_index(self, meters: int):
+        return {
+            160: 0,
+            80: 1,
+            40: 2,
+            20: 3,
+            15: 4,
+            10: 5,
+            6: 6,
+            2: 7
+        }[meters]
     
     def _freq_to_band(self, freq_khz: int) -> int:
         """Convert frequency in kHz to band in meters"""

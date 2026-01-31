@@ -335,7 +335,7 @@ class LogPreparation:
         overlay = self.determine_overlay(header_overlay)
         
         # Generate category name
-        category_name = get_category_name(location_type, mode_category, is_rover, power_level, overlay)
+        category_name = get_category_name(location_type, mode_category, power_level)
         
         # Insert category line after header
         prepared_lines.insert(1, f"LAQP-CATEGORY: {category_name}")

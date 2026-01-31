@@ -1,4 +1,0 @@
-Validation errors for n5ys.log
-============================================================
-
-- Line 1: Invalid QTH-rcvd 'SN3' (not a valid parish or state/province)
