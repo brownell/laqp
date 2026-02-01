@@ -383,8 +383,8 @@ def generate_all_individual_results(score_data: List[Dict],
             output_dir=output_dir
         )
         
-        generated_files.append(filepath)
-        print(f"  Generated: {filepath.name}")
+        # generated_files.append(filepath)
+        # print(f"  Generated: {filepath.name}")
     
     return generated_files
 

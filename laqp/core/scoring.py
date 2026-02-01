@@ -53,7 +53,6 @@ class ScoreCalculator:
         Returns dict with:
             - callsign: Station callsign
             - category: Short category name (e.g., 'nl_ph_lo')
-            - base_category: Base category (same as category if no overlay)
             - overlay: Overlay name ('WIRES', 'TB-WIRES', 'POTA', or None)
             - location_type: LOC_* constant
             - mode_category: MODE_* constant
@@ -83,7 +82,6 @@ class ScoreCalculator:
         result = {
             'callsign': '',
             'category': '',
-            'base_category': '',
             'overlay': None,
             'location_type': LOC_NON_LA,
             'mode_category': MODE_MIXED,
@@ -116,7 +114,7 @@ class ScoreCalculator:
 
         # for allowing duplicate conttacts with same mode, same contact, but different band
         dups = []
-        
+        n5lcc_contacts = 0
         # Parse log file
         with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
             for line in f:
@@ -129,17 +127,13 @@ class ScoreCalculator:
                     continue
                 
                 tag = parts[0]
-
-
                 
                 # Get header information
                 if tag == 'CALLSIGN:':
                     result['callsign'] = parts[1] if len(parts) > 1 else ''
+                    # print(f'\n*******Processing log for callsign: {result["callsign"]}******')
                     if result['callsign'] == '':
                         raise ValueError(f"Missing callsign in log: {log_path}")
-                    
-                    if result['callsign'] == 'AF5J':
-                        print("AA0FO ")
 
                 elif tag == 'NAME:':
                     result['name'] = ' '.join(parts[1:]) if len(parts) > 1 else ''
@@ -152,32 +146,25 @@ class ScoreCalculator:
                             result['claimed_score'] = 0
                 
                 elif tag == 'LAQP-CATEGORY:':
-                    # Format: "location,mode,power,overlay"
-                    # Example: "1,2,1,0" = NON_LA, MIXED, LOW, NONE
+                    # Format: "location,mode,power"
                     if len(parts) > 1:
-                        cat_parts = parts[1].split(',')
-                        if len(cat_parts) >= 4:
-                            result['location_type'] = int(cat_parts[0])
-                            result['mode_category'] = int(cat_parts[1])
-                            result['power_level'] = int(cat_parts[2])
-                            overlay_int = int(cat_parts[3])
-                            
-                            # Determine categories
-                            result['category'] = get_category_names(
-                                result['location_type'],
-                                result['mode_category'],
-                                result['power_level'],
-                                overlay_int
-                            )['short']
-                            
-                            result['base_category'] = get_category_names['short']
-                            
-                            result['overlay'] = get_overlay_name(overlay_int)
-                
+                        result['category'] = parts[1]
+                        cat_parts = parts[1].split('_')
+                        result['location_type'] = cat_parts[0] if len(cat_parts) >= 1 else LOC_NON_LA    
+
+                elif tag == "CATEGORY-OVERLAY":
+                    result['overlay'] = parts[1] if len(parts) > 1 else None
+
+                elif tag == "CATEGORY-POWER":
+                    result['power_level'] = parts[1] if len(parts) > 1 else None
+
+                elif tag == "CATEGORY-MODE":
+                    result['mode_category'] = parts[1] if len(parts) > 1 else None
+                               
                 # Count QSOs and calculate points
                 elif tag == 'QSO:':
                     result['total_qsos'] += 1
-                    print(f'Processing QSO line: {line}')
+                    # print(f'QSO : {line}')
                     
                     if len(parts) >= 11:
                         # Parse QSO line
@@ -187,8 +174,14 @@ class ScoreCalculator:
                         qth_sent = parts[7]
                         call_rcvd = parts[8]
                         qth_rcvd = parts[10]
+
                         
-                        result['qsos_by_band'][meters] += 1
+                        # Check if worked N5LCC
+                        if call_rcvd == 'N5LCC':
+                            result['worked_n5lcc'] = True
+                            n5lcc_contacts += 1
+                            # print(f'  Worked N5LCC.: {n5lcc_contacts} ')
+                        #     print(f'  Did not work N5LCC. Contacted: {call_rcvd} in {qth_rcvd} on {meters}m via {mode} worked N5LCC: {result["worked_n5lcc"]}')
                         
                         # Count by mode
                         if mode in PHONE_MODES:
@@ -229,10 +222,6 @@ class ScoreCalculator:
                             result['num_dx_contacts'] += 1
                             result['dx_multiplier'] += 1
                         
-                        # Check if worked N5LCC
-                        if call_rcvd == 'N5LCC':
-                            result['worked_n5lcc'] = True
-                        
                         # Track parishes activated (for rovers)
                         if result['location_type'] == LOC_LA_ROVER:
                             qth_sent_upper = qth_sent.upper()
@@ -260,21 +249,35 @@ class ScoreCalculator:
         result['final_score'] = result['qso_points'] * result['multipliers']
         
         # Add N5LCC bonus
+        # print(f"Worked N5LCC: {result['worked_n5lcc']} Final Score BEFORE bonus: {result['final_score']}")
+        # temp = result['final_score']
         if result['worked_n5lcc']:
             result['final_score'] += N5LCC_BONUS
+        # if temp == result['final_score']:
+        #     print("No bonus applied - final score unchanged")
+        # else:
+        #     print(f"Worked N5LCC: {result['worked_n5lcc']} Final Score AFTER bonus: {result['final_score']}")
         
+        # print(f"Location type: {result['location_type']}  inal Score BEFORE rover bonus: {result['final_score']}")
         # Add rover parish activation bonus
         if result['location_type'] == LOC_LA_ROVER:
             parishes_activated = len(result['parishes_worked'])  # Simplified
             result['parishes_activated'] = parishes_activated
             result['final_score'] += parishes_activated * ROVER_PARISH_BONUS
+
+            # print(f"Location type: {result['location_type']}Final Score AFTER rover bonus: {result['final_score']}")
         
+        # print(f"Final Score after all bonuses: {result['final_score']}")
         # Get list of bands worked
         result['bands_worked'] = sorted(result['qsos_by_band'].keys())
 
         if result['claimed_score'] != 0 and result['claimed_score'] != result['final_score']:
-            print(f"***************************************Warning: claimed score {result['claimed_score']} does not match calculated score {result['final_score']}")
-        
+            print(f"\n**************  E R R O R: {result['callsign']} claimed score {result['claimed_score']} does not match calculated score {result['final_score']}\n**************  {n5lcc_contacts} contacts with N5LCC")
+            n5lcc_contacts = 0
+            print(result)
+        # else:
+        #     print("S U C C E S S, calbulated score M A T C H E S  C L A I M E D  S C O R E")
+                
         return result
     
     def _meters_to_index(self, meters: int):
@@ -390,12 +393,12 @@ def score_all_logs(prepared_logs_dir: Path,
         category_scores[result['category']].append(result)
         
         # If has overlay, also store in base category with note
-        if result['overlay']:
-            # Make a copy for base category
-            base_result = result.copy()
-            category_scores[result['base_category']].append(base_result)
+        # if result['overlay']:
+        #     # Make a copy for base category
+        #     base_result = result.copy()
+        #     category_scores[result['base_category']].append(base_result)
         
-        print(f"  {result['callsign']}: {result['final_score']:,} points ({result['category']})")
+        # print(f"  {result['callsign']}: {result['final_score']:,} points ({result['category']})")
     
     # Sort all scores by score (highest first)
     all_scores.sort(key=lambda x: x['final_score'], reverse=True)
