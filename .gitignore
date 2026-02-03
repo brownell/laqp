@@ -12,6 +12,7 @@ data/logs/processed/*.*
 data/logs/validated/*.*
 data/logs/problems/*.*
 data/output/individual_results/*.*
+data/output/Summary_Report.*
 
 # Distribution / packaging
 .Python

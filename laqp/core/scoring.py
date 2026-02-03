@@ -25,7 +25,7 @@ from config.config import (
     PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
     N5LCC_BONUS, ROVER_PARISH_BONUS,
     PHONE_MODES, CW_DIGITAL_MODES,
-    LOC_DX, LOC_NON_LA, LOC_LA_FIXED, LOC_LA_ROVER,
+    LOC_DX, LOC_NON_LA, LOC_LA_FIXED, LOC_LA_ROVER, PROVINCES,
     MODE_PHONE_ONLY, MODE_CW_DIGITAL_ONLY, MODE_MIXED,
     POWER_QRP, POWER_LOW, POWER_HIGH,
     OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA,
@@ -50,71 +50,46 @@ class ScoreCalculator:
         """
         Calculate score for a prepared log file.
         
-        Returns dict with:
-            - callsign: Station callsign
-            - category: Short category name (e.g., 'nl_ph_lo')
-            - overlay: Overlay name ('WIRES', 'TB-WIRES', 'POTA', or None)
-            - location_type: LOC_* constant
-            - mode_category: MODE_* constant
-            - power_level: POWER_* constant
-            - final_score: Total calculated score
-            - qso_points: Points from QSOs only
-            - total_qsos: Total number of QSOs
-            - valid_qsos: Number of valid QSOs (for scoring)
-            - multipliers: Total multiplier count
-            - parishes_worked: Set of parishes worked
-            - states_worked: Set of states worked
-            - provinces_worked: Set of provinces worked
-            - dx_worked: Set of DX entities worked
-            - parishes_activated: Number of parishes activated (rovers)
-            - worked_n5lcc: Boolean if worked N5LCC
-            - qsos_by_band: Dict of {band: count}
-            - qsos_by_mode: Dict of {'Phone': count, 'CW/Digital': count}
-            - bands_worked: List of bands worked
-            - multipliers_by_band_mode: Detailed multiplier breakdown
-
-            NEW
-            - name
-            - claimed score
-
+        Returns result dict
         """
-        # Initialize result
+            
+        # Define and initialize result
         result = {
-            'callsign': '',
-            'category': '',
-            'overlay': None,
-            'location_type': LOC_NON_LA,
-            'mode_category': MODE_MIXED,
-            'power_level': POWER_LOW,
-            'final_score': 0,
-            'qso_points': 0,
-            'total_qsos': 0,
-            'valid_qsos': 0,
-            'multipliers': 0,
-            'parishes_worked': set(),
-            'parishes_multiplier': 0,
-            'states_worked': set(),
-            'states_multiplier': 0,
-            'provinces_worked': set(),
-            'provinces_multiplier': 0,
-            'dx_worked': set(),
-            'dx_multiplier': 0,
-            'num_dx_contacts': 0,
-            'parishes_activated': 0,
-            'worked_n5lcc': False,
-            'qsos_by_band': { '160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0 },
-            'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
-            'bands_worked': [],
-            'multipliers_by_band_mode': {},
-            'nanme': '',
-            'claimed_score': 0,
-
+            'callsign': '',  #  Station callsign
+            'category': '',  #  Short category name (e.g., 'nl_ph_lo')
+            'overlay': None,  # Overlay name ('WIRES', 'TB-WIRES', 'POTA', or None)
+            'location_type': LOC_NON_LA,  #  
+            'mode_category': MODE_MIXED,  #  
+            'power_level': POWER_LOW,  #  
+            'final_score': 0,  # Total calculated score WITH bonuses 
+            'qso_points': 0,  #  Points from QSOs only (absent multipliers, dups INCLUDED)
+            'total_qsos': 0,  #  Total number of QSOs
+            'valid_qsos': 0,  #  Number of valid QSOs (for scoring, absent multipliers, dups EXCLUDED)
+            'total_multipliers': 0,  # Total multiplier count (multiplied by QSO points for final score) 
+            'parishes_worked': set(),  #  Unique parishes worked by NON LA stations
+            'parishes_worked_multiplier': 0,  # Count of non-dup parishes multipliers
+            'states_worked': set(),  #  Unique states worked by LA resident  stationss
+            'states_worked_multiplier': 0,  #  Count of non-dup state multipliers
+            'provinces_worked': set(),  #  Unique  provinces worked by LA resident  stations
+            'provinces_multiplier': 0,  #  Count of non-dup provinces multipliers
+            'dx_worked': set(),  #  Unique DX worked by LA resident  stations
+            'dx_worked_multiplier': 0,  #  Count of non-dup DX multipliers
+            'parishes_activated': set(),  #  Unique parishes activated (rovers and others)
+            'rover_bonus_points': 0,  #  
+            'worked_n5lcc': False,  #  
+            'num_n5lcc_contacts': 0,  #  
+            'qsos_by_band': { '160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0 },  #  
+            'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},  #  
+            'qsos_by_hour': {i: 0 for i in range(12)},  #  
+            'bands_worked': [],  #  
+            'multipliers_by_band_mode': {},  #  
+            'name': '',  #  
+            'claimed_score': 0,  #  
         }
         
 
         # for allowing duplicate conttacts with same mode, same contact, but different band
         dups = []
-        n5lcc_contacts = 0
         # Parse log file
         with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
             for line in f:
@@ -127,7 +102,7 @@ class ScoreCalculator:
                     continue
                 
                 tag = parts[0]
-                
+
                 # Get header information
                 if tag == 'CALLSIGN:':
                     result['callsign'] = parts[1] if len(parts) > 1 else ''
@@ -165,6 +140,14 @@ class ScoreCalculator:
                 elif tag == 'QSO:':
                     result['total_qsos'] += 1
                     # print(f'QSO : {line}')
+
+
+                    # if same received call, mode, and band, it is a duplicate and does not count at all
+                    dup_check = qth_rcvd + mode + str(meters)
+                    if dup_check in dups:
+                        continue
+                    else:
+                        dups.append(dup_check)
                     
                     if len(parts) >= 11:
                         # Parse QSO line
@@ -174,44 +157,37 @@ class ScoreCalculator:
                         qth_sent = parts[7]
                         call_rcvd = parts[8]
                         qth_rcvd = parts[10]
+                    else:  # Malformed QSO line
+                        continue
+                        
+                    # Check if worked N5LCC
+                    if call_rcvd == 'N5LCC':
+                        result['worked_n5lcc'] = True
+                        result['num_n5lcc_contacts'] += 1
+                    
+                    # Count by mode
+                    if mode in PHONE_MODES:
+                        result['qsos_by_mode']['Phone'] += 1
+                        qso_points = PHONE_QSO_POINTS
+                    elif mode in CW_DIGITAL_MODES:
+                        result['qsos_by_mode']['CW/Digital'] += 1
+                        qso_points = CW_DIGITAL_QSO_POINTS
+                    else:
+                        qso_points = PHONE_QSO_POINTS  # Default
+                    
+                    result['qso_points'] += qso_points
+                    result['valid_qsos'] += 1
+                    
+                    # Track multipliers (QTH worked)
+                    qth_rcvd_upper = qth_rcvd.upper()
+                       
+                    # if sender station is LA - count parishes sent from
+                    if (result['location_type'] == LOC_LA_FIXED or result['location_type'] == LOC_LA_ROVER):
+                        result['parishes_multiplier'] += 1
 
-                        
-                        # Check if worked N5LCC
-                        if call_rcvd == 'N5LCC':
-                            result['worked_n5lcc'] = True
-                            n5lcc_contacts += 1
-                            # print(f'  Worked N5LCC.: {n5lcc_contacts} ')
-                        #     print(f'  Did not work N5LCC. Contacted: {call_rcvd} in {qth_rcvd} on {meters}m via {mode} worked N5LCC: {result["worked_n5lcc"]}')
-                        
-                        # Count by mode
-                        if mode in PHONE_MODES:
-                            result['qsos_by_mode']['Phone'] += 1
-                            qso_points = PHONE_QSO_POINTS
-                        elif mode in CW_DIGITAL_MODES:
-                            result['qsos_by_mode']['CW/Digital'] += 1
-                            qso_points = CW_DIGITAL_QSO_POINTS
-                        else:
-                            qso_points = PHONE_QSO_POINTS  # Default
-                        
-                        result['qso_points'] += qso_points
-                        result['valid_qsos'] += 1
-                        
-                        # Track multipliers (QTH worked)
-                        qth_rcvd_upper = qth_rcvd.upper()
-
-                        #check if duiplicate QSO for multiplier
-                        dup_check = qth_rcvd + mode + str(meters)
-                        if dup_check in dups:
-                            continue  # Skip duplicate multiplier
-                        else:
-                            dups.append(dup_check)
-
-                        if qth_rcvd_upper in self.parishes:
-                            result['parishes_worked'].add(qth_rcvd_upper)
-                            result['parishes_multiplier'] += 1
-                        elif qth_rcvd_upper in self.states_provinces:
+                        if qth_rcvd_upper in self.states_provinces:
                             # Distinguish between states and provinces
-                            if qth_rcvd_upper in ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']:
+                            if qth_rcvd_upper in PROVINCES:
                                 result['provinces_worked'].add(qth_rcvd_upper)
                                 result['provinces_multiplier'] += 1
                             else:
@@ -221,62 +197,46 @@ class ScoreCalculator:
                             result['dx_worked'].add(qth_rcvd_upper)
                             result['num_dx_contacts'] += 1
                             result['dx_multiplier'] += 1
-                        
-                        # Track parishes activated (for rovers)
-                        if result['location_type'] == LOC_LA_ROVER:
-                            qth_sent_upper = qth_sent.upper()
-                            if qth_sent_upper in self.parishes:
-                                # Count unique parishes in sent QTH
-                                # (will be counted in final calculation)
-                                pass
+
+                    # sender station is NON-LA - count parishes worked
+                    else: 
+                        if qth_rcvd_upper in self.parishes:
+                            result['parishes_worked'].add(qth_rcvd_upper)
+                            result['parishes_multiplier'] += 1
+
         
         # Calculate multipliers
+        # caller NOT in Louisiana
         if result['location_type'] in [LOC_DX, LOC_NON_LA]:
-            # Non-LA stations: parishes only, per band/mode
-            # For now, simplified: total unique parishes
-            result['multipliers'] = result['parishes_multiplier']
+            result['multipliers'] = result['parishes_worked_multiplier']
+        
+        # caller is LA stations: parishes + states + provinces + DX, per band/mode
+        # For now, simplified: total unique entities
         else:
-            # LA stations: parishes + states + provinces + DX, per band/mode
-            # For now, simplified: total unique entities
             result['multipliers'] = (
-                result['parishes_multiplier'] +
-                result['states_multiplier'] +
-                result['provinces_multiplier'] +
-                result['dx_multiplier']
+                len(result['parishes_activated']) +
+                result['states_worked_multiplier'] +
+                result['provinces_worked_multiplier'] +
+                result['dx_worked_multiplier']
             )
         
         # Calculate final score
         result['final_score'] = result['qso_points'] * result['multipliers']
         
         # Add N5LCC bonus
-        # print(f"Worked N5LCC: {result['worked_n5lcc']} Final Score BEFORE bonus: {result['final_score']}")
-        # temp = result['final_score']
         if result['worked_n5lcc']:
             result['final_score'] += N5LCC_BONUS
-        # if temp == result['final_score']:
-        #     print("No bonus applied - final score unchanged")
-        # else:
-        #     print(f"Worked N5LCC: {result['worked_n5lcc']} Final Score AFTER bonus: {result['final_score']}")
         
-        # print(f"Location type: {result['location_type']}  inal Score BEFORE rover bonus: {result['final_score']}")
-        # Add rover parish activation bonus
         if result['location_type'] == LOC_LA_ROVER:
-            parishes_activated = len(result['parishes_worked'])  # Simplified
-            result['parishes_activated'] = parishes_activated
-            result['final_score'] += parishes_activated * ROVER_PARISH_BONUS
+            result['parishes_activated'] = len(result['parishes_worked'])  # Simplified
+            result['final_score'] += result['parishes_activated'] * ROVER_PARISH_BONUS
 
-            # print(f"Location type: {result['location_type']}Final Score AFTER rover bonus: {result['final_score']}")
-        
-        # print(f"Final Score after all bonuses: {result['final_score']}")
         # Get list of bands worked
         result['bands_worked'] = sorted(result['qsos_by_band'].keys())
 
         if result['claimed_score'] != 0 and result['claimed_score'] != result['final_score']:
-            print(f"\n**************  E R R O R: {result['callsign']} claimed score {result['claimed_score']} does not match calculated score {result['final_score']}\n**************  {n5lcc_contacts} contacts with N5LCC")
-            n5lcc_contacts = 0
+            print(f"\n**************  E R R O R: {result['callsign']} claimed score {result['claimed_score']} does not match calculated score {result['final_score']}\n**************  {result['n5lcc_contacts']} contacts with N5LCC")
             print(result)
-        # else:
-        #     print("S U C C E S S, calbulated score M A T C H E S  C L A I M E D  S C O R E")
                 
         return result
     
@@ -291,28 +251,6 @@ class ScoreCalculator:
             6: 6,
             2: 7
         }[meters]
-    
-    def _freq_to_band(self, freq_khz: int) -> int:
-        """Convert frequency in kHz to band in meters"""
-        if 1800 <= freq_khz <= 2000:
-            return 160
-        elif 3500 <= freq_khz <= 4000:
-            return 80
-        elif 7000 <= freq_khz <= 7300:
-            return 40
-        elif 14000 <= freq_khz <= 14350:
-            return 20
-        elif 21000 <= freq_khz <= 21450:
-            return 15
-        elif 28000 <= freq_khz <= 29700:
-            return 10
-        elif 50000 <= freq_khz <= 54000:
-            return 6
-        elif 144000 <= freq_khz <= 148000:
-            return 2
-        else:
-            return None
-
 
 def score_single_log(log_path: Path, 
                     parish_file: Path,
@@ -381,10 +319,10 @@ def score_all_logs(prepared_logs_dir: Path,
         result = calculator.score_log(log_file)
         
         # Convert sets to counts for storage
-        result['parishes_worked'] = len(result['parishes_worked'])
-        result['states_worked'] = len(result['states_worked'])
-        result['provinces_worked'] = len(result['provinces_worked'])
-        result['dx_contacts'] = len(result['dx_worked'])
+        result['parishes_multiplier'] = len(result['parishes_worked']) 
+        result['states_multiplier'] = len(result['states_worked'])
+        result['provinces_multiplier'] = len(result['provinces_worked'])
+        result['dx_multiplier'] = len(result['dx_worked'])
         
         # Store in all_scores
         all_scores.append(result)

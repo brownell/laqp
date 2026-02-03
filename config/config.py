@@ -145,7 +145,7 @@ OVERLAY_TB_WIRES = 2     # Tribander + wires
 OVERLAY_POTA = 3         # Parks on the Air
 
 # ============================================================
-# US AND CANADIAN PREFIXES
+# US AND CANADIAN PREFIXES and Provinces
 # ============================================================
 
 US_PREFIXES = [
@@ -159,6 +159,8 @@ CANADIAN_PREFIXES = [
     'VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ',
     'XJ', 'XK', 'XL', 'XM', 'XN', 'XO'
 ]
+
+PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
 
 # ============================================================
 # FLASK WEB APPLICATION
@@ -182,6 +184,8 @@ level (QRP, Low, High). Additional overlay categories recognize special
 operating conditions (Wires Only, Tribander+Wires, POTA).
 
 Thank you to all participants for making this year's Louisiana QSO Party a success!
+Good luck and 73,
+The Jefferson Amateur Radio Club
 """
 
 # ============================================================
