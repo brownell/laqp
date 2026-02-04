@@ -30,7 +30,7 @@ from config.config import (
 # Import processing modules
 from laqp.core.validator import validate_single_log
 from laqp.core.preparation import prepare_single_log
-from laqp.core.scoring import score_all_logs
+from laqp.core.scoring import score_all_logs, generate_score_report
 
 # # Individual results
 # try:

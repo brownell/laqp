@@ -4,17 +4,15 @@ Louisiana QSO Party Log Upload Application
 Web interface for contestants to submit and validate Cabrillo log files
 """
 
-import sys
-from pathlib import Path
-# Add project to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from flask import Flask, render_template, request, jsonify
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import tempfile
-from laqp.core.validator import validate_single_log
+
+# Import your existing validation module
+# Adjust the import path based on your project structure
+# from laqp.core.validator import validate_single_log
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
@@ -164,7 +162,49 @@ def upload_log():
             tmp_path = tmp.name
         
         try:
-            result = validate_single_log(tmp_path)
+            # TODO: Replace this with your actual validation function
+            # result = validate_single_log(tmp_path)
+            
+            # MOCK VALIDATION FOR TESTING - Replace with actual validation
+            # This simulates what your validate_single_log function should return
+            result = {
+                'success': True,  # or False if validation fails
+                'errors': [],  # List of error messages if validation fails
+                'callsign': 'K5ABC',
+                'category': 'nl_ph_lo',
+                'overlay': None,
+                'location_type': 'NON-LA',
+                'mode_category': 'Phone',
+                'power_level': 'Low',
+                'final_score': 1250,
+                'qso_points': 625,
+                'total_qsos': 350,
+                'valid_qsos': 313,
+                'total_multipliers': 2,
+                'parishes_worked': {'ORL', 'JEF', 'STB', 'PLQ', 'TAN'},
+                'parishes_worked_multiplier': 5,
+                'states_worked': set(),
+                'states_worked_multiplier': 0,
+                'provinces_worked': set(),
+                'provinces_multiplier': 0,
+                'dx_worked': set(),
+                'dx_worked_multiplier': 0,
+                'parishes_activated': set(),
+                'rover_bonus_points': 0,
+                'worked_n5lcc': True,
+                'num_n5lcc_contacts': 3,
+                'qsos_by_band': {'160': 0, '80': 45, '40': 123, '20': 142, '15': 3, '10': 0, '6': 0, '2': 0},
+                'qsos_by_mode': {'Phone': 313, 'CW/Digital': 0},
+                'qsos_by_hour': {0: 28, 1: 35, 2: 42, 3: 38, 4: 31, 5: 29, 6: 26, 7: 24, 8: 22, 9: 18, 10: 12, 11: 8},
+                'bands_worked': ['80', '40', '20', '15'],
+                'multipliers_by_band_mode': {
+                    '40-Phone': {'ORL', 'JEF', 'STB', 'PLQ'},
+                    '20-Phone': {'ORL', 'JEF', 'TAN'},
+                    '80-Phone': {'ORL', 'JEF'}
+                },
+                'name': 'John Smith',
+                'claimed_score': 1250
+            }
             
             if result.get('success', True):
                 # Save the accepted log
