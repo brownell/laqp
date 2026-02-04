@@ -23,7 +23,6 @@ from config.config import (
     PROBLEMS_LOGS,
     LA_PARISHES_FILE,
     WVE_ABBREVS_FILE,
-    INDIVIDUAL_RESULTS_DIR,
     DATA_OUTPUT_DIR,
     ensure_initial_directories,
 )
@@ -31,23 +30,23 @@ from config.config import (
 # Import processing modules
 from laqp.core.validator import validate_single_log
 from laqp.core.preparation import prepare_single_log
-from laqp.core.scoring import score_all_logs, generate_score_report
+from laqp.core.scoring import score_all_logs
 
-# Individual results
-try:
-    from laqp.core.individual_results import generate_all_individual_results
-    HAS_INDIVIDUAL_RESULTS = True
-except ImportError:
-    print("Warning: individual_results module not yet in __init__.py")
-    HAS_INDIVIDUAL_RESULTS = False
+# # Individual results
+# try:
+#     from laqp.core.individual_results import generate_all_individual_results
+#     HAS_INDIVIDUAL_RESULTS = True
+# except ImportError:
+#     print("Warning: individual_results module not yet in __init__.py")
+#     HAS_INDIVIDUAL_RESULTS = False
 
 # Summary report
-try:
-    from laqp.core.summary_report import generate_summary_report
-    HAS_SUMMARY_REPORT = True
-except ImportError:
-    print("Warning: summary_report module not yet in __init__.py")
-    HAS_SUMMARY_REPORT = False
+# try:
+#     from laqp.core.summary_report import generate_summary_report
+#     HAS_SUMMARY_REPORT = True
+# except ImportError:
+#     print("Warning: summary_report module not yet in __init__.py")
+#     HAS_SUMMARY_REPORT = False
 
 
 class LogProcessor:
@@ -104,19 +103,19 @@ class LogProcessor:
         category_scores = score_logs_result[1]
         
         # Step 4: Individual Results
-        if HAS_INDIVIDUAL_RESULTS:
-            self.generate_individual_results(all_scores, category_scores)
-        else:
-            print("\nSkipping individual results (module not yet imported)")
+        # if HAS_INDIVIDUAL_RESULTS:
+        #     self.generate_individual_results(all_scores, category_scores)
+        # else:
+        #     print("\nSkipping individual results (module not yet imported)")
         
         # Step 5: Summary Report
-        if HAS_SUMMARY_REPORT:
-            self.generate_summary_report(all_scores, category_scores)
-        else:
-            print("\nSkipping summary report (module not yet imported)")
+        # if HAS_SUMMARY_REPORT:
+        #     self.generate_summary_report(all_scores, category_scores)
+        # else:
+        #     print("\nSkipping summary report (module not yet imported)")
         
-        # Final summary
-        self.print_summary()
+        # # Final summary
+        # self.print_summary()
     
     def clean_directories(self):
         """Clean validated and prepared directories before starting"""
@@ -275,113 +274,76 @@ class LogProcessor:
             traceback.print_exc()
             return [], {}
     
-    def generate_individual_results(self, all_scores, category_scores):
-        """Step 4: Generate individual DOCX files"""
-        print("=" * 80)
-        print("STEP 4: INDIVIDUAL RESULTS")
-        print("=" * 80)
-        
-        if not all_scores:
-            print("No scores to generate results for")
-            return
-        
-        try:
-            print(f"Generating individual DOCX files for {len(all_scores)} contestants...")
-            print()
-            
-            files = generate_all_individual_results(
-                all_scores,
-                category_scores,
-                INDIVIDUAL_RESULTS_DIR
-            )
-            
-            print()
-            print(f"✓ Generated {len(files)} individual result files")
-            print(f"  Location: {INDIVIDUAL_RESULTS_DIR}")
-            print()
-        
-        except Exception as e:
-            print(f"ERROR generating individual results: {e}")
-            import traceback
-            traceback.print_exc()
     
-    def generate_summary_report(self, all_scores, category_scores):
-        """Step 5: Generate Summary Report DOCX"""
-        print("=" * 80)
-        print("STEP 5: SUMMARY REPORT")
-        print("=" * 80)
+    # def generate_summary_report(self, all_scores, category_scores):
+    #     """Step 5: Generate Summary Report DOCX"""
+    #     print("=" * 80)
+    #     print("STEP 5: SUMMARY REPORT")
+    #     print("=" * 80)
         
-        if not all_scores:
-            print("No scores to generate report for")
-            return
+    #     if not all_scores:
+    #         print("No scores to generate report for")
+    #         return
         
-        try:
-            print("Generating Summary_Report.docx...")
-            print()
+    #     try:
+    #         print("Generating Summary_Report.docx...")
+    #         print()
             
-            # Gather contest statistics
-            contest_stats = self._gather_contest_stats(all_scores)
+    #         # Gather contest statistics
+    #         contest_stats = self._gather_contest_stats(all_scores)
             
-            # Generate report
-            report_path = generate_summary_report(
-                all_scores,
-                category_scores,
-                contest_stats,
-                DATA_OUTPUT_DIR / 'Summary_Report.docx'
-            )
+    #         # Generate report
+    #         report_path = generate_summary_report(
+    #             all_scores,
+    #             category_scores,
+    #             contest_stats,
+    #             DATA_OUTPUT_DIR / 'Summary_Report.docx'
+    #         )
             
-            print(f"✓ Summary report generated")
-            print(f"  Location: {report_path}")
-            print()
+    #         print(f"✓ Summary report generated")
+    #         print(f"  Location: {report_path}")
+    #         print()
         
-        except Exception as e:
-            print(f"ERROR generating summary report: {e}")
-            import traceback
-            traceback.print_exc()
+    #     except Exception as e:
+    #         print(f"ERROR generating summary report: {e}")
+    #         import traceback
+    #         traceback.print_exc()
     
-    def _gather_contest_stats(self, all_scores):
-        """Gather overall contest statistics"""
-        stats = {}
+    # def _gather_contest_stats(self, all_scores):
+    #     """Gather overall contest statistics"""
+    #     stats = {}
         
-        # Unique callsigns
-        stats['unique_callsigns'] = len(set(s['callsign'] for s in all_scores))
+    #     # Unique callsigns
+    #     stats['unique_callsigns'] = len(set(s['callsign'] for s in all_scores))
         
-        # Band activity
-        band_qsos = {}
-        for score in all_scores:
-            for band, count in score.get('qsos_by_band', {}).items():
-                band_qsos[band] = band_qsos.get(band, 0) + count
-        stats['band_activity'] = band_qsos
+    #     # Band activity
+    #     band_qsos = {}
+    #     for score in all_scores:
+    #         for band, count in score.get('qsos_by_band', {}).items():
+    #             band_qsos[band] = band_qsos.get(band, 0) + count
+    #     stats['band_activity'] = band_qsos
         
-        # Parishes activated
-        all_parishes = set()
-        for score in all_scores:
-            # This would need to be tracked better in scoring
-            # For now, just count from scores
-            pass
+    #     # Parishes activated
+    #     all_parishes = set()
+    #     for score in all_scores:
+    #         # This would need to be tracked better in scoring
+    #         # For now, just count from scores
+    #         pass
         
-        return stats
+    #     return stats
     
-    def print_summary(self):
-        """Print final summary"""
-        print("=" * 80)
-        print("PROCESSING COMPLETE")
-        print("=" * 80)
-        print()
-        print(f"  Incoming logs: {self.stats['total_incoming']}")
-        print(f"  Validated: {self.stats['validated']}")
-        print(f"  Failed validation: {self.stats['validation_failed']}")
-        print(f"  Prepared: {self.stats['prepared']}")
-        print(f"  Scored: {self.stats['scored']}")
-        print()
-        
-        if self.stats['validated'] > 0:
-            print(f"Output files generated:")
-            print(f"  - Individual results: {INDIVIDUAL_RESULTS_DIR}")
-            print(f"  - Summary report: {DATA_OUTPUT_DIR / 'Summary_Report.docx'}")
-            print(f"  - Problem logs: {PROBLEMS_LOGS}")
-            print()
-
+    # def print_summary(self):
+    #     """Print final summary"""
+    #     print("=" * 80)
+    #     print("PROCESSING COMPLETE")
+    #     print("=" * 80)
+    #     print()
+    #     print(f"  Incoming logs: {self.stats['total_incoming']}")
+    #     print(f"  Validated: {self.stats['validated']}")
+    #     print(f"  Failed validation: {self.stats['validation_failed']}")
+    #     print(f"  Prepared: {self.stats['prepared']}")
+    #     print(f"  Scored: {self.stats['scored']}")
+    #     print()
 
 def main():
     """Main entry point"""

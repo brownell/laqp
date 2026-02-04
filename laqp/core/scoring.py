@@ -22,14 +22,14 @@ from laqp.categories import get_category_names, get_overlay_name
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from config.config import (
-    PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
+    LA_ROVER, OUTSIDE_LA, PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
     N5LCC_BONUS, ROVER_PARISH_BONUS,
     PHONE_MODES, CW_DIGITAL_MODES,
     LOC_DX, LOC_NON_LA, LOC_LA_FIXED, LOC_LA_ROVER, PROVINCES,
     MODE_PHONE_ONLY, MODE_CW_DIGITAL_ONLY, MODE_MIXED,
     POWER_QRP, POWER_LOW, POWER_HIGH,
     OVERLAY_NONE, OVERLAY_WIRES, OVERLAY_TB_WIRES, OVERLAY_POTA,
-    PREPARED_LOGS, INDIVIDUAL_RESULTS_DIR
+    PREPARED_LOGS, LA_FIXED, LA_ROVER
 )
 
 class ScoreCalculator:
@@ -65,13 +65,13 @@ class ScoreCalculator:
             'qso_points': 0,  #  Points from QSOs only (absent multipliers, dups INCLUDED)
             'total_qsos': 0,  #  Total number of QSOs
             'valid_qsos': 0,  #  Number of valid QSOs (for scoring, absent multipliers, dups EXCLUDED)
-            'total_multipliers': 0,  # Total multiplier count (multiplied by QSO points for final score) 
+            'total_multiplier': 0,  # Total multiplier count (multiplied by QSO points for final score) 
             'parishes_worked': set(),  #  Unique parishes worked by NON LA stations
             'parishes_worked_multiplier': 0,  # Count of non-dup parishes multipliers
             'states_worked': set(),  #  Unique states worked by LA resident  stationss
             'states_worked_multiplier': 0,  #  Count of non-dup state multipliers
             'provinces_worked': set(),  #  Unique  provinces worked by LA resident  stations
-            'provinces_multiplier': 0,  #  Count of non-dup provinces multipliers
+            'provinces_worked_multiplier': 0,  #  Count of non-dup provinces multipliers
             'dx_worked': set(),  #  Unique DX worked by LA resident  stations
             'dx_worked_multiplier': 0,  #  Count of non-dup DX multipliers
             'parishes_activated': set(),  #  Unique parishes activated (rovers and others)
@@ -85,12 +85,15 @@ class ScoreCalculator:
             'multipliers_by_band_mode': {},  #  
             'name': '',  #  
             'claimed_score': 0,  #  
+        
         }
         
 
         # for allowing duplicate conttacts with same mode, same contact, but different band
         dups = []
         # Parse log file
+        # print(f'*******Processing log: {log_path}******')
+        # print(f'checkpoint')
         with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
             for line in f:
                 line = line.strip().upper()
@@ -140,14 +143,6 @@ class ScoreCalculator:
                 elif tag == 'QSO:':
                     result['total_qsos'] += 1
                     # print(f'QSO : {line}')
-
-
-                    # if same received call, mode, and band, it is a duplicate and does not count at all
-                    dup_check = qth_rcvd + mode + str(meters)
-                    if dup_check in dups:
-                        continue
-                    else:
-                        dups.append(dup_check)
                     
                     if len(parts) >= 11:
                         # Parse QSO line
@@ -159,9 +154,17 @@ class ScoreCalculator:
                         qth_rcvd = parts[10]
                     else:  # Malformed QSO line
                         continue
+
+                    # if same received call, mode, and band, it is a duplicate and does not count at all
+                    # e.g. QSO: 40 CW 2024-04-06 1406 AA2AD 599 PA KZ5D 599 IBER
+                    dup_check = call_sent.upper() + call_rcvd.upper() + qth_sent.upper() + qth_rcvd + mode + str(meters)
+                    if dup_check in dups:
+                        continue
+                    else:
+                        dups.append(dup_check)
                         
                     # Check if worked N5LCC
-                    if call_rcvd == 'N5LCC':
+                    if call_rcvd.upper() == 'N5LCC':
                         result['worked_n5lcc'] = True
                         result['num_n5lcc_contacts'] += 1
                     
@@ -181,61 +184,59 @@ class ScoreCalculator:
                     # Track multipliers (QTH worked)
                     qth_rcvd_upper = qth_rcvd.upper()
                        
+                    # ALL stations can  work LA stations
+                    
+                    if qth_rcvd_upper in self.parishes:
+                        result['parishes_worked'].add(qth_rcvd_upper)
+                        result['parishes_worked_multiplier'] += 1
+
                     # if sender station is LA - count parishes sent from
-                    if (result['location_type'] == LOC_LA_FIXED or result['location_type'] == LOC_LA_ROVER):
-                        result['parishes_multiplier'] += 1
+                    if (result['location_type'] == LA_FIXED or result['location_type'] == LA_ROVER):
+                        result['parishes_activated'].add(qth_sent.upper())
 
                         if qth_rcvd_upper in self.states_provinces:
                             # Distinguish between states and provinces
                             if qth_rcvd_upper in PROVINCES:
                                 result['provinces_worked'].add(qth_rcvd_upper)
-                                result['provinces_multiplier'] += 1
+                                result['provinces_worked_multiplier'] += 1
                             else:
                                 result['states_worked'].add(qth_rcvd_upper)
-                        else:
-                            # Assume DX
+                                result['states_worked_multiplier'] += 1
+                        elif qth_rcvd_upper not in self.parishes:
+                            # Not a state, province, or parish: assume DX
                             result['dx_worked'].add(qth_rcvd_upper)
-                            result['num_dx_contacts'] += 1
-                            result['dx_multiplier'] += 1
-
-                    # sender station is NON-LA - count parishes worked
-                    else: 
-                        if qth_rcvd_upper in self.parishes:
-                            result['parishes_worked'].add(qth_rcvd_upper)
-                            result['parishes_multiplier'] += 1
-
+                            result['dx_worked_multiplier'] += 1
         
         # Calculate multipliers
-        # caller NOT in Louisiana
-        if result['location_type'] in [LOC_DX, LOC_NON_LA]:
-            result['multipliers'] = result['parishes_worked_multiplier']
+        # caller is NOT LA station
+        if result['location_type'] == OUTSIDE_LA:
+            result['total_multiplier'] = result['parishes_worked_multiplier']
         
         # caller is LA stations: parishes + states + provinces + DX, per band/mode
         # For now, simplified: total unique entities
         else:
-            result['multipliers'] = (
-                len(result['parishes_activated']) +
+            result['total_multiplier'] = (
+                result['parishes_worked_multiplier'] +
                 result['states_worked_multiplier'] +
                 result['provinces_worked_multiplier'] +
                 result['dx_worked_multiplier']
             )
         
         # Calculate final score
-        result['final_score'] = result['qso_points'] * result['multipliers']
+        result['final_score'] = result['qso_points'] * result['total_multiplier']
         
         # Add N5LCC bonus
         if result['worked_n5lcc']:
             result['final_score'] += N5LCC_BONUS
         
         if result['location_type'] == LOC_LA_ROVER:
-            result['parishes_activated'] = len(result['parishes_worked'])  # Simplified
             result['final_score'] += result['parishes_activated'] * ROVER_PARISH_BONUS
 
         # Get list of bands worked
         result['bands_worked'] = sorted(result['qsos_by_band'].keys())
 
         if result['claimed_score'] != 0 and result['claimed_score'] != result['final_score']:
-            print(f"\n**************  E R R O R: {result['callsign']} claimed score {result['claimed_score']} does not match calculated score {result['final_score']}\n**************  {result['n5lcc_contacts']} contacts with N5LCC")
+            print(f"\n**************  E R R O R: {result['callsign']} claimed score {result['claimed_score']} does not match calculated score {result['final_score']}\n**************  {result['num_n5lcc_contacts']} contacts with N5LCC")
             print(result)
                 
         return result
@@ -317,12 +318,6 @@ def score_all_logs(prepared_logs_dir: Path,
     
     for log_file in log_files:
         result = calculator.score_log(log_file)
-        
-        # Convert sets to counts for storage
-        result['parishes_multiplier'] = len(result['parishes_worked']) 
-        result['states_multiplier'] = len(result['states_worked'])
-        result['provinces_multiplier'] = len(result['provinces_worked'])
-        result['dx_multiplier'] = len(result['dx_worked'])
         
         # Store in all_scores
         all_scores.append(result)

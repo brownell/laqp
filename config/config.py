@@ -127,6 +127,9 @@ LOC_DX = 0           # DX (outside North America)
 LOC_NON_LA = 1       # Non-Louisiana (US/Canada, not LA)
 LOC_LA_FIXED = 2     # Louisiana Fixed station
 LOC_LA_ROVER = 3     # Louisiana Rover/Mobile
+OUTSIDE_LA = "NL"  # Non-Louisiana
+LA_FIXED = 'LF'   # Louisiana Fixed
+LA_ROVER = 'LR'   # Louisiana Rover
 
 # Mode categories
 MODE_PHONE_ONLY = 0
