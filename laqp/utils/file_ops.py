@@ -13,5 +13,8 @@ def safe_move(src, dst):
     shutil.move(str(src), str(dst))
 
 def ensure_dir(path):
-    """Ensure directory exists"""
-    Path(path).mkdir(parents=True, exist_ok=True)
+    """Ensure directory exists and is empty"""
+    lib_path = Path(path)
+    if lib_path.exists():
+        shutil.rmtree(lib_path)
+    lib_path.mkdir(parents=True, exist_ok=True)

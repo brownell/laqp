@@ -2,6 +2,8 @@
 
 Contest log processing system for the Louisiana QSO Party, hosted by Jefferson Amateur Radio Club.
 
+### Adapted from Texas QSO Party software created by Charles Sanders, NO5W
+
 ## Directory Structure
 
 ```

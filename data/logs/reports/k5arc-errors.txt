@@ -1,8 +1,0 @@
-Validation Report for K5ARC
-============================================================
-Total QSOs: 280
-Invalid QSOs: 1
-Overall Status: INVALID
-
-Errors:
-  - Line 177: Invalid received callsign: KIRBR

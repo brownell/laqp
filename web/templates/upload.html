@@ -7,174 +7,135 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
 </head>
 <body>
-    <!-- Header -->
-    <header id="site-header">
-        <div class="header-inner section-inner">
-            <div class="header-titles-wrapper">
-                <div class="header-titles">
-                    <h1 class="site-title">
-                        <a href="https://laqp.louisianacontestclub.org/">The Louisiana QSO Party</a>
-                    </h1>
-                    <p class="site-description">Sponsored by the Jefferson Amateur Radio Club - <a href="https://w5gad.org" target="_blank">w5gad.org</a></p>
-                </div>
-            </div>
-        </div>
-    </header>
+    <div class="container">
+        <header class="banner">
+            <h1>Jefferson Amateur Radio Club</h1>
+            <h2>Louisiana QSO Party</h2>
+        </header>
 
-    <!-- Main Content -->
-    <main id="site-content">
-        <article class="post-single">
-            <div class="post-inner section-inner">
-                <div class="entry-content">
-                    
-                    <h1 style="text-align: center;">Louisiana QSO Party Logs</h1>
-                    <h2 style="text-align: center;">Log Submission - 2025</h2>
-                    
-                    <hr class="styled-separator">
-                    
-                    <div class="step-indicator">
-                        <strong>Step 1 - Submit Cabrillo Log</strong> &gt; Step 2 - Confirmation
+        <div class="separator"></div>
+
+        <main>
+            <section class="upload-section" id="uploadSection">
+                <h3>Log File Submission</h3>
+                <p>Submit your Cabrillo format log file for the Louisiana QSO Party. You may upload a file or paste the contents directly.</p>
+
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="email">Email Address: <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required 
+                               placeholder="your@email.com">
+                        <small>Required for contest results and communication</small>
                     </div>
-                    
-                    <hr class="styled-separator">
-                    
-                    <p style="text-align: center;">
-                        Use this form to submit your Cabrillo-formatted log for the Louisiana QSO Party. 
-                        The form will check your log submission for proper format and completeness before uploading it.
-                    </p>
-                    
-                    <hr class="styled-separator">
-                    
-                    <!-- Upload Form -->
-                    <form id="upload-form" enctype="multipart/form-data">
-                        
-                        <!-- Email -->
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label for="email">Submitter's E-mail Address <span class="required">*</span></label>
-                            <input type="email" id="email" name="email" required>
+                            <label for="mode">Mode:</label>
+                            <select id="mode" name="mode">
+                                <option value="">Select...</option>
+                                <option value="phone">Phone</option>
+                                <option value="cw">CW</option>
+                                <option value="digital">Digital</option>
+                                <option value="mixed">Mixed</option>
+                            </select>
                         </div>
-                        
-                        <!-- Mode Category -->
+
                         <div class="form-group">
-                            <label>What mode category are you entering? <span class="required">*</span></label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="mode_category" value="mixed" required>
-                                    Mixed
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="mode_category" value="cw_digital">
-                                    CW/Digital Only
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="mode_category" value="phone">
-                                    Phone Only
-                                </label>
-                            </div>
+                            <label for="power">Power Level:</label>
+                            <select id="power" name="power">
+                                <option value="">Select...</option>
+                                <option value="qrp">QRP (5W or less)</option>
+                                <option value="low">Low (150W or less)</option>
+                                <option value="high">High (>150W)</option>
+                            </select>
                         </div>
-                        
-                        <!-- Overlay Category -->
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label>What category overlay applies to your entry (see rules)? <span class="required">*</span></label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="overlay" value="none" required>
-                                    None
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="overlay" value="wires">
-                                    Wires
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="overlay" value="tb_wires">
-                                    Tribander-Wires
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="overlay" value="pota">
-                                    POTA
-                                </label>
-                            </div>
+                            <label for="station_type">Station Type:</label>
+                            <select id="station_type" name="station_type">
+                                <option value="">Select...</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="mobile">Mobile</option>
+                                <option value="rover">Rover</option>
+                                <option value="portable">Portable</option>
+                            </select>
                         </div>
-                        
-                        <!-- Power -->
+
                         <div class="form-group">
-                            <label>What's the highest output power you used during the contest? <span class="required">*</span></label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="power" value="qrp" required>
-                                    5W or less (QRP)
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="power" value="low">
-                                    100W or less (Low)
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="power" value="high">
-                                    1500W or less (High)
-                                </label>
-                            </div>
+                            <label for="overlay">Overlay Category:</label>
+                            <select id="overlay" name="overlay">
+                                <option value="">None</option>
+                                <option value="wires">WIRES</option>
+                                <option value="tb-wires">TB-WIRES</option>
+                                <option value="pota">POTA</option>
+                            </select>
                         </div>
-                        
-                        <!-- Station Category -->
+                    </div>
+
+                    <div class="separator-thin"></div>
+
+                    <div class="upload-options">
                         <div class="form-group">
-                            <label>What station category are you entering? <span class="required">*</span></label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="station_type" value="fixed" required>
-                                    Fixed
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="station_type" value="rover">
-                                    Rover
-                                </label>
-                            </div>
+                            <label for="logfile">Upload Log File:</label>
+                            <input type="file" id="logfile" name="logfile" 
+                                   accept=".log,.txt,.cbr">
+                            <small>Accepted formats: .log, .txt, .cbr (max 5MB)</small>
                         </div>
-                        
-                        <!-- File Upload OR Paste -->
-                        <div class="form-group">
-                            <label for="log_file">Select Log File on Your Computer:</label>
-                            <input type="file" id="log_file" name="log_file" accept=".log,.txt,.cbr">
-                            <p class="help-text">Accepted file types: .log, .txt, .cbr</p>
-                        </div>
-                        
+
                         <div class="or-divider">
                             <span>OR</span>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="log_text">Paste your Cabrillo-formatted log into the text area below:</label>
-                            <textarea id="log_text" name="log_text" rows="15" placeholder="START-OF-LOG: 3.0
-CALLSIGN: YOUR_CALL
-...
-END-OF-LOG:"></textarea>
-                        </div>
-                        
-                        <!-- Submit Button -->
-                        <div class="form-group submit-group">
-                            <button type="submit" class="submit-button">Submit Log</button>
-                        </div>
-                        
-                    </form>
-                    
-                    <!-- Result Messages -->
-                    <div id="result-message" class="result-message" style="display: none;"></div>
-                    
-                </div>
-            </div>
-        </article>
-    </main>
 
-    <!-- Footer -->
-    <footer id="site-footer">
-        <div class="footer-inner section-inner">
-            <div class="footer-credits">
-                <p>Send comments and corrections about this page to 
-                    <a href="mailto:questions@laqp.org">QSO Party Manager</a>
-                </p>
-                <p>&copy; 2025-2026 Louisiana Contest Club / Jefferson Amateur Radio Club, All Rights Reserved</p>
-            </div>
-        </div>
-    </footer>
+                        <div class="form-group">
+                            <label for="log_text">Paste Log Contents:</label>
+                            <textarea id="log_text" name="log_text" rows="8" 
+                                      placeholder="Paste your Cabrillo log here..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            Submit Log
+                        </button>
+                        <button type="button" class="btn-secondary" id="clearBtn">
+                            Clear Form
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Loading indicator -->
+                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Processing your log file...</p>
+                </div>
+
+                <!-- Message display -->
+                <div id="messageBox" class="message-box" style="display: none;"></div>
+            </section>
+
+            <div class="separator"></div>
+
+            <!-- Results section - hidden by default -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h3>Log Processing Results</h3>
+                    <button type="button" class="btn-print" id="printBtn" onclick="window.print()">
+                        🖨️ Print Results
+                    </button>
+                </div>
+
+                <div id="resultsContent" class="results-content">
+                    <!-- Results will be inserted here by JavaScript -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Jefferson Amateur Radio Club | Louisiana QSO Party</p>
+        </footer>
+    </div>
 
     <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
 </body>

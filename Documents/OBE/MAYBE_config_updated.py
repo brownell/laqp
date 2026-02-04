@@ -4,7 +4,6 @@ Updated with new output directory structure and categories
 """
 from pathlib import Path
 from datetime import date, time
-import shutil
 
 # ============================================================
 # BASE PATHS
@@ -23,8 +22,8 @@ SPONSOR_NAME = "Jefferson Amateur Radio Club"
 SPONSOR_WEBSITE = "w5gad.org"
 
 # Contest dates (update each year)
-CONTEST_START_DAY1 = date(2024, 4, 6)  # April 6, 2024
-CONTEST_END_DAY1 = date(2024, 4, 7)    # April 7, 2024
+CONTEST_START_DAY1 = date(2026, 4, 4)  # April 4, 2026
+CONTEST_END_DAY1 = date(2026, 4, 5)    # April 5, 2026
 
 # Contest times (UTC)
 CONTEST_START_TIME = time(14, 0)  # 14:00 UTC
@@ -39,19 +38,18 @@ TIME_FORMAT = "%H%M"
 # ============================================================
 
 # Input logs
-DATA_DIR = BASE_DIR / 'data'
-INCOMING_LOGS = DATA_DIR / 'logs' / 'incoming'
-VALIDATED_LOGS = DATA_DIR / 'logs' / 'validated'
-PREPARED_LOGS = DATA_DIR / 'logs' / 'prepared'
-PROBLEMS_LOGS = DATA_DIR / 'logs' / 'problems'
+INCOMING_LOGS = BASE_DIR / 'logs' / 'incoming'
+VALIDATED_LOGS = BASE_DIR / 'logs' / 'validated'
+PREPARED_LOGS = BASE_DIR / 'logs' / 'prepared'
+PROBLEM_LOGS = BASE_DIR / 'logs' / 'problems'
 
 # Output directory structure (NEW)
-DATA_OUTPUT_DIR = DATA_DIR / 'output'
+DATA_OUTPUT_DIR = BASE_DIR / 'data' / 'output'
 INDIVIDUAL_RESULTS_DIR = DATA_OUTPUT_DIR / 'individual_results'
 
 # Legacy directories (to be removed)
-OLD_SCORES_DIR = DATA_DIR / 'output' / 'scores'
-OLD_STATISTICS_DIR = DATA_DIR / 'output' / 'statistics'
+OLD_SCORES_DIR = BASE_DIR / 'output' / 'scores'
+OLD_STATISTICS_DIR = BASE_DIR / 'output' / 'statistics'
 
 # Keep for compatibility during transition
 SCORES_DIR = OLD_SCORES_DIR
@@ -61,7 +59,7 @@ STATISTICS_DIR = OLD_STATISTICS_DIR
 # REFERENCE DATA FILES
 # ============================================================
 
-REFERENCE_DATA_DIR = DATA_DIR / 'reference_data'
+REFERENCE_DATA_DIR = BASE_DIR / 'reference_data'
 LA_PARISHES_FILE = REFERENCE_DATA_DIR / 'la_parishes.txt'
 WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
 
@@ -69,33 +67,20 @@ WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
 # BAND AND MODE DEFINITIONS
 # ============================================================
 
-# need to convert freq in KHz to band
-# Band frequency ranges (in kHz) - tuples of (min, max) for each band
-BAND_RANGES = {
-    160: (1800, 2000),      # 160m: 1.8 - 2.0 MHz
-    80:  (3500, 4000),      # 80m:  3.5 - 4.0 MHz
-    40:  (7000, 7300),      # 40m:  7.0 - 7.3 MHz
-    20:  (14000, 14350),    # 20m:  14.0 - 14.35 MHz
-    15:  (21000, 21450),    # 15m:  21.0 - 21.45 MHz
-    10:  (28000, 29700),    # 10m:  28.0 - 29.7 MHz
-    6:   (50000, 54000),    # 6m:   50.0 - 54.0 MHz
-    2:   (144000, 148000),  # 2m:   144.0 - 148.0 MHz
-}
+# Valid bands (meters)
+VALID_BANDS = [160, 80, 40, 20, 15, 10, 6, 2]
 
-def freq_to_band(freq_khz: int) -> int:
-    """
-    Convert frequency in kHz to band in meters.
-    
-    Args:
-        freq_khz: Frequency in kHz
-    
-    Returns:
-        Band in meters (e.g., 20, 40, 80) or None if not in a valid band
-    """
-    for band, (min_freq, max_freq) in BAND_RANGES.items():
-        if min_freq <= freq_khz <= max_freq:
-            return band
-    return None
+# Frequency ranges for band determination (in kHz)
+BAND_RANGES = {
+    1800: 160,   1900: 160,
+    3500: 80,    4000: 80,
+    7000: 40,    7300: 40,
+    14000: 20,   14350: 20,
+    21000: 15,   21450: 15,
+    28000: 10,   29700: 10,
+    50000: 6,    54000: 6,
+    144000: 2,   148000: 2,
+}
 
 # Valid modes
 VALID_MODES = ['CW', 'PH', 'RY', 'DIG', 'FM', 'SSB', 'LSB', 'USB', 'RTTY', 'FT8', 'FT4']
@@ -127,9 +112,6 @@ LOC_DX = 0           # DX (outside North America)
 LOC_NON_LA = 1       # Non-Louisiana (US/Canada, not LA)
 LOC_LA_FIXED = 2     # Louisiana Fixed station
 LOC_LA_ROVER = 3     # Louisiana Rover/Mobile
-OUTSIDE_LA = "NL"  # Non-Louisiana
-LA_FIXED = 'LF'   # Louisiana Fixed
-LA_ROVER = 'LR'   # Louisiana Rover
 
 # Mode categories
 MODE_PHONE_ONLY = 0
@@ -148,7 +130,7 @@ OVERLAY_TB_WIRES = 2     # Tribander + wires
 OVERLAY_POTA = 3         # Parks on the Air
 
 # ============================================================
-# US AND CANADIAN PREFIXES and Provinces
+# US AND CANADIAN PREFIXES
 # ============================================================
 
 US_PREFIXES = [
@@ -162,8 +144,6 @@ CANADIAN_PREFIXES = [
     'VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ',
     'XJ', 'XK', 'XL', 'XM', 'XN', 'XO'
 ]
-
-PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
 
 # ============================================================
 # FLASK WEB APPLICATION
@@ -187,8 +167,6 @@ level (QRP, Low, High). Additional overlay categories recognize special
 operating conditions (Wires Only, Tribander+Wires, POTA).
 
 Thank you to all participants for making this year's Louisiana QSO Party a success!
-Good luck and 73,
-The Jefferson Amateur Radio Club
 """
 
 # ============================================================
@@ -202,24 +180,32 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # UTILITY FUNCTIONS
 # ============================================================
 
-def ensure_initial_directories():
+def ensure_directories():
     """Ensure all required directories exist"""
-    initial_directories = [
+    directories = [
         # Log directories
+        INCOMING_LOGS,
         VALIDATED_LOGS,
         PREPARED_LOGS,
-        PROBLEMS_LOGS,
+        PROBLEM_LOGS,
         
         # Output directories (NEW structure)
         DATA_OUTPUT_DIR,
-        INDIVIDUAL_RESULTS_DIR
+        INDIVIDUAL_RESULTS_DIR,
+        
+        # Legacy directories (will be removed later)
+        SCORES_DIR,
+        STATISTICS_DIR,
+        
+        # Reference data
+        REFERENCE_DATA_DIR,
+        
+        # Database directory
+        DATABASE_FILE.parent,
     ]
     
-    for directory in initial_directories:
-        path = Path(directory)
-        if path.exists():
-            shutil.rmtree(path)
-        path.mkdir(parents=True, exist_ok=True)
+    for directory in directories:
+        directory.mkdir(parents=True, exist_ok=True)
 
 
 def get_contest_year():
@@ -233,47 +219,4 @@ def get_contest_name():
 
 
 # Ensure directories exist on import
-ensure_initial_directories()
-
-# Category definitions: (short_name, full_name)
-CATEGORIES = {
-    # NON-LA Categories
-    'nl_ph_qp': 'NON-LA - Phone Only - QRP',
-    'nl_ph_lo': 'NON-LA - Phone Only - Low Power',
-    'nl_ph_hi': 'NON-LA - Phone Only - High Power',
-    'nl_cw_qp': 'NON-LA - CW Only - QRP',
-    'nl_cw_lo': 'NON-LA - CW Only - Low Power',
-    'nl_cw_hi': 'NON-LA - CW Only - High Power',
-    'nl_mx_qp': 'NON-LA - Mixed - QRP',
-    'nl_mx_lo': 'NON-LA - Mixed - Low Power',
-    'nl_mx_hi': 'NON-LA - Mixed - High Power',
-    
-    # LA Fixed Categories
-    'lf_ph_qp': 'LA Fixed - Phone Only - QRP',
-    'lf_ph_lo': 'LA Fixed - Phone Only - Low Power',
-    'lf_ph_hi': 'LA Fixed - Phone Only - High Power',
-    'lf_cw_qp': 'LA Fixed - CW Only - QRP',
-    'lf_cw_lo': 'LA Fixed - CW Only - Low Power',
-    'lf_cw_hi': 'LA Fixed - CW Only - High Power',
-    'lf_mx_qp': 'LA Fixed - Mixed - QRP',
-    'lf_mx_lo': 'LA Fixed - Mixed - Low Power',
-    'lf_mx_hi': 'LA Fixed - Mixed - High Power',
-    
-    # LA Rover Categories
-    'lr_ph_qp': 'LA Rover - Phone Only - QRP',
-    'lr_ph_lo': 'LA Rover - Phone Only - Low Power',
-    'lr_ph_hi': 'LA Rover - Phone Only - High Power',
-    'lr_cw_qp': 'LA Rover - CW Only - QRP',
-    'lr_cw_lo': 'LA Rover - CW Only - Low Power',
-    'lr_cw_hi': 'LA Rover - CW Only - High Power',
-    'lr_mx_qp': 'LA Rover - Mixed - QRP',
-    'lr_mx_lo': 'LA Rover - Mixed - Low Power',
-    'lr_mx_hi': 'LA Rover - Mixed - High Power',
-}
-
-# Overlay types
-OVERLAYS = {
-    'WIRES': 'Wires Only',
-    'TB-WIRES': 'Tribander + Wires',
-    'POTA': 'Parks on the Air',
-}
+ensure_directories()
