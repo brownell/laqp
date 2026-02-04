@@ -17,6 +17,7 @@ This version extends the base validator to cross-check:
 import sys
 from datetime import datetime
 from pathlib import Path
+from pprint import pprint
 from typing import List, Tuple, Dict, Optional
 
 # Import configuration and utilities
@@ -45,9 +46,11 @@ class ValidationResult:
         # Log header fields
         self.log_email = ""
         self.log_mode_category = ""  # PHONE-ONLY, CW/DIGITAL-ONLY, MIXED
+        self.catetgory = ""  # just a different name for compatibility
         self.log_power = ""  # QRP, LOW, HIGH
         self.log_station = ""  # FIXED, ROVER
         self.log_overlay = ""  # WIRES, TB-WIRES, POTA, or empty
+        self.success = False   # used for web app testing success
         
     def add_error(self, message: str):
         self.errors.append(message)
@@ -79,6 +82,11 @@ class ValidationResult:
             report.append("")
         
         return report
+    
+    def print_result(self):
+        """Print validation result to console"""
+        for line in self.to_report():
+            pprint(line)
 
 
 class LogValidator:
@@ -146,6 +154,8 @@ class LogValidator:
                         result.add_error(f"Line {line_num}: Missing callsign")
                     else:
                         result.callsign = parts[1]
+                        result.callsign = parts[1].upper()
+                        result.has_callsign = True
                 
                 elif tag == "EMAIL:":
                     if len(parts) >= 2:
@@ -303,8 +313,12 @@ class LogValidator:
             
             # ===== FINAL VALIDATION =====
             
-            if result.invalid_qso_count > 0:
+            if result.invalid_qso_count > 0 or len(result.errors) > 0:
                 result.is_valid = False
+                result.success = False
+            else:
+                result.is_valid = True
+                result.success = True
         
         return result
     
@@ -394,16 +408,16 @@ class LogValidator:
 
 
 def validate_single_log(
-                    upload,
-                    log_path: Path, 
-                    parish_file: Path, 
-                    state_province_file: Path,
-                    output_dir: Path = None,
-                    form_email: str = None,
-                    form_mode: str = None,
-                    form_power: str = None,
-                    form_station: str = None,
-                    form_overlay: str = None) -> ValidationResult:
+        upload,
+        log_path: Path, 
+        parish_file: Path, 
+        state_province_file: Path,
+        output_dir: Path = None,
+        form_email: str = None,
+        form_mode: str = None,
+        form_power: str = None,
+        form_station: str = None,
+        form_overlay: str = None) -> ValidationResult:
     """
     Validate a single log file with optional web form cross-checking.
     
@@ -441,14 +455,22 @@ def validate_single_log(
         form_station=form_station,
         form_overlay=form_overlay
     )
+
+    # success or failure
+    pprint(vars(result))
+    print('breakpoint reached')
     
-    # Write report if output directory specified
-    if output_dir:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        report_path = output_dir / f"{result.callsign}-validation.txt"
-        with open(report_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(result.to_report()))
+    # # Write report if output directory specified
+    # if output_dir:
+    #     output_dir.mkdir(parents=True, exist_ok=True)
+    #     report_path = output_dir / f"{result.callsign}-validation.txt"
+    #     with open(report_path, 'w', encoding='utf-8') as f:
+    #         f.write('\n'.join(result.to_report()))
     
+    if len(result.errors) == 0:
+        result.success = True
+    else:
+        result.success = False
     return result
 
 

@@ -12,13 +12,23 @@
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/venv/bin/python"
         },
+        
         {
-            "type": "debugpy",
             "name": "Web app",
+            "type": "debugpy",
             "request": "launch",
-            "program": "web/app.py",
-            "console": "integratedTerminal",
-            "python": "${workspaceFolder}/venv/bin/python"
+            "module": "flask",
+            "env": {
+                "FLASK_APP": "app.py",
+                "FLASK_DEBUG": "1"
+            },
+            "args": [
+                "run",
+                "--no-debugger",
+                "--no-reload"
+            ],
+            "jinja": true,
+            "justMyCode": true
         }
     ]
 }

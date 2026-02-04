@@ -84,8 +84,14 @@ class ScoreCalculator:
             'bands_worked': [],  #  
             'multipliers_by_band_mode': {},  #  
             'name': '',  #  
-            'claimed_score': 0,  #  
-        
+            'claimed_score': 0,  #  if in the cabrillo file
+            'is_rover': False,  # whether the LA station is a rover
+            'errors': [], #error message strings
+            'warnings': [], #warning message strings
+            'has_valid_power': True,
+            'has_valid_operator': True,
+            'has_email': False,
+            'is_valid': True,  # overall validity (could also be "success": True)
         }
         
 

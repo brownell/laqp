@@ -8,8 +8,9 @@ flask>=3.0.0
 flask-cors>=4.0.0
 werkzeug>=3.0.0
 
+
 # WSGI server for production
-gunicorn>=21.0.0
+gunicorn>=21.2.0
 
 # Data processing
 pandas>=2.0.0
