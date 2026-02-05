@@ -92,6 +92,9 @@ class UnifiedLogProcessor:
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f"Preparation failed: {str(e)}")
+
+            pprint(f"Done preparing: {result}")
+            print("BREAKPOINT")
             return result
         
         # Phase 3: Score
@@ -100,6 +103,9 @@ class UnifiedLogProcessor:
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f"Scoring failed: {str(e)}")
+
+            pprint(f"Done scoring: {result}")
+            print("BREAKPOINT")
             return result
         
         return result
@@ -125,7 +131,7 @@ class UnifiedLogProcessor:
             'states_worked': set(),
             'states_worked_multiplier': 0,
             'provinces_worked': set(),
-            'provinces_multiplier': 0,
+            'provinces_worked_multiplier': 0,
             'dx_worked': set(),
             'dx_worked_multiplier': 0,
             'parishes_activated': set(),
@@ -247,6 +253,9 @@ class UnifiedLogProcessor:
                     error_msg = self._validate_qso_line(line, line_num)
                     if error_msg:
                         result['warnings'].append(error_msg)
+
+        pprint(f' AFTER process log headers: result: {result}')
+        print("BREAKPOINT")
         
         # Check required fields
         if not has_start:
@@ -294,6 +303,8 @@ class UnifiedLogProcessor:
             if result['_header']['email'].lower() != form_email.lower():
                 result['warnings'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_email}")
                 
+        pprint(f"END validate + parse: errros: {result['errors']}, warnings: {result['warnings']}")
+        print("BREAKPOINT")
 
     # END of _validate_and_parse
     
@@ -329,6 +340,8 @@ class UnifiedLogProcessor:
             if len(parts) < 11:
                 continue
             
+            pprint(f"Processing QSO Line {line_num}: {parts}")
+            print("BREAKPOINT")
             # Parse QSO fields
             freq_khz = int(parts[1])
             mode = parts[2]
@@ -414,6 +427,10 @@ class UnifiedLogProcessor:
         }[result['power_level']]
         
         result['category'] = f"{loc_abbrev}_{mode_abbrev}_{power_abbrev}"
+
+
+        pprint(f"location_type: {result['location_type']}, category: {result['category']}\nPrepared {len(prepared)} QSOs; QSO Line {line_num}: Prepared {prepared}")
+        print("BREAKPOINT")
         
         return prepared
     
@@ -453,22 +470,12 @@ class UnifiedLogProcessor:
     def _score_qsos(self, qsos: List[Dict], result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
-        dups = []  # Track duplicates: (band, mode, call)
-        
         for qso in qsos:
             band = qso['band']
             mode_cat = qso['mode_category']
             sent_call = qso['sent_call']
             rcvd_call = qso['rcvd_call']
             rcvd_qth = qso['rcvd_qth'].replace('DX', '')
-            
-            # Check for duplicate
-            dup_key = (band, mode_cat,  sent_call, rcvd_call)
-            if dup_key in dups:
-                continue  # Skip duplicate
-            else:
-                dups.append(dup_key)
-                result['total_multipliers'] += 1  # Count unique QSO
             
             # Award points
             if mode_cat == 'Phone':
@@ -490,21 +497,22 @@ class UnifiedLogProcessor:
             except:
                 pass
             
-            
-            
-            # Determine multiplier based on location type
+            # Increment multiplier based on location type
             if result['location_type'] == 'NON-LA':
                 # Non-LA: LA parishes are multipliers
                 if rcvd_qth in self.parishes:
                         result['parishes_worked'].add(rcvd_qth)
                         result['parishes_worked_multiplier'] += 1
+
+                pprint(f"NON-LA basic multiplier: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
+                print("BREAKPOINT")
             
             else:  # LA station
                 # LA: states, provinces, DX are multipliers
                 if rcvd_qth in self.states_provinces:
                         if rcvd_qth in PROVINCES:
                             result['provinces_worked'].add(rcvd_qth)
-                            result['provinces_multiplier'] += 1
+                            result['provinces_worked_multiplier'] += 1
                         else:
                             result['states_worked'].add(rcvd_qth)
                             result['states_worked_multiplier'] += 1
@@ -517,14 +525,20 @@ class UnifiedLogProcessor:
                 # Track parish activations for rovers
                 if result['is_rover'] and qso['sent_qth'] in self.parishes:
                     result['parishes_activated'].add(qso['sent_qth'].replace('DX', ''))
+
+            for i in ['parishes', 'states', 'provinces', 'dx']:
+                result['total_multipliers'] += result[f'{i}_worked_multiplier']
             
             # Check for N5LCC
             if rcvd_call == 'N5LCC':
                 result['worked_n5lcc'] = True
                 result['num_n5lcc_contacts'] += 1
+                pprint(f"Found N5LCC contact, total now: {result['num_n5lcc_contacts']}")
 
         
-        pprint(f'Total multipliers: {result["total_multipliers"]}')
+        pprint(f"Done qso_points: {result['qso_points']}")            
+        pprint(f"L TOTAL MULT: {result['total_multipliers']} basic multipliers: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
+        print("BREAKPOINT")
         # Store multipliers by band/mode
         # result['multipliers_by_band_mode'] = mult_tracker
         
@@ -534,6 +548,9 @@ class UnifiedLogProcessor:
         # Calculate final score
         result['final_score'] = result['qso_points'] * max(1, result['total_multipliers'])
 
+        pprint(f'Final score before bonuses: {result["final_score"]}')
+        print('BREAKPOINT')
+
         # Calculate bonuses
         if result['worked_n5lcc']:
             result['final_score'] += N5LCC_BONUS
@@ -541,7 +558,7 @@ class UnifiedLogProcessor:
         if result['is_rover']:
             result['rover_bonus_points'] = len(result['parishes_activated']) * ROVER_PARISH_BONUS
             result['final_score'] += result['rover_bonus_points']
-        pprint(f'Final score: {result["final_score"]}')
+        pprint(f'Final score with bonuses: {result["final_score"]}')
     
     def _is_dx_callsign(self, call: str) -> bool:
         """Check if callsign is DX (not US or VE)"""
