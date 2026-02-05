@@ -9,15 +9,15 @@ import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import tempfile
+from pathlib import Path
 
-# Import your existing validation module
-# Adjust the import path based on your project structure
-# from laqp.core.validator import validate_single_log
+# Import the unified processor
+from processor import process_single_log
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
-app.config['UPLOAD_FOLDER'] = 'logs/incoming'
+app.config['UPLOAD_FOLDER'] = 'laqp/logs/incoming'
 app.config['ALLOWED_EXTENSIONS'] = {'log', 'txt', 'cbr'}
 
 # Ensure upload directory exists
@@ -162,51 +162,18 @@ def upload_log():
             tmp_path = tmp.name
         
         try:
-            # TODO: Replace this with your actual validation function
-            # result = validate_single_log(tmp_path)
+            # Process the log file (validate, prepare, score)
+            result = process_single_log(
+                Path(tmp_path),
+                email=email,
+                mode=mode,
+                power=power,
+                station=station_type,
+                overlay=overlay
+            )
             
-            # MOCK VALIDATION FOR TESTING - Replace with actual validation
-            # This simulates what your validate_single_log function should return
-            result = {
-                'success': True,  # or False if validation fails
-                'errors': [],  # List of error messages if validation fails
-                'callsign': 'K5ABC',
-                'category': 'nl_ph_lo',
-                'overlay': None,
-                'location_type': 'NON-LA',
-                'mode_category': 'Phone',
-                'power_level': 'Low',
-                'final_score': 1250,
-                'qso_points': 625,
-                'total_qsos': 350,
-                'valid_qsos': 313,
-                'total_multipliers': 2,
-                'parishes_worked': {'ORL', 'JEF', 'STB', 'PLQ', 'TAN'},
-                'parishes_worked_multiplier': 5,
-                'states_worked': set(),
-                'states_worked_multiplier': 0,
-                'provinces_worked': set(),
-                'provinces_multiplier': 0,
-                'dx_worked': set(),
-                'dx_worked_multiplier': 0,
-                'parishes_activated': set(),
-                'rover_bonus_points': 0,
-                'worked_n5lcc': True,
-                'num_n5lcc_contacts': 3,
-                'qsos_by_band': {'160': 0, '80': 45, '40': 123, '20': 142, '15': 3, '10': 0, '6': 0, '2': 0},
-                'qsos_by_mode': {'Phone': 313, 'CW/Digital': 0},
-                'qsos_by_hour': {0: 28, 1: 35, 2: 42, 3: 38, 4: 31, 5: 29, 6: 26, 7: 24, 8: 22, 9: 18, 10: 12, 11: 8},
-                'bands_worked': ['80', '40', '20', '15'],
-                'multipliers_by_band_mode': {
-                    '40-Phone': {'ORL', 'JEF', 'STB', 'PLQ'},
-                    '20-Phone': {'ORL', 'JEF', 'TAN'},
-                    '80-Phone': {'ORL', 'JEF'}
-                },
-                'name': 'John Smith',
-                'claimed_score': 1250
-            }
-            
-            if result.get('success', True):
+            # Check if processing succeeded
+            if result.get('is_valid', True) and not result.get('errors'):
                 # Save the accepted log
                 final_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 with open(final_path, 'w') as f:
@@ -217,15 +184,15 @@ def upload_log():
                 
                 return jsonify({
                     'success': True,
-                    'message': 'Log file validated and accepted successfully!',
+                    'message': 'Log file processed successfully!',
                     'result': display_result
                 })
             else:
-                # Validation failed
-                errors = result.get('errors', ['Unknown validation error'])
+                # Processing failed - return errors
+                errors = result.get('errors', ['Unknown processing error'])
                 return jsonify({
                     'success': False,
-                    'error': 'Log validation failed',
+                    'error': 'Log processing failed',
                     'errors': errors
                 }), 400
                 
