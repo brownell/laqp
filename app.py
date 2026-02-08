@@ -76,7 +76,7 @@ def format_result_for_display(result):
     display_result['provinces_worked'] = format_set_as_list(result.get('provinces_worked', set()))
     display_result['dx_worked'] = format_set_as_list(result.get('dx_worked', set()))
     display_result['parishes_activated'] = format_set_as_list(result.get('parishes_activated', set()))
-    display_result['bands_worked'] = result.get('bands_worked', [])
+    display_result['bands_worked'] = format_set_as_list(result.get('bands_worked', set()))
     
     # Format QSOs by band
     qsos_by_band = result.get('qsos_by_band', {})

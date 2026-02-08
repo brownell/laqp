@@ -1,5 +1,16 @@
 # Louisiana QSO Party - Unified Log Processor Integration
 
+Brownell Notes
+Funtional FLow:
+process_single_log - creates UnifiedLogProcessor instance
+process_log (in UnifiedLogProcessor instance; creates result object)
+*** ambiguous DX????
+    validate_and_parse - stores parsed QSOs - creates error and warning messages
+    prepare_qsos - creates prepared object
+    score_qsos
+
+
+
 This update refactors your validation, preparation, and scoring modules into a single unified processor that:
 
 1. ✅ Works in-memory (no intermediate files)

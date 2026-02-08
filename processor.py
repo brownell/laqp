@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Set, Optional
 from datetime import datetime
+from unittest import result
 
 # Import your existing modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -141,7 +142,7 @@ class UnifiedLogProcessor:
             'qsos_by_band': {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0},
             'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
             'qsos_by_hour': {i: 0 for i in range(12)},
-            'bands_worked': [],
+            'bands_worked': set(),
             'multipliers_by_band_mode': {},
             'claimed_score': 0,
             'errors': [],
@@ -254,8 +255,8 @@ class UnifiedLogProcessor:
                     if error_msg:
                         result['warnings'].append(error_msg)
 
-        pprint(f' AFTER process log headers: result: {result}')
-        print("BREAKPOINT")
+        # pprint(f' AFTER process log headers: result: {result}')
+        # print("BREAKPOINT")
         
         # Check required fields
         if not has_start:
@@ -303,8 +304,8 @@ class UnifiedLogProcessor:
             if result['_header']['email'].lower() != form_email.lower():
                 result['warnings'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_email}")
                 
-        pprint(f"END validate + parse: errros: {result['errors']}, warnings: {result['warnings']}")
-        print("BREAKPOINT")
+        # pprint(f"END validate + parse: errros: {result['errors']}, warnings: {result['warnings']}\nresult: {result}")
+        # print("BREAKPOINT")
 
     # END of _validate_and_parse
     
@@ -340,8 +341,8 @@ class UnifiedLogProcessor:
             if len(parts) < 11:
                 continue
             
-            pprint(f"Processing QSO Line {line_num}: {parts}")
-            print("BREAKPOINT")
+            # pprint(f"Processing QSO Line {line_num}: {parts}")
+            # print("BREAKPOINT")
             # Parse QSO fields
             freq_khz = int(parts[1])
             mode = parts[2]
@@ -402,6 +403,7 @@ class UnifiedLogProcessor:
             # pprint(f"Prepared QSO Line {line_num}: {prepared}")
             # pprint("-----")
         
+        # Get info that is NOT specific to each QSO but is needed for scoring (e.g., location type)
         # Determine location type from prepared QSOs
         result['location_type'] = self._determine_location_type(prepared, result['_header'])
         result['is_rover'] = (result['location_type'] == 'LA-ROVER')
@@ -429,10 +431,12 @@ class UnifiedLogProcessor:
         result['category'] = f"{loc_abbrev}_{mode_abbrev}_{power_abbrev}"
 
 
-        pprint(f"location_type: {result['location_type']}, category: {result['category']}\nPrepared {len(prepared)} QSOs; QSO Line {line_num}: Prepared {prepared}")
-        print("BREAKPOINT")
+        # pprint(f"location_type: {result['location_type']}, category: {result['category']}\nPrepared {len(prepared)} QSOs; QSO Line {line_num}: Prepared {prepared}")
+        # print("BREAKPOINT")
         
         return prepared
+    
+    ## END of prepare_qsos
     
     def _determine_location_type(self, qsos: List[Dict], header: Dict) -> str:
         """Determine location type from QSOs"""
@@ -470,12 +474,41 @@ class UnifiedLogProcessor:
     def _score_qsos(self, qsos: List[Dict], result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
+        # for checking duplicate qsos: same band, mode, and rcvd_qth is a duplicate
+        dup_check = []
+
         for qso in qsos:
             band = qso['band']
             mode_cat = qso['mode_category']
             sent_call = qso['sent_call']
             rcvd_call = qso['rcvd_call']
             rcvd_qth = qso['rcvd_qth'].replace('DX', '')
+
+            # Ignore if a duplicate -- no points
+            dup_key = band + mode_cat + rcvd_qth
+            if dup_key in dup_check:
+                pprint(f"Duplicate QSO detected: Line {qso['line_num']} QSO: {rcvd_qth}  {rcvd_call} on {band} {mode_cat}")
+                result['warnings'].append(f"Duplicate QSO: Band {band}, Mode {mode_cat}, Rcvd QTH {rcvd_qth} (Line {qso['line_num']})")
+                if rcvd_call == 'N5LCC':
+                    result['worked_n5lcc'] = True
+                    result['num_n5lcc_contacts'] += 1
+                continue
+            else:
+                pprint(f"NOT Duplicate QSO: Line {qso['line_num']} QSO: {rcvd_qth}  {rcvd_call} on {band} {mode_cat}")
+                dup_check.append(dup_key)
+                    
+
+            # Track bands worked and QSO by band (for display only, does not impact score)
+            result['bands_worked'].add(band)
+            result['qsos_by_band'][band] += 1
+
+            # Track qsos by hour (2-hour blocks)
+            try:
+                hour = int(qso['time'][:2])  # hour of the qso
+                if hour in result['qsos_by_hour']:
+                    result['qsos_by_hour'][hour] += 1
+            except:
+                pass
             
             # Award points
             if mode_cat == 'Phone':
@@ -484,81 +517,68 @@ class UnifiedLogProcessor:
             else:  # CW/Digital
                 result['qso_points'] += CW_DIGITAL_QSO_POINTS
                 result['qsos_by_mode']['CW/Digital'] += 1
-            
-            # Track band
-            if band in result['qsos_by_band']:
-                result['qsos_by_band'][band] += 1
-            
-            # Track hour
-            try:
-                hour = int(qso['time'][:2]) // 2  # 2-hour blocks
-                if hour in result['qsos_by_hour']:
-                    result['qsos_by_hour'][hour] += 1
-            except:
-                pass
-            
-            # Increment multiplier based on location type
-            if result['location_type'] == 'NON-LA':
-                # Non-LA: LA parishes are multipliers
-                if rcvd_qth in self.parishes:
-                        result['parishes_worked'].add(rcvd_qth)
-                        result['parishes_worked_multiplier'] += 1
 
-                pprint(f"NON-LA basic multiplier: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
-                print("BREAKPOINT")
-            
-            else:  # LA station
-                # LA: states, provinces, DX are multipliers
-                if rcvd_qth in self.states_provinces:
-                        if rcvd_qth in PROVINCES:
-                            result['provinces_worked'].add(rcvd_qth)
-                            result['provinces_worked_multiplier'] += 1
-                        else:
-                            result['states_worked'].add(rcvd_qth)
-                            result['states_worked_multiplier'] += 1
-
-                elif rcvd_qth.endswith('DX'):
-                    dx_country = rcvd_qth
-                    result['dx_worked'].add(dx_country)
-                    result['dx_worked_multiplier'] += 1
-                
-                # Track parish activations for rovers
-                if result['is_rover'] and qso['sent_qth'] in self.parishes:
-                    result['parishes_activated'].add(qso['sent_qth'].replace('DX', ''))
-
-            for i in ['parishes', 'states', 'provinces', 'dx']:
-                result['total_multipliers'] += result[f'{i}_worked_multiplier']
-            
             # Check for N5LCC
             if rcvd_call == 'N5LCC':
                 result['worked_n5lcc'] = True
                 result['num_n5lcc_contacts'] += 1
                 pprint(f"Found N5LCC contact, total now: {result['num_n5lcc_contacts']}")
 
-        
-        pprint(f"Done qso_points: {result['qso_points']}")            
+            ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
+            if rcvd_qth in self.parishes:
+                    result['parishes_worked'].add(rcvd_qth)
+                    result['parishes_worked_multiplier'] += 1
+            
+            # LA stations get state, province, and DX multipliers
+            elif result['location_type'] == 'LA-FIXED' or result['location_type'] == 'LA-ROVER':
+                # LA: states, provinces, DX are multipliers
+                if rcvd_qth in self.states_provinces:
+                    if rcvd_qth in PROVINCES:
+                        result['provinces_worked'].add(rcvd_qth)
+                        result['provinces_worked_multiplier'] += 1
+                    else:
+                        result['states_worked'].add(rcvd_qth)
+                        result['states_worked_multiplier'] += 1
+
+                else:
+                    result['dx_worked'].add(rcvd_qth)
+                    result['dx_worked_multiplier'] += 1
+                
+                # Track parish activations for rovers
+                if result['is_rover'] and qso['sent_qth'] in self.parishes:
+                    result['parishes_activated'].add(qso['sent_qth'])
+
+            pprint(f"QSO_points: {result['qso_points']}")
+
+        pprint(f"Done qso_points: {result['qso_points']}")
+        print("BREAKPOINT")
+
+        # Finished with points, now sum the individual multipliers
+        for i in ['parishes', 'states', 'provinces', 'dx']:
+            result['total_multipliers'] += result[f'{i}_worked_multiplier']
+          
         pprint(f"L TOTAL MULT: {result['total_multipliers']} basic multipliers: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
         print("BREAKPOINT")
-        # Store multipliers by band/mode
-        # result['multipliers_by_band_mode'] = mult_tracker
-        
-        # Calculate bands worked
-        result['bands_worked'] = sorted([band for band, count in result['qsos_by_band'].items() if count > 0])
-        
-        # Calculate final score
+
+        ## score before bonuses
         result['final_score'] = result['qso_points'] * max(1, result['total_multipliers'])
 
         pprint(f'Final score before bonuses: {result["final_score"]}')
         print('BREAKPOINT')
 
-        # Calculate bonuses
+        ## add bonus points for one or more N5LCC contacts
         if result['worked_n5lcc']:
             result['final_score'] += N5LCC_BONUS
-        
-        if result['is_rover']:
+
+        ## Add rover bonus points for activated parishes
+        if result['location_type'] == 'LA-ROVER':
             result['rover_bonus_points'] = len(result['parishes_activated']) * ROVER_PARISH_BONUS
             result['final_score'] += result['rover_bonus_points']
+            
         pprint(f'Final score with bonuses: {result["final_score"]}')
+        print('BREAKPOINT')
+
+    ## END of score_qsos
     
     def _is_dx_callsign(self, call: str) -> bool:
         """Check if callsign is DX (not US or VE)"""
@@ -584,7 +604,8 @@ class UnifiedLogProcessor:
             if char.isdigit():
                 return call[:i]
         return call
-
+    
+## End of UnifiedLogProcessor class
 
 # Convenience functions for single log and batch processing
 
