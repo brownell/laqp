@@ -22,8 +22,8 @@ def main():
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
     result = process_batch_logs(INCOMING_LOGS)
-    pprint("Batch processing complete. Results:")
-    pprint(result)
+    # pprint("Batch processing complete. Results:")
+    # pprint(result)
 
 if __name__ == "__main__":
     main()
