@@ -163,6 +163,7 @@ def upload_log():
         
         try:
             # Process the log file (validate, prepare, score)
+            ## this function is ONLY called from the web interface
             result = process_single_log(
                 Path(tmp_path),
                 email=email,

@@ -8,36 +8,22 @@ def main():
     import os, sys
     from datetime import datetime
     from pathlib import Path
+    from pprint import pprint
 
     # Import the unified processor
-    from processor import process_single_log
+    from processor import process_batch_logs
 
     from config.config import (
         INCOMING_LOGS,
-        LA_PARISHES_FILE,
-        WVE_ABBREVS_FILE,
-        DATA_OUTPUT_DIR
+
     )
 
     # Add project to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
-    log_files = sorted(INCOMING_LOGS.glob('*.log'))
-    if log_files:
-
-        print(f"Found {len(log_files)} log files to validate\n")
-
-        for log_file in log_files:
-            print(f"Validating {log_file.name}...", end=" ")
-
-            log_content = f.read()
-            print(f"Processing log: {log_path}")
-            result = process_single_log(log_content)
-            print(f"Result for {log_path}: {result}")
-            print('BREEAKPOINT')
-    else:
-
-
+    result = process_batch_logs(INCOMING_LOGS)
+    pprint("Batch processing complete. Results:")
+    pprint(result)
 
 if __name__ == "__main__":
     main()

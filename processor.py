@@ -54,12 +54,14 @@ class UnifiedLogProcessor:
         # Ambiguous QTH that need DX suffix
         self.ambiguous_dx_qth = {"ON", "PA", "CT", "TN", "LA", "HI", "OK", "CO", "OH"}
     
-    def process_log(self, log_path: Path,
-                   form_email: Optional[str] = None,
-                   form_mode: Optional[str] = None,
-                   form_power: Optional[str] = None,
-                   form_station: Optional[str] = None,
-                   form_overlay: Optional[str] = None) -> Dict:
+    def process_log_details(self,
+        log_path: Path = None,
+        form_email: Optional[str] = None,
+        form_mode: Optional[str] = None,
+        form_power: Optional[str] = None,
+        form_station: Optional[str] = None,
+        form_overlay: Optional[str] = None) -> Dict:
+
         """
         Complete processing pipeline: validate → prepare → score
         
@@ -156,107 +158,26 @@ class UnifiedLogProcessor:
             '_header': {}
         }
     
-    def _validate_and_parse(self, log_path: Path, result: Dict,
-                           form_email: Optional[str],
-                           form_mode: Optional[str],
-                           form_power: Optional[str],
-                           form_station: Optional[str],
-                           form_overlay: Optional[str]):
-        """Phase 1: Validate and parse header/QSOs"""
+    def _validate_and_parse(self,
+            log_path: Path,
+            result: Dict,
+            form_email: Optional[str],
+            form_mode: Optional[str],
+            form_power: Optional[str],
+            form_station: Optional[str],
+            form_overlay: Optional[str]):
         
+        """Phase 1: Validate and parse header/QSOs"""
         has_start = False
         has_end = False
         qso_modes = set()
         
-        with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
-            for line_num, line in enumerate(f, 1):
-                line = line.strip().upper()
-                if not line:
-                    continue
-                
-                parts = line.split()
-                if not parts:
-                    continue
-                
-                tag = parts[0]
-                
-                # Parse header
-                if tag == "START-OF-LOG:":
-                    has_start = True
-                    if len(parts) < 2 or parts[1] != "3.0":
-                        result['warnings'].append(f"Line {line_num}: Expected START-OF-LOG: 3.0")
-                
-                elif tag == "END-OF-LOG:":
-                    has_end = True
-                
-                elif tag == "CALLSIGN:":
-                    if len(parts) < 2:
-                        result['errors'].append(f"Line {line_num}: Missing callsign")
-                        result['is_valid'] = False
-                    else:
-                        result['callsign'] = parts[1]
-                
-                elif tag == "NAME:":
-                    result['name'] = ' '.join(parts[1:]) if len(parts) > 1 else ''
-                
-                elif tag == "EMAIL:":
-                    if len(parts) >= 2:
-                        result['_header']['email'] = parts[1]
-                        result['has_email'] = True
-                
-                elif tag == "CLAIMED-SCORE:":
-                    if len(parts) > 1:
-                        try:
-                            result['claimed_score'] = int(parts[1])
-                        except ValueError:
-                            result['claimed_score'] = 0
-                
-                elif tag == "CONTEST:":
-                    if len(parts) < 2 or parts[1] not in ['LA-QSO-PARTY', 'LOUISIANA-QSO-PARTY', 'LAQP']:
-                        result['errors'].append(f"Line {line_num}: CONTEST must be LA-QSO-PARTY")
-                        result['is_valid'] = False
-                
-                elif tag == "CATEGORY-POWER:":
-                    if len(parts) >= 2:
-                        result['_header']['power'] = parts[1]
-                        result['has_valid_power'] = True
-                        if parts[1] not in ['QRP', 'LOW', 'HIGH']:
-                            result['errors'].append(f"Line {line_num}: CATEGORY-POWER must be QRP, LOW, or HIGH")
-                            result['is_valid'] = False
-                    else:
-                        result['has_valid_power'] = False
-                
-                elif tag == "CATEGORY-OPERATOR:":
-                    result['has_valid_operator'] = True
-                
-                elif tag == "CATEGORY-STATION:":
-                    if len(parts) >= 2:
-                        result['_header']['station'] = parts[1]
-                        if parts[1] not in ['FIXED', 'ROVER', 'MOBILE', 'PORTABLE']:
-                            result['warnings'].append(f"Line {line_num}: CATEGORY-STATION should be FIXED or ROVER")
-                
-                elif tag == "CATEGORY-OVERLAY:":
-                    if len(parts) >= 2:
-                        result['_header']['overlay'] = parts[1]
-                        if parts[1] not in ['WIRES', 'TB-WIRES', 'POTA']:
-                            result['warnings'].append(f"Line {line_num}: CATEGORY-OVERLAY should be WIRES, TB-WIRES, or POTA")
-                
-                # Store QSO lines for later processing
-                elif tag == "QSO:":
-                    result['total_qsos'] += 1
-                    result['_qso_lines'].append((line_num, line))
-                    
-                    # Track modes
-                    if len(parts) >= 3:
-                        qso_modes.add(parts[2])
-                    
-                    # Basic QSO validation
-                    error_msg = self._validate_qso_line(line, line_num)
-                    if error_msg:
-                        result['warnings'].append(error_msg)
+        if log_path:
+            with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                self._log_line_by_line(f, result)
 
         # pprint(f' AFTER process log headers: result: {result}')
-        # print("BREAKPOINT")
+        # print("BREAKPOINT")   
         
         # Check required fields
         if not has_start:
@@ -308,6 +229,68 @@ class UnifiedLogProcessor:
         # print("BREAKPOINT")
 
     # END of _validate_and_parse
+
+    def _log_line_by_line(self, log_path, result):
+        for line_num, line in enumerate(log_path, 1):
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Check for START-OF-LOG and END-OF-LOG
+            if line.startswith('START-OF-LOG:'):
+                has_start = True
+                continue
+            if line.startswith('END-OF-LOG:'):
+                has_end = True
+                continue
+            
+            # Parse header fields (CALLSIGN, EMAIL, CATEGORY-POWER, etc.)
+            if ':' in line and not line.startswith('QSO:'):
+                key, value = line.split(':', 1)
+                key = key.strip().lower()
+                value = value.strip()
+                result['_header'][key] = value
+                
+                if key == 'callsign':
+                    result['callsign'] = value.upper()
+                elif key == 'email':
+                    result['has_email'] = True
+                elif key == 'category-power':
+                    power_value = value.upper()
+                    if power_value in ('QRP', 'LOW', 'HIGH'):
+                        result['has_valid_power'] = True
+                        result['_header']['power'] = power_value
+                    else:
+                        result['has_valid_power'] = False
+                        result['warnings'].append(f"Unrecognized power level: {value}")
+                elif key == 'category-station':
+                    station_value = value.upper()
+                    if station_value in ('FIXED', 'PORTABLE', 'MOBILE', 'ROVER'):
+                        result['_header']['station'] = station_value
+                    else:
+                        result['warnings'].append(f"Unrecognized station type: {value}")
+                elif key == 'category-overlay':
+                    overlay_value = value.upper()
+                    if overlay_value in ('WIRES', 'TB-WIRES', 'POTA'):
+                        result['_header']['overlay'] = overlay_value
+                    else:
+                        result['warnings'].append(f"Unrecognized overlay: {value}")
+                
+                continue
+            
+            # Validate QSO lines and collect them for later processing
+            if line.startswith('QSO:'):
+                qso_error = self._validate_qso_line(line, line_num)
+                if qso_error:
+                    result['errors'].append(qso_error)
+                    result['is_valid'] = False
+                else:
+                    result['_qso_lines'].append((line_num, line))
+                    # parts = line.split()
+                    # if len(parts) >= 3:
+                    #     qso_modes.add(len(parts[2]))
+
+        return result
     
     def _validate_qso_line(self, line: str, line_num: int) -> Optional[str]:
         """Basic QSO line validation - returns error message or None"""
@@ -607,9 +590,9 @@ class UnifiedLogProcessor:
     
 ## End of UnifiedLogProcessor class
 
-# Convenience functions for single log and batch processing
-
-def process_single_log(log_path: Path, 
+# Convenience functions for single log processing in WEB app ONLY (not used for batch processing
+def process_single_log(log_path: Path = None,
+                       log_content: str = None,
                       parish_file: Path = None,
                       state_province_file: Path = None,
                       **form_data) -> Dict:
@@ -631,7 +614,8 @@ def process_single_log(log_path: Path,
         state_province_file = Path(WVE_ABBREVS_FILE)
     
     processor = UnifiedLogProcessor(parish_file, state_province_file)
-    return processor.process_log(
+
+    return processor.process_log_details(
         log_path,
         form_email=form_data.get('email'),
         form_mode=form_data.get('mode'),
@@ -642,8 +626,8 @@ def process_single_log(log_path: Path,
 
 
 def process_batch_logs(log_dir: Path,
-                      parish_file: Path = None,
-                      state_province_file: Path = None) -> List[Dict]:
+    parish_file: Path = None,
+    state_province_file: Path = None) -> Dict:
     """
     Process multiple log files (for batch processing).
     
@@ -661,10 +645,15 @@ def process_batch_logs(log_dir: Path,
         state_province_file = Path(WVE_ABBREVS_FILE)
     
     processor = UnifiedLogProcessor(parish_file, state_province_file)
+
     results = []
-    
-    for log_file in log_dir.glob('*.log'):
-        result = processor.process_log(log_file)
+    for log_path in log_dir.glob('*.log'):
+        result = processor.process_log_details(log_path)
+        if result['claimed_score'] != result['final_score']:
+            pprint(f"Score mismatch for {log_path}: claimed {result['claimed_score']} vs calculated {result['final_score']}")
+            print("BREAKPOINT")
+        else:
+            print(f"SUCCESS!!!  Score match for {log_path} Claimed {result['claimed_score']} vs calculated {result['final_score']}")
         results.append(result)
     
     return results

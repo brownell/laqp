@@ -3,7 +3,8 @@
 Brownell Notes
 Funtional FLow:
 process_single_log - creates UnifiedLogProcessor instance
-process_log (in UnifiedLogProcessor instance; creates result object)
+process_batch_logs - does all the log files in the incoming directory
+process_log_details (in UnifiedLogProcessor instance; creates result object)
 *** ambiguous DX????
     validate_and_parse - stores parsed QSOs - creates error and warning messages
     prepare_qsos - creates prepared object
