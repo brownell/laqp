@@ -39,29 +39,14 @@ TIME_FORMAT = "%H%M"
 # ============================================================
 
 # Input logs
-DATA_DIR = BASE_DIR / 'data'
-INCOMING_LOGS = DATA_DIR / 'logs' / 'incoming'
-VALIDATED_LOGS = DATA_DIR / 'logs' / 'validated'
-PREPARED_LOGS = DATA_DIR / 'logs' / 'prepared'
-PROBLEMS_LOGS = DATA_DIR / 'logs' / 'problems'
-
-# Output directory structure (NEW)
-DATA_OUTPUT_DIR = DATA_DIR / 'output'
-INDIVIDUAL_RESULTS_DIR = DATA_OUTPUT_DIR / 'individual_results'
-
-# Legacy directories (to be removed)
-OLD_SCORES_DIR = DATA_DIR / 'output' / 'scores'
-OLD_STATISTICS_DIR = DATA_DIR / 'output' / 'statistics'
-
-# Keep for compatibility during transition
-SCORES_DIR = OLD_SCORES_DIR
-STATISTICS_DIR = OLD_STATISTICS_DIR
+INCOMING_LOGS = BASE_DIR / 'batch_input'
+HTML_RESULTS = BASE_DIR / 'batch_results'
 
 # ============================================================
 # REFERENCE DATA FILES
 # ============================================================
 
-REFERENCE_DATA_DIR = DATA_DIR / 'reference_data'
+REFERENCE_DATA_DIR = BASE_DIR / 'reference_data'
 LA_PARISHES_FILE = REFERENCE_DATA_DIR / 'la_parishes.txt'
 WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
 
@@ -202,26 +187,6 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # UTILITY FUNCTIONS
 # ============================================================
 
-def ensure_initial_directories():
-    """Ensure all required directories exist"""
-    initial_directories = [
-        # Log directories
-        VALIDATED_LOGS,
-        PREPARED_LOGS,
-        PROBLEMS_LOGS,
-        
-        # Output directories (NEW structure)
-        DATA_OUTPUT_DIR,
-        INDIVIDUAL_RESULTS_DIR
-    ]
-    
-    for directory in initial_directories:
-        path = Path(directory)
-        if path.exists():
-            shutil.rmtree(path)
-        path.mkdir(parents=True, exist_ok=True)
-
-
 def get_contest_year():
     """Get the current contest year"""
     return CONTEST_YEAR
@@ -230,10 +195,6 @@ def get_contest_year():
 def get_contest_name():
     """Get the full contest name with year"""
     return f"{CONTEST_NAME} {CONTEST_YEAR}"
-
-
-# Ensure directories exist on import
-ensure_initial_directories()
 
 # Category definitions: (short_name, full_name)
 CATEGORIES = {

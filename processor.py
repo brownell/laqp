@@ -97,8 +97,8 @@ class UnifiedLogProcessor:
             result['is_valid'] = False
             result['errors'].append(f"Preparation failed: {str(e)}")
 
-            pprint(f"Done preparing: {result}")
-            print("BREAKPOINT")
+            # pprint(f"Done preparing: {result}")
+            # print("BREAKPOINT")
             return result
         
         # Phase 3: Score
@@ -108,8 +108,8 @@ class UnifiedLogProcessor:
             result['is_valid'] = False
             result['errors'].append(f"Scoring failed: {str(e)}")
 
-            pprint(f"Done scoring: {result}")
-            print("BREAKPOINT")
+            # pprint(f"Done scoring: {result}")
+            # print("BREAKPOINT")
             return result
         
         return result
@@ -169,13 +169,11 @@ class UnifiedLogProcessor:
             form_overlay: Optional[str]):
 
         """Phase 1: Validate and parse header/QSOs"""
-        has_start = False
-        has_end = False
         qso_modes = set()
         
         if log_path:
             with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
-                self._log_line_by_line(f, result)
+                has_start, has_end = self._log_line_by_line(f, result)
 
         # pprint(f' AFTER process log headers: result: {result}')
         # print("BREAKPOINT")   
@@ -232,7 +230,12 @@ class UnifiedLogProcessor:
     # END of _validate_and_parse
 
     def _log_line_by_line(self, log_path, result: Dict):
+        
+        has_start = False
+        has_end = False
+        
         for line_num, line in enumerate(log_path, 1):
+            # print(f'Processing line {line_num}: {line.strip()}')
             line = line.strip()
             if not line:
                 continue
@@ -276,6 +279,11 @@ class UnifiedLogProcessor:
                         result['_header']['overlay'] = overlay_value
                     else:
                         result['warnings'].append(f"Unrecognized overlay: {value}")
+                elif key == 'claimed-score':
+                    try:
+                        result['claimed_score'] = int(value)
+                    except ValueError:
+                        result['warnings'].append(f"Invalid claimed score format: {value}")
                 
                 continue
             
@@ -287,9 +295,10 @@ class UnifiedLogProcessor:
                     result['is_valid'] = False
                 else:
                     result['_qso_lines'].append((line_num, line))
+                    result['total_qsos'] += 1
 
-        return result
-    
+        return has_start, has_end
+
     def _validate_qso_line(self, line: str, line_num: int) -> Optional[str]:
         """Basic QSO line validation - returns error message or None"""
         parts = line.split()
@@ -315,7 +324,7 @@ class UnifiedLogProcessor:
     def _prepare_qsos(self, result: Dict) -> List[Dict]:
         """Phase 2: Prepare QSOs (convert freq, expand multi-parish, etc.)"""
         prepared = []
-        print(f"Initial prepared: {id(prepared)}")
+        # print(f"Initial prepared: {id(prepared)}")
         
         for line_num, qso_line in result['_qso_lines']:
             parts = qso_line.split()
@@ -458,7 +467,7 @@ class UnifiedLogProcessor:
         # a mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These should be allowed but not count for multipliers.  A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points.
         mult_dups = []
         qso_dups = []
-
+        # pprint(f"QSO Scoring for {result['callsign'].upper()}")
         for qso in qsos:
             band = qso['band']
             mode_cat = qso['mode_category']
@@ -473,10 +482,14 @@ class UnifiedLogProcessor:
             # if not a duplicate for QSO points purposes, get the points. Else add to the dup list and skip points
             qso_check = band + mode_cat + rcvd_call
             if qso_check in qso_dups:
-                pprint(f"Duplicate QSO detected band/mode/call worked: Line {qso['line_num']} band {band} mode {mode_cat} call worked {rcvd_call}")
-                result['warnings'].append(f"Duplicate QSO detected band/mode/call worked: Line {qso['line_num']} band {band} mode {mode_cat} call worked {rcvd_call}")
+                index = qso_dups.index(qso_check)
+                pprint(f"in qso_dups {index} / {qso_dups[index]} / {qso_check}")
+                # pprint(f"Duplicate QSO detected band/mode/call worked: Line {qso['line_num']} band {band} mode {mode_cat} call worked {rcvd_call}")
+                # pprint(f"QSO Dup Line {qso['line_num']} {qso['band']} {qso['mode_category']} {rcvd_call} {rcvd_qth}")
+                result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
             else:  ## not a duplicate for points, so get points
                 qso_dups.append(qso_check)
+                result['total_qsos'] += 1
 
                 # Track bands worked and QSO by band (for display only, does not impact score)
                 result['bands_worked'].add(band)
@@ -502,14 +515,23 @@ class UnifiedLogProcessor:
                 if rcvd_call == 'N5LCC':
                     result['worked_n5lcc'] = True
                     result['num_n5lcc_contacts'] += 1
-                    pprint(f"Found N5LCC contact, total now: {result['num_n5lcc_contacts']}")
+                    # pprint(f"Found N5LCC contact, total now: {result['num_n5lcc_contacts']}")
 
             ## add to correct multiplier list even if a dup for points, but check for mult dup first and warn if so.  This allows the multiplier to be counted for the first QSO but not for subsequent dup QSOs.
             if mult_check in mult_dups:
-                pprint(f"Duplicate Multiplier detected band/mode/qth worked: Line {qso['line_num']} band {band} mode {mode_cat} qth worked {rcvd_qth}")
-                result['warnings'].append(f"Duplicate QSO detected band/mode/qth worked: Line {qso['line_num']} band {band} mode {mode_cat} qth worked {rcvd_qth}")
+                if mult_check == '20PhoneOUAC':
+                    pprint("BREAKPOINT SPECIAL CASE 20PhoneOUAC")
+                index = mult_dups.index(mult_check)
+                pprint(f"in mult_dups {index} / {mult_dups[index]} / {mult_check}")
+                # pprint(f"Duplicate Multiplier detected band/mode/qth worked: Line {qso['line_num']} band {band} mode {mode_cat} qth worked {rcvd_qth}")
+                # pprint(f"Mult Dup Line {qso['line_num']} {qso['band']} {qso['mode_category']} {rcvd_call} {rcvd_qth}")
+                result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{rcvd_qth}")
+                # pprint(f"warnings: {result['warnings']}")
+                # print("BREAKPOINT")
 
             else:
+                if mult_check == '20PhoneOUAC':
+                    pprint("BREAKPOINT SPECIAL CASE 20PhoneOUAC")
                 mult_dups.append(mult_check)
                 ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
                 if rcvd_qth in self.parishes:
@@ -535,15 +557,15 @@ class UnifiedLogProcessor:
                     if result['is_rover'] and qso['sent_qth'] in self.parishes:
                         result['parishes_activated'].add(qso['sent_qth'])
 
-        pprint(f"Done qso_points: {result['qso_points']}")
-        print("BREAKPOINT")
+        # pprint(f"Done qso_points: {result['qso_points']}")
+        # print("BREAKPOINT")
 
         # Finished with points, now sum the individual multipliers
         for i in ['parishes', 'states', 'provinces', 'dx']:
             result['total_multipliers'] += result[f'{i}_worked_multiplier']
           
-        pprint(f"L TOTAL MULT: {result['total_multipliers']} basic multipliers: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
-        print("BREAKPOINT")
+        # pprint(f"L TOTAL MULT: {result['total_multipliers']} basic multipliers: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
+        # print("BREAKPOINT")
 
         ## score before bonuses
         result['final_score'] = result['qso_points'] * max(1, result['total_multipliers'])
@@ -560,8 +582,8 @@ class UnifiedLogProcessor:
             result['rover_bonus_points'] = len(result['parishes_activated']) * ROVER_PARISH_BONUS
             result['final_score'] += result['rover_bonus_points']
             
-        pprint(f'Final score with bonuses: {result["final_score"]}')
-        print('BREAKPOINT')
+        # pprint(f'Final score with bonuses: {result["final_score"]}')
+        # print('BREAKPOINT')
 
     ## END of score_qsos
     
@@ -653,10 +675,22 @@ def process_batch_logs(log_dir: Path,
     for log_path in log_dir.glob('*.log'):
         result = processor.process_log_details(log_path)
         if result['claimed_score'] != result['final_score']:
-            pprint(f"Score mismatch for {log_path}: claimed {result['claimed_score']} vs calculated {result['final_score']}")
-            print("BREAKPOINT")
+            pprint(f"Score mismatch for {str(log_path).split('/')[-1].split('.')[0].upper()}: claimed / calculated {result['claimed_score']} / {result['final_score']}")
+            # if len(result['errors']) > 0:
+            #     for line in result['errors']:
+            #         pprint(f"  ERR: {line}")            
+            # if len(result['warnings']) > 0:
+            #     for line in result['warnings']:
+            #         if line.startswith("Duplicate Multiplier"):
+            #             pprint(f"  WRN: {line}")
+            #         if line.startswith("Duplicate QSO"):
+            #             pprint(f"  WRN: {line}")
+            # pprint(f'result: {result}')
+            pprint("BREAKPOINT")
         else:
-            print(f"SUCCESS!!!  Score match for {str(log_path).split('/')[-1].split('.')[0].upper()} Claimed {result['claimed_score']} vs calculated {result['final_score']}")
+            pprint(f"SUCCESS!!!  Score match for {str(log_path).split('/')[-1].split('.')[0].upper()} Claimed {result['claimed_score']} vs calculated {result['final_score']}\nErrors: {len(result['errors'])}  Warnings: {len(result['warnings'])}")
+            pprint("BREAKPOINT")
+            
         results.append(result)
     
     return results
