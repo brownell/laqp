@@ -483,13 +483,12 @@ class UnifiedLogProcessor:
             qso_check = band + mode_cat + rcvd_call
             if qso_check in qso_dups:
                 index = qso_dups.index(qso_check)
-                pprint(f"in qso_dups {index} / {qso_dups[index]} / {qso_check}")
+                # pprint(f"in qso_dups {index} / {qso_dups[index]} / {qso_check}")
                 # pprint(f"Duplicate QSO detected band/mode/call worked: Line {qso['line_num']} band {band} mode {mode_cat} call worked {rcvd_call}")
                 # pprint(f"QSO Dup Line {qso['line_num']} {qso['band']} {qso['mode_category']} {rcvd_call} {rcvd_qth}")
                 result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
             else:  ## not a duplicate for points, so get points
                 qso_dups.append(qso_check)
-                result['total_qsos'] += 1
 
                 # Track bands worked and QSO by band (for display only, does not impact score)
                 result['bands_worked'].add(band)
@@ -519,10 +518,8 @@ class UnifiedLogProcessor:
 
             ## add to correct multiplier list even if a dup for points, but check for mult dup first and warn if so.  This allows the multiplier to be counted for the first QSO but not for subsequent dup QSOs.
             if mult_check in mult_dups:
-                if mult_check == '20PhoneOUAC':
-                    pprint("BREAKPOINT SPECIAL CASE 20PhoneOUAC")
-                index = mult_dups.index(mult_check)
-                pprint(f"in mult_dups {index} / {mult_dups[index]} / {mult_check}")
+                # index = mult_dups.index(mult_check)
+                # pprint(f"in mult_dups {index} / {mult_dups[index]} / {mult_check}")
                 # pprint(f"Duplicate Multiplier detected band/mode/qth worked: Line {qso['line_num']} band {band} mode {mode_cat} qth worked {rcvd_qth}")
                 # pprint(f"Mult Dup Line {qso['line_num']} {qso['band']} {qso['mode_category']} {rcvd_call} {rcvd_qth}")
                 result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{rcvd_qth}")
@@ -530,8 +527,6 @@ class UnifiedLogProcessor:
                 # print("BREAKPOINT")
 
             else:
-                if mult_check == '20PhoneOUAC':
-                    pprint("BREAKPOINT SPECIAL CASE 20PhoneOUAC")
                 mult_dups.append(mult_check)
                 ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
                 if rcvd_qth in self.parishes:
@@ -650,6 +645,42 @@ def process_single_log(log_path: Path = None,
     )
 
 
+def print_result(result):
+    """Utility function to print result in a readable format"""
+    print(f"Callsign: {result['callsign']} Errors: {len(result['errors'])}  Warnings: {len(result['warnings'])}")
+    print(f"Category: {result['category']}")
+    print(f"Location Type: {result['location_type']}")
+    print(f"Mode Category: {result['mode_category']}")
+    print(f"Power Level: {result['power_level']}")
+    print(f"Overlay: {result['overlay']}")
+    print(f"Final Score: {result['final_score']} (Claimed: {result['claimed_score']})")
+    print(f"Total QSOs: {result['total_qsos']}  Valid QSOs: {result['valid_qsos']}  QSO Points: {result['qso_points']}")
+    print(f"Total Multipliers: {result['total_multipliers']} (Parishes: {result['parishes_worked_multiplier']}, States: {result['states_worked_multiplier']}, Provinces: {result['provinces_worked_multiplier']}, DX: {result['dx_worked_multiplier']})")
+    if result['is_rover']:
+        print(f"Rover Bonus Points: {result['rover_bonus_points']} for activating parishes: {', '.join(result['parishes_activated'])}")
+    if result['worked_n5lcc']:
+        print(f"N5LCC Contacts: {result['num_n5lcc_contacts']} (Bonus points applied)")
+    if result['warnings']:
+        if len(result['warnings']) < 10:
+            print("Warnings:")
+            for w in result['warnings']:
+                print(f"{w}")
+        else:
+            q = 0
+            m = 0
+            for w in result['warnings']:
+                if w.startswith("Duplicate Q"):
+                    q += 1
+                else:
+                    m += 1
+            print(f"Warnings: {q} duplicate QSOs, {m} duplicate multipliers")
+
+    if result['errors'] and len(result['errors']) < 10:
+        if len(result['errors']) < 10:
+            print("Errors:")
+            for e in result['errors']:
+                print(f"{e}")
+
 def process_batch_logs(log_dir: Path,
     parish_file: Path = None,
     state_province_file: Path = None) -> Dict:
@@ -675,20 +706,11 @@ def process_batch_logs(log_dir: Path,
     for log_path in log_dir.glob('*.log'):
         result = processor.process_log_details(log_path)
         if result['claimed_score'] != result['final_score']:
-            pprint(f"Score mismatch for {str(log_path).split('/')[-1].split('.')[0].upper()}: claimed / calculated {result['claimed_score']} / {result['final_score']}")
-            # if len(result['errors']) > 0:
-            #     for line in result['errors']:
-            #         pprint(f"  ERR: {line}")            
-            # if len(result['warnings']) > 0:
-            #     for line in result['warnings']:
-            #         if line.startswith("Duplicate Multiplier"):
-            #             pprint(f"  WRN: {line}")
-            #         if line.startswith("Duplicate QSO"):
-            #             pprint(f"  WRN: {line}")
-            # pprint(f'result: {result}')
+            pprint(f"\n================================================\nScore mismatch for {str(log_path).split('/')[-1].split('.')[0].upper()}: claimed / calculated {result['claimed_score']} / {result['final_score']}")
+            print_result(result)
             pprint("BREAKPOINT")
         else:
-            pprint(f"SUCCESS!!!  Score match for {str(log_path).split('/')[-1].split('.')[0].upper()} Claimed {result['claimed_score']} vs calculated {result['final_score']}\nErrors: {len(result['errors'])}  Warnings: {len(result['warnings'])}")
+            pprint(f"\n================================================  SUCCESS!!! for {str(log_path).split('/')[-1].split('.')[0].upper()} Err: {len(result['errors'])} Wrn: {len(result['warnings'])}")
             pprint("BREAKPOINT")
             
         results.append(result)

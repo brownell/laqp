@@ -32,7 +32,7 @@ def main():
         # if result['is_valid']:
             # Generate HTML
         html_file = generate_html_result(result, Path(HTML_RESULTS))
-        print(f"✓ {result['callsign']}: {html_file.name}")
+        # print(f"✓ {result['callsign']}: {html_file.name}")
 
 if __name__ == "__main__":
     main()
