@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         
         try {
-            const response = await fetch('/upload', {
+            const response = await fetch('/process', {
                 method: 'POST',
                 body: formData
             });

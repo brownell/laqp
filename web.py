@@ -112,10 +112,47 @@ def home():
     """Render the home page"""
     return render_template('home.html')
 
+@app.route('/abbreviations')
+def abbreviations():
+    """Render the LA parish abbreviations page (placeholder)"""
+    return render_template('abbreviations.html')
+
+@app.route('/activate')
+def activate():
+    """Render the parish activation page (placeholder)"""
+    return render_template('activate.html')
+
+@app.route('/map')
+def map():
+    """ parish map """
+    return render_template('map.html')
+
+@app.route('/operations')
+def operations():
+    """  operations """
+    return render_template('operations.html')
+
+
+@app.route('/results')
+def results():
+    """ form for getting results based on callsign and email address (placeholder)"""
+    return render_template('results.html')
+
+@app.route('/rules')
+def rules():
+    """Render the contest rules page (placeholder)"""
+    return render_template('rules.html')
+
 @app.route('/upload')
 def upload():
     """Render the log upload page with user upload form"""
     return render_template('upload.html')
+
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok'})
 
 
 @app.route('/process', methods=['POST'])
@@ -212,34 +249,6 @@ def upload_log():
             'success': False,
             'error': f'Server error: {str(e)}'
         }), 500
-
-
-@app.route('/activate')
-def activate():
-    """Render the parish activation page (placeholder)"""
-    return render_template('activate.html')
-
-@app.route('/results')
-def results():
-    """ form for getting results based on callsign and email address (placeholder)"""
-    return render_template('results.html')
-
-@app.route('/abbreviations')
-def abbreviations():
-    """Render the LA parish abbreviations page (placeholder)"""
-    return render_template('abbreviations.html')
-
-@app.route('/rules')
-def rules():
-    """Render the contest rules page (placeholder)"""
-    return render_template('rules.html')
-
-
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok'})
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -22,14 +22,14 @@ def test_format_functions():
     }
     
     # Test set formatting
-    from app import format_set_as_list
+    from web import format_set_as_list
     formatted_set = format_set_as_list(test_set)
     print(f"✓ Set formatted: {formatted_set}")
     assert isinstance(formatted_set, list)
     assert len(formatted_set) == 5
     
     # Test dict formatting
-    from app import format_multipliers_by_band_mode
+    from web import format_multipliers_by_band_mode
     formatted_dict = format_multipliers_by_band_mode(test_dict)
     print(f"✓ Dict formatted: {len(formatted_dict)} items")
     assert isinstance(formatted_dict, list)
@@ -42,7 +42,7 @@ def test_result_formatting():
     """Test the complete result formatting"""
     print("Testing complete result formatting...")
     
-    from app import format_result_for_display
+    from web import format_result_for_display
     
     # Mock result data
     mock_result = {
@@ -168,7 +168,7 @@ def test_json_serialization():
     """Test that result can be serialized to JSON"""
     print("Testing JSON serialization...")
     
-    from app import format_result_for_display
+    from web import format_result_for_display
     
     mock_result = {
         'callsign': 'K5ABC',
