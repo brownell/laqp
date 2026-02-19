@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>W5GAD Certificate of Merit – 2021 Louisiana QSO Party</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=IM+Fell+English+SC&family=Great+Vibes&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #c8b89a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      font-family: 'Cinzel', serif;
+    }
+
+    /* ── Outer paper ── */
+    .certificate {
+      background: #fdf8ee;
+      width: 850px;
+      min-height: 620px;
+      position: relative;
+      padding: 0;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+    }
+
+    /* ══ Filigree border system ══ */
+
+    /* Gold outer rule */
+    .border-outer {
+      position: absolute;
+      inset: 8px;
+      border: 3px solid #8B6914;
+    }
+
+    /* Thicker gold mid rule */
+    .border-mid {
+      position: absolute;
+      inset: 14px;
+      border: 8px solid #C9992A;
+      border-image: repeating-linear-gradient(
+        90deg,
+        #C9992A 0px, #C9992A 6px,
+        #e8c84a 6px, #e8c84a 10px,
+        #C9992A 10px, #C9992A 16px
+      ) 8;
+    }
+
+    /* Thin inner rule */
+    .border-inner {
+      position: absolute;
+      inset: 24px;
+      border: 2px solid #8B6914;
+    }
+
+    /* Corner ornaments */
+    .corner {
+      position: absolute;
+      font-size: 2.2rem;
+      color: #8B6914;
+      line-height: 1;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .corner.tl { top: 26px;  left: 26px;  transform: rotate(0deg); }
+    .corner.tr { top: 26px;  right: 26px; transform: rotate(90deg); }
+    .corner.bl { bottom: 26px; left: 26px;  transform: rotate(270deg); }
+    .corner.br { bottom: 26px; right: 26px; transform: rotate(180deg); }
+
+    /* Side filigree repeating ornaments */
+    .filigree-h {
+      position: absolute;
+      left: 60px; right: 60px;
+      text-align: center;
+      color: #8B6914;
+      font-size: 1.1rem;
+      letter-spacing: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .filigree-h.top    { top: 27px; }
+    .filigree-h.bottom { bottom: 27px; }
+
+    .filigree-v {
+      position: absolute;
+      top: 60px; bottom: 60px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      text-align: center;
+      color: #8B6914;
+      font-size: 1.1rem;
+      letter-spacing: 6px;
+      overflow: hidden;
+    }
+    .filigree-v.left  { left: 27px; }
+    .filigree-v.right { right: 27px; transform: rotate(180deg); }
+
+    /* ── Content area ── */
+    .content {
+      position: relative;
+      z-index: 10;
+      padding: 55px 80px 45px;
+      text-align: center;
+      color: #2a1a00;
+    }
+
+    .issuer {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #5a2d00;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .tagline {
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      color: #6b4c1e;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .divider {
+      color: #8B6914;
+      font-size: 1.4rem;
+      letter-spacing: 8px;
+      margin: 8px 0;
+    }
+
+    .callsign {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 3.2rem;
+      font-weight: 700;
+      color: #1a0e00;
+      letter-spacing: 6px;
+      margin: 6px 0 4px;
+    }
+
+    .recognition {
+      font-family: 'IM Fell English SC', serif;
+      font-size: 0.9rem;
+      letter-spacing: 4px;
+      color: #5a3b10;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .event-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #5a2d00;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+    }
+
+    /* ── Fleurs ── */
+    .fleurs {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      font-size: 2.2rem;
+      color: #8B6914;
+      margin: 6px 0 14px;
+    }
+
+    /* ── Points & Rankings box ── */
+    .awards-block {
+      background: linear-gradient(135deg, #fdf2d0 0%, #f5e4a0 50%, #fdf2d0 100%);
+      border: 2px solid #C9992A;
+      border-radius: 3px;
+      padding: 16px 40px;
+      display: inline-block;
+      margin: 0 auto 20px;
+      min-width: 380px;
+      box-shadow: inset 0 0 12px rgba(180,130,0,0.15);
+    }
+
+    .points {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #1a0800;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .points span {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #5a3b10;
+      display: block;
+      letter-spacing: 4px;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    .rankings {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .rank-item {
+      text-align: center;
+      padding: 6px 14px;
+      border-left: 1px solid #C9992A;
+    }
+    .rank-item:first-child { border-left: none; }
+
+    .rank-number {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #8B0000;
+    }
+
+    .rank-category {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: #5a3b10;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ── Signature area ── */
+    .signatures {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      margin-top: 16px;
+      padding: 0 30px;
+    }
+
+    .sig-block {
+      text-align: center;
+      flex: 1;
+      max-width: 220px;
+    }
+
+    .sig-name {
+      font-family: 'Great Vibes', cursive;
+      font-size: 1.8rem;
+      color: #1a0e00;
+      border-bottom: 1px solid #8B6914;
+      padding-bottom: 4px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
+    .sig-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #5a3b10;
+    }
+
+    .sig-callsign {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #2a1a00;
+      margin-top: 2px;
+    }
+
+    /* ── Club logo / mascot text ── */
+    .club-footer {
+      margin-top: 10px;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 0.75rem;
+      color: #8B6914;
+      letter-spacing: 3px;
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .certificate { box-shadow: none; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="certificate">
+
+    <!-- Filigree border layers -->
+    <div class="border-outer"></div>
+    <div class="border-mid"></div>
+    <div class="border-inner"></div>
+
+    <!-- Corner ornaments (fleur-style ❧) -->
+    <div class="corner tl">❧</div>
+    <div class="corner tr">❧</div>
+    <div class="corner bl">❧</div>
+    <div class="corner br">❧</div>
+
+    <!-- Horizontal side filigree -->
+    <div class="filigree-h top">⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻</div>
+    <div class="filigree-h bottom">⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻ ✦ ⸻</div>
+
+    <!-- Vertical side filigree -->
+    <div class="filigree-v left">· ✦ · ✦ · ✦ · ✦ · ✦ · ✦ · ✦ · ✦ ·</div>
+    <div class="filigree-v right">· ✦ · ✦ · ✦ · ✦ · ✦ · ✦ · ✦ · ✦ ·</div>
+
+    <!-- Main content -->
+    <div class="content">
+
+      <div class="issuer">The Louisiana Contest Club</div>
+      <div class="tagline">Takes pleasure in awarding this</div>
+      <div class="tagline" style="font-size:1.1rem; font-weight:600; letter-spacing:5px; color:#5a2d00;">Certificate of Merit</

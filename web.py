@@ -11,8 +11,9 @@ from werkzeug.utils import secure_filename
 import tempfile
 from pathlib import Path
 
-# Import the unified processor
+# Import the unified processor and database
 from processor import process_single_log
+from database import save_result
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
@@ -163,6 +164,7 @@ def upload_log():
     """
     try:
         # Get form data
+        year = request.form.get('year', '').strip()
         email = request.form.get('email', '').strip()
         mode = request.form.get('mode', '').strip()
         power = request.form.get('power', '').strip()
@@ -170,11 +172,11 @@ def upload_log():
         overlay = request.form.get('overlay', '').strip()
         
         # Validate required fields
-        if not email:
-            return jsonify({
-                'success': False,
-                'error': 'Email address is required'
-            }), 400
+        # if not email:
+        #     return jsonify({
+        #         'success': False,
+        #         'error': 'Email address is required'
+        #     }), 400
         
         # Get log content (either from file or pasted text)
         log_content = None
@@ -215,14 +217,33 @@ def upload_log():
                 overlay=overlay
             )
             
+            # Add year to result
+            if year:
+                result['year'] = year
+            else:
+                # Default to current year if not provided
+                result['year'] = str(datetime.now().year)
+            
+            # Initialize empty rankings dict
+            result['rankings'] = {}
+            
             # Check if processing succeeded
             if result.get('is_valid', True) and not result.get('errors'):
-                # Save the accepted log
+                # Save the accepted log file
                 final_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 with open(final_path, 'w') as f:
                     f.write(log_content)
                 
-                # Format the result for display
+                # Save result to database (will overwrite if exists)
+                try:
+                    if save_result(result):
+                        print(f"✓ Saved result to database: {result['callsign']} ({result['year']})")
+                    else:
+                        print(f"⚠ Failed to save result to database: {result['callsign']}")
+                except Exception as e:
+                    print(f"⚠ Database save error: {e}")
+                
+                # Format the result for display (HTML rendered in browser, not saved)
                 display_result = format_result_for_display(result)
                 
                 return jsonify({

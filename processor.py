@@ -117,6 +117,7 @@ class UnifiedLogProcessor:
     def _init_result(self) -> Dict:
         """Initialize result dictionary with standardized structure"""
         return {
+            'year': '2026',
             'callsign': '',
             'name': '',
             'category': '',  # Short category name (e.g., 'nl_ph_lo')
@@ -206,12 +207,15 @@ class UnifiedLogProcessor:
         has_phone = any(mode in qso_modes for mode in ['PH', 'FM', 'SSB', 'LSB', 'USB'])
         has_cw_digital = any(mode in qso_modes for mode in ['CW', 'RY', 'RTTY', 'DIG', 'FT8', 'FT4'])
         
-        if has_phone and has_cw_digital:
-            result['mode_category'] = 'MIXED'
-        elif has_phone:
-            result['mode_category'] = 'PHONE'
-        elif has_cw_digital:
-            result['mode_category'] = 'CW-DIGITAL'
+        ## I think we would rather just get the mode from the stated mode in the Cabrillo File
+        ## if a QSO has a mode that violates this, I think we mark this as an error and reject the log
+
+        # if has_phone and has_cw_digital:
+        #     result['mode_category'] = 'MIXED'
+        # elif has_phone:
+        #     result['mode_category'] = 'PHONE'
+        # elif has_cw_digital:
+        #     result['mode_category'] = 'CW-DIGITAL'
         
         # Set power level from header
         result['power_level'] = result['_header'].get('power', 'LOW')
@@ -257,6 +261,8 @@ class UnifiedLogProcessor:
                 
                 if key == 'callsign':
                     result['callsign'] = value.upper()
+                elif key == 'category-mode':
+                    result['mode_category'] = value.upper()
                 elif key == 'email':
                     result['has_email'] = True
                 elif key == 'category-power':
@@ -266,7 +272,7 @@ class UnifiedLogProcessor:
                         result['_header']['power'] = power_value
                     else:
                         result['has_valid_power'] = False
-                        result['warnings'].append(f"Unrecognized power level: {value}")
+                        result['errors'].append(f"Unrecognized power level: {value}")
                 elif key == 'category-station':
                     station_value = value.upper()
                     if station_value in ('FIXED', 'PORTABLE', 'MOBILE', 'ROVER'):
@@ -283,7 +289,7 @@ class UnifiedLogProcessor:
                     try:
                         result['claimed_score'] = int(value)
                     except ValueError:
-                        result['warnings'].append(f"Invalid claimed score format: {value}")
+                        result['errors'].append(f"Invalid claimed score format: {value}")
                 
                 continue
             
