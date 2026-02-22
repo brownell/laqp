@@ -1,3 +1,8 @@
+Categories from the LCC for LAQP:
+qth-mode-power-overlay - (la,nla) times(cw,ssb,mix) times (q,lo,hi) times (none,pota,wire,tb) = 2x3x3x4 = 72 categories
+
+
+
 Things that need to be done:
 
 
