@@ -189,26 +189,30 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # ============================================================
 
 LEADERBOARDS = [
-    {'title': 'LA Fixed QRP', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
-    {'title': 'LA Fixed LOW', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
-    {'title': 'LA Fixed HIGH', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
-    {'title': 'LA Fixed CW/Digital', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'CW/Digital']]},
-    {'title': 'LA Fixed SSB', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'SSB']]},
-    {'title': 'LA Fixed MIXED', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
-    {'title': 'LA Rover QRP', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
-    {'title': 'LA Rover LOW', 'ands':[['location_type', 'LA-RO'], ['power_level', 'LOW']]},
-    {'title': 'LA Rover HIGH', 'ands':[['location_type', 'LA-Rover'], ['power_level', 'HIGH']]},
-    {'title': 'LA Rover CW/Digital', 'ands':[['location_type', 'LA-Rover'], ['mode_category', 'CW/Digital']]},
-    {'title': 'LA Rover SSB', 'ands':[['location_type', 'LA-Rover'], ['mode_category', 'SSB']]},
-    {'title': 'LA Rover MIXED', 'ands':[['location_type', 'LA-Rover'], ['mode_category', 'MIXED']]},
-    {'title': 'LA Fixed QRP', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
-    {'title': 'LA Rover LOW', 'ands':[['location_type', 'LA-Rover'], ['power_level', 'LOW']]},
-    {'title': 'LA Rover HIGH', 'ands':[['location_type', 'LA-Rover'], ['power_level', 'HIGH']]},
-    {'title': 'LA Rover CW/Digital', 'ands':[['location_type', 'LA-Rover'], ['mode_category', 'CW/Digital']]},
-    {'title': 'LA Rover SSB', 'ands':[['location_type', 'LA-Rover'], ['mode_category', 'SSB']]},
-    {'title': 'LA Rover MIXED', 'ands':[['location_type', 'LA-Rover'], ['mode_category', 'MIXED']]},
-
-
+    [
+        {'section_title': 'Top Level Categories - Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'] ['overlay','Overlay'], ['mode_category','Mode'], ['n5lcc', 'N5LCC']]},
+        {'title': 'LA Fixed QRP', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
+        {'title': 'LA Fixed LOW', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
+        {'title': 'LA Fixed HIGH', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
+        {'title': 'LA Fixed CW/Digital', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'CW/Digital']]},
+        {'title': 'LA Fixed SSB', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'SSB']]},
+        {'title': 'LA Fixed MIXED', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
+        {'title': 'LA Rover QRP', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
+        {'title': 'LA Rover LOW', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
+        {'title': 'LA Rover HIGH', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
+        {'title': 'LA Rover CW/Digital', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'CW/Digital']]},
+        {'title': 'LA Rover SSB', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'SSB']]},
+        {'title': 'LA Rover MIXED', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]}
+    ],
+    [
+        {'section_title': 'Top Level Categories Non-Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'] ['overlay','Overlay'], ['mode_category','Mode'], ['n5lcc', 'N5LCC']]},
+        {'title': 'NON-LA QRP', 'ands':[['location_type', 'NON-LA'], ['power_level', 'QRP']]},
+        {'title': 'NON-LA LOW', 'ands':[['location_type', 'NON-LA'], ['power_level', 'LOW']]},
+        {'title': 'NON-LA HIGH', 'ands':[['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
+        {'title': 'NON-LA CW/Digital', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'CW/Digital']]},
+        {'title': 'NON-LA SSB', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'SSB']]},
+        {'title': 'NON-LA MIXED', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'MIXED']]}
+    ]
 ]
 
 
