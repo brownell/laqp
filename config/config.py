@@ -18,13 +18,13 @@ CONFIG_DIR = BASE_DIR / 'config'
 # ============================================================
 
 CONTEST_NAME = "Louisiana QSO Party"
-CONTEST_YEAR = 2026  # Update each year
+CONTEST_YEAR = 2024  # Update each year
 SPONSOR_NAME = "Jefferson Amateur Radio Club"
 SPONSOR_WEBSITE = "w5gad.org"
 
 # Contest dates (update each year)
-CONTEST_START_DAY1 = date(2024, 4, 6)  # April 6, 2024
-CONTEST_END_DAY1 = date(2024, 4, 7)    # April 7, 2024
+CONTEST_START_DAY1 = date(int(CONTEST_YEAR), 4, 6)  # April 6, 2024
+CONTEST_END_DAY1 = date(int(CONTEST_YEAR), 4, 7)    # April 7, 2024
 
 # Contest times (UTC)
 CONTEST_START_TIME = time(14, 0)  # 14:00 UTC
@@ -188,9 +188,10 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # LEADERBOARDS
 # ============================================================
 
+FINAL_REPORT_TXT = "this is the introductory text for the final report"
 LEADERBOARDS = [
     [
-        {'section_title': 'Top Level Categories - Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'] ['overlay','Overlay'], ['mode_category','Mode'], ['n5lcc', 'N5LCC']]},
+        {'section_title': 'Top Level Categories - Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['overlay','Overlay'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
         {'title': 'LA Fixed QRP', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
         {'title': 'LA Fixed LOW', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
         {'title': 'LA Fixed HIGH', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
@@ -205,7 +206,7 @@ LEADERBOARDS = [
         {'title': 'LA Rover MIXED', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]}
     ],
     [
-        {'section_title': 'Top Level Categories Non-Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'] ['overlay','Overlay'], ['mode_category','Mode'], ['n5lcc', 'N5LCC']]},
+        {'section_title': 'Top Level Categories Non-Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['overlay','Overlay'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
         {'title': 'NON-LA QRP', 'ands':[['location_type', 'NON-LA'], ['power_level', 'QRP']]},
         {'title': 'NON-LA LOW', 'ands':[['location_type', 'NON-LA'], ['power_level', 'LOW']]},
         {'title': 'NON-LA HIGH', 'ands':[['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
