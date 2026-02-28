@@ -26,7 +26,7 @@ from config.config import (
     US_PREFIXES, CANADIAN_PREFIXES,
     PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
     N5LCC_BONUS, ROVER_PARISH_BONUS,
-    PHONE_MODES, CW_DIGITAL_MODES, PROVINCES
+    PHONE_MODES, CW_DIGITAL_MODES, PROVINCES, CONTEST_YEAR
 )
 
 
@@ -117,7 +117,7 @@ class UnifiedLogProcessor:
     def _init_result(self) -> Dict:
         """Initialize result dictionary with standardized structure"""
         return {
-            'year': '2026',
+            'year': CONTEST_YEAR,
             'callsign': '',
             'name': '',
             'category': '',  # Short category name (e.g., 'nl_ph_lo')
@@ -289,7 +289,8 @@ class UnifiedLogProcessor:
                     try:
                         result['claimed_score'] = int(value)
                     except ValueError:
-                        result['errors'].append(f"Invalid claimed score format: {value}")
+                        result['claimed_score'] = 0
+                        result['warnings'].append(f"Invalid claimed score format: {value}")
                 
                 continue
             
@@ -369,11 +370,12 @@ class UnifiedLogProcessor:
                 # Check if DX suffix needed
                 sent_qth_final = sent_qth
                 rcvd_qth_final = qth
-                
                 if self._is_dx_callsign(sent_call) and sent_qth in self.ambiguous_dx_qth:
                     sent_qth_final = sent_qth + 'DX'
                 if self._is_dx_callsign(rcvd_call) and qth in self.ambiguous_dx_qth:
                     rcvd_qth_final = qth + 'DX'
+
+                # check if sender in state or province
                 
             prepared.append({
                 'band': band,
@@ -411,10 +413,11 @@ class UnifiedLogProcessor:
             'LA-FIXED': 'lf',
             'LA-ROVER': 'lr'
         }[result['location_type']]
-        
+        pprint(f"mode_category = {result['mode_category']}")
         mode_abbrev = {
+            'SSB': 'ph',
             'PHONE': 'ph',
-            'CW-DIGITAL': 'cw',
+            'CW/DIGITAL': 'cw',
             'MIXED': 'mx'
         }[result['mode_category']]
         
@@ -434,6 +437,7 @@ class UnifiedLogProcessor:
     
     ## END of prepare_qsos
     
+    # get location type of a QSO's sender
     def _determine_location_type(self, qsos: List[Dict], header: Dict) -> str:
         """Determine location type from QSOs"""
         sent_qths = []
@@ -448,7 +452,7 @@ class UnifiedLogProcessor:
             
             # Check if non-LA
             if sent_qth in self.states_provinces:
-                return 'NON-LA'
+                return 'NON-LA', 'PROVINCES'
             
             # Must be LA
             if sent_qth in self.parishes:
@@ -589,6 +593,9 @@ class UnifiedLogProcessor:
     ## END of score_qsos
     
     ## Utility functions
+
+    # def _callsign_analyze(self, call: str)
+
     def _is_dx_callsign(self, call: str) -> bool:
         """Check if callsign is DX (not US or VE)"""
         prefix = self._get_callsign_prefix(call)
@@ -611,7 +618,10 @@ class UnifiedLogProcessor:
         """Extract prefix from callsign"""
         for i, char in enumerate(call):
             if char.isdigit():
-                return call[:i]
+                if i < 1:
+                    return call[:1]
+                else:
+                    return call[:i]
         return call
     
 ## End of UnifiedLogProcessor class

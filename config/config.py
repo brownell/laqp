@@ -189,32 +189,86 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # ============================================================
 
 FINAL_REPORT_TXT = "this is the introductory text for the final report"
+STATES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','KA','KB','KC','KD','KE','KF','KG','KH','KI','KJ','KK','KL','KM','KN','KO','KP','KQ','KR','KS','KT','KU','KV','KW','KX','KY','KZ','NA','NB','NC','ND','NE','NF','NG','NH','NI','NJ','NK','NL','NM','NN','NO','NP','NQ','NR','NS','NT','NU','NV','NW','NX','NY','NZ','WA','WB','WC','WD','WE','WF','WG','WH','WI','WJ','WK','WL','WM','WN','WO','WP','WQ','WR','WS','WT','WU','WV','WW','WX','WY','WZ')"
+PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ','XJ', 'XK', 'XL', 'XM', 'XN', 'XO')"
 LEADERBOARDS = [
     [
         {'section_title': 'Top Level Categories - Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['overlay','Overlay'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
-        {'title': 'LA Fixed QRP', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
-        {'title': 'LA Fixed LOW', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
-        {'title': 'LA Fixed HIGH', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
-        {'title': 'LA Fixed CW/Digital', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'CW/Digital']]},
-        {'title': 'LA Fixed SSB', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'SSB']]},
-        {'title': 'LA Fixed MIXED', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
-        {'title': 'LA Rover QRP', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
-        {'title': 'LA Rover LOW', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
-        {'title': 'LA Rover HIGH', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
-        {'title': 'LA Rover CW/Digital', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'CW/Digital']]},
-        {'title': 'LA Rover SSB', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'SSB']]},
-        {'title': 'LA Rover MIXED', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]}
+        {'title': 'LFQ', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
+        {'title': 'LFL', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
+        {'title': 'LFH', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
+        {'title': 'LFC', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'CW/Digital']]},
+        {'title': 'LFS', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'SSB']]},
+        {'title': 'LFM', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
+        {'title': 'LRQ', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
+        {'title': 'LRL', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
+        {'title': 'LRH HIGH Power', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
+        {'title': 'LA Rover CW or Digital Modes', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'CW/Digital']]},
+        {'title': 'LRS', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'SSB']]},
+        {'title': 'LRM', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]}
     ],
     [
-        {'section_title': 'Top Level Categories Non-Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['overlay','Overlay'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
-        {'title': 'NON-LA QRP', 'ands':[['location_type', 'NON-LA'], ['power_level', 'QRP']]},
-        {'title': 'NON-LA LOW', 'ands':[['location_type', 'NON-LA'], ['power_level', 'LOW']]},
-        {'title': 'NON-LA HIGH', 'ands':[['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
-        {'title': 'NON-LA CW/Digital', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'CW/Digital']]},
-        {'title': 'NON-LA SSB', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'SSB']]},
-        {'title': 'NON-LA MIXED', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'MIXED']]}
-    ]
+        {'section_title': 'Top Level Categories Non-Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'NQ', 'ands':[['location_type', 'NON-LA'], ['power_level', 'QRP']]},
+        {'title': 'NL', 'ands':[['location_type', 'NON-LA'], ['power_level', 'LOW']]},
+        {'title': 'NH', 'ands':[['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
+        {'title': 'NC', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'CW/Digital']]},
+        {'title': 'NS', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'SSB']]},
+        {'title': 'NM', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'MIXED']]}
+    ],
+    [
+        {'section_title': 'Top Level Categories - Stations in Canadian Provinces', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['parishes_worked', 'Parishes Worked'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'CQ', 'ands':[[PROVINCES_SUBSTRING], ['power_level', 'QRP']]},
+        {'title': 'CL', 'ands':[[PROVINCES_SUBSTRING], ['power_level', 'LOW']]},
+        {'title': 'CH', 'ands':[[PROVINCES_SUBSTRING], ['power_level', 'HIGH']]},
+        {'title': 'CC', 'ands':[[PROVINCES_SUBSTRING], ['mode_category', 'CW/Digital']]},
+        {'title': 'CS', 'ands':[[PROVINCES_SUBSTRING], ['mode_category', 'SSB']]},
+        {'title': 'CM', 'ands':[[PROVINCES_SUBSTRING], ['mode_category', 'MIXED']]},
+    ],
+    [
+        {'section_title': 'Top Level Categories - Stations in US States', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['parishes_worked', 'Parishes Worked'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'States - QRP Power', 'ands':[["(SUBSTRING(callsign, 1, 1) IN ('K', 'W', 'N')) OR (SUBSTRING(callsign, 1, 2) IN ())"], ['power_level', 'QRP']]},
+        {'title': 'SL', 'ands':[[STATES_SUBSTRING], ['power_level', 'LOW']]},
+        {'title': 'SH', 'ands':[[STATES_SUBSTRING], ['power_level', 'HIGH']]},
+        {'title': 'SC', 'ands':[[STATES_SUBSTRING], ['mode_category', 'CW/Digital']]},
+        {'title': 'SS', 'ands':[[STATES_SUBSTRING], ['mode_category', 'SSB']]},
+        {'title': 'SM', 'ands':[[STATES_SUBSTRING], ['mode_category', 'MIXED']]}
+    ]  
 ]
+
+RANKINGS = {
+    'LFQ': 'Louisiana - Fixed QRP Power',
+    'LFL': 'Louisiana - Fixed LOW Power',
+    'LFH': 'Louisiana - Fixed HIGH Power',
+    'LFC': 'Louisiana - Fixed CW or Digital Modes',
+    'LFS': 'Louisiana - Fixed SSB (phone) Mode',
+    'LFM': 'Louisiana - Fixed MIXED Modes (SSB, CW, Digital',
+    'LRQ': 'Louisiana - Rover QRP Power',
+    'LRL': 'Louisiana - Rover LOW Power',
+    'LRH': 'Louisiana - Rover HIGH Power',
+    'LRC': 'Louisiana - Rover CW or Digital Modes',
+    'LRS': 'Louisiana - Rover SSB (phone) Mode',
+    'LRM': 'Louisiana - Rover MIXED Modes (SSB, CW, Digital',
+    'NQ': 'Non Louisiana - QRP Power',
+    'NL': 'Non Louisiana - LOW Power',
+    'NH': 'Non Louisiana - HIGH Power',
+    'NC': 'Non Louisiana - CW or Digital Modes',
+    'NS': 'Non Louisiana - SSB (phone) Mode',
+    'NM': 'Non Louisiana - MIXED Modes (SSB, CW, Digital',
+    'CQ': 'Canadian Provinces -  QRP Power',
+    'CL': 'Canadian Provinces -  LOW Power',
+    'CH': 'Canadian Provinces -  HIGH Power',
+    'CC': 'Canadian Provinces -  CW or Digital Modes',
+    'SB': 'Canadian Provinces -  SSB (phone) Mode',
+    'CM': 'Canadian Provinces -  MIXED Modes (SSB, CW, Digital',
+    'SQ': 'States - QRP Power',
+    'SL': 'States - LOW Power',
+    'SH': 'States - HIGH Power',
+    'SC': 'States - CW or Digital Modes',
+    'SS': 'States - SSB (phone) Mode',
+    'SM': 'States - MIXED Modes (SSB, CW, Digital',
+}
+
 
 
 # ============================================================

@@ -162,7 +162,13 @@ def upload_log():
     Handle log file upload and validation
     Returns JSON response with validation results and formatted data
     """
+
+    return jsonify({
+            'success': False,
+            'error': 'Not acepting log content yet for 2026.'
+        }), 400
     try:
+    
         # Get form data
         year = request.form.get('year', '').strip()
         email = request.form.get('email', '').strip()
@@ -272,4 +278,4 @@ def upload_log():
         }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5100)

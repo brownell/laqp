@@ -14,7 +14,7 @@ from typing import List, Dict, Tuple
 class LeaderboardGenerator:
     """Generates leaderboards from database based on configuration"""
     
-    def __init__(self, db_path: str = 'laqp/database/laqp.db'):
+    def __init__(self, db_path: str = 'database/laqp.db'):
         """
         Initialize leaderboard generator.
         
@@ -134,7 +134,11 @@ class LeaderboardGenerator:
         params = [year]
         
         for and_clause in ands:
-            if len(and_clause) == 2:
+            # we are given the actual AND string to use
+            if len(and_clause) == 1:
+                where_conditions.append(and_clause[0])
+
+            elif len(and_clause) == 2:
                 # Simple equality: [field, value]
                 field, value = and_clause
                 where_conditions.append(f"{field} = ?")
@@ -145,7 +149,7 @@ class LeaderboardGenerator:
                 where_conditions.append(f"{field} {operator} ?")
                 params.append(value)
             else:
-                raise ValueError(f"Invalid AND clause: {and_clause} (must be 2 or 3 elements)")
+                raise ValueError(f"Invalid AND clause: {and_clause} (must be 1, 2 or 3 elements)")
         
         where_clause = ' AND '.join(where_conditions)
         
@@ -162,7 +166,7 @@ class LeaderboardGenerator:
 
 # Convenience function
 def generate_leaderboards(year: str, leaderboards_config: List, 
-                         db_path: str = 'laqp/database/laqp.db') -> List[Dict]:
+                         db_path: str = 'database/laqp.db') -> List[Dict]:
     """
     Generate leaderboards for a year.
     
