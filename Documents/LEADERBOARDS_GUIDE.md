@@ -152,7 +152,7 @@ from leaderboards import generate_leaderboards
 from config.config import LEADERBOARDS
 
 # Generate all sections and tables
-sections = generate_leaderboards('2026', LEADERBOARDS)
+sections = generate_leaderboards('2024', LEADERBOARDS)
 
 # sections is a list of dicts:
 # [
@@ -299,7 +299,7 @@ html_report = '\n'.join(html_parts)
 from leaderboards import generate_leaderboards
 from config.config import LEADERBOARDS, FINAL_REPORT_TXT
 
-year = '2026'
+year = '2024'
 
 # Generate leaderboards
 sections = generate_leaderboards(year, LEADERBOARDS)
@@ -336,7 +336,7 @@ test_config = [
     ]
 ]
 
-sections = generate_leaderboards('2026', test_config)
+sections = generate_leaderboards('2024', test_config)
 print(f"Generated {len(sections)} section(s)")
 for section in sections:
     print(f"  {len(section['tables'])} table(s)")

@@ -465,4 +465,4 @@ if __name__ == "__main__":
     print("  save_result(result)")
     print()
     print("  # Get a result")
-    print("  result = get_result('2026', 'K5ABC')")
+    print("  result = get_result('2024', 'K5ABC')")

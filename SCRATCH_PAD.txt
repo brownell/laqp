@@ -1,3 +1,29 @@
+web log upload flow:
+process_single_log (temp_file_path, form_data)
+        ONLY called by Web upload
+        creates UnifiedLogProcessor
+process_log_details (temp_file_path, form_data)
+        called by both Web and batch - batch has empty form_data
+        creates "result" object
+        calls in order: 
+            _validate_and_parse
+            _prepare_qsos
+            _prepare_qsos
+            _score_qsos
+
+
+_validate_and_parse(temp_file_path, result, form_data)
+        _log_line_by_line(log_file_object, result)
+
+_log_line_by_line(log_file_object, result)
+        processes Cabrillo keys
+        returns has_start, has_end
+        calls _validate_qso_line
+
+_validate_qso_line
+
+
+
 # cspell:ignore-file
 that's workijng great! Next step is to save the individual rankings for each operator in the database. We created a field in the content_results table called rankings that is a dict. The idea I had was to add each applicable ranking into this dict, with the key being a code for the "category" and the value being his numerical rank. I want you to think about whether this is a good way to go, or whether we should make another table that has the rankings for each operator, indexed the existing table by year+callsign. We might end up with literally dozens of ranking categories, but each individual user will probably only be ranked in less than a dozen. I have created a constant dict - RANKINGS - that has as its key  the short code for the category, and the value is the descriptive string for that category to be used in displays. For example:
 'LRS': 'Louisiana - Rover SSB (phone) Mode',

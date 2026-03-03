@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Louisiana QSO Party - Log Submission</title>
+    <title>2026 Louisiana QSO Party - Log Submission</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
 </head>
 <body>
     <div class="container">
         <header class="banner">
             <h2>Jefferson Amateur Radio Club</h1>
-            <h1>Louisiana QSO Party</h2>
+            <h1>2026 Louisiana QSO Party</h2>
         </header>
 
         <div class="separator"></div>
@@ -18,15 +18,22 @@
         <main>
             <section class="upload-section" id="uploadSection">
                 <h3>Log File Submission</h3>
-                <p>Submit your Cabrillo format log file for the Louisiana QSO Party. You may upload a file or paste the contents directly.</p>
+                <p class="instructions">Submit your Cabrillo format log file for the Louisiana QSO Party. You may upload a file or paste the contents directly.</p>
+                <p class="instructions">Your log file will be processed immediately, showing results. If you receive errors,<br>fix the Cabrillo file and/or field entries and try again</p>
+                <p class="instructions">Fields marked with <span class="required">*</span> are required for contest confirmation.</p>
 
                 <form id="uploadForm" enctype="multipart/form-data">
                     <input type="hidden" name="year" value="2026">
                     <div class="form-group">
+                        <label for="callsign">Callsign: <span class="required">*</span></label>
+                        <input type="text" id="callsign" name="callsign" required
+                                placeholder="Your Callsign">
+                    </div>
+                    <div class="form-group">
                         <label for="email">Email Address: <span class="required">*</span></label>
-                        <input type="email" id="email" name="email" 
+                        <input type="email" id="email" name="email" required 
                                placeholder="your@email.com">
-                        <small>OVERRIDES email in log file - is equired for contest confirmation.</small>
+                    </div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -94,6 +101,15 @@
                         </div>
                     </div>
 
+                    <!-- Loading indicator -->
+                    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Processing your log file...</p>
+                    </div>
+
+                    <!-- Message display -->
+                    <div id="messageBox" class="message-box" style="display: none;"></div>
+
                     <div class="button-group">
                         <button type="submit" class="btn-primary" id="submitBtn">
                             Submit Log
@@ -103,15 +119,6 @@
                         </button>
                     </div>
                 </form>
-
-                <!-- Loading indicator -->
-                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Processing your log file...</p>
-                </div>
-
-                <!-- Message display -->
-                <div id="messageBox" class="message-box" style="display: none;"></div>
             </section>
 
             <div class="separator"></div>

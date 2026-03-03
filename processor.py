@@ -56,11 +56,7 @@ class UnifiedLogProcessor:
     
     def process_log_details(self,
         log_path: Path = None,
-        form_email: Optional[str] = None,
-        form_mode: Optional[str] = None,
-        form_power: Optional[str] = None,
-        form_station: Optional[str] = None,
-        form_overlay: Optional[str] = None) -> Dict:
+        form_data: Dict = None) -> Dict:
 
         """
         Complete processing pipeline: validate → prepare → score
@@ -74,12 +70,10 @@ class UnifiedLogProcessor:
         """
         # Initialize result with your standardized structure
         result = self._init_result()
-        result['callsign'] = 'foo'
         
         # Phase 1: Validate and parse
         try:
-            self._validate_and_parse(log_path, result, form_email, form_mode, 
-                                    form_power, form_station, form_overlay)
+            self._validate_and_parse(log_path, result, form_data)
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f"Validation failed: {str(e)}")
@@ -95,7 +89,7 @@ class UnifiedLogProcessor:
             result['valid_qsos'] = len(prepared_qsos)
         except Exception as e:
             result['is_valid'] = False
-            result['errors'].append(f"Preparation failed: {str(e)}")
+            result['errors'].append(f": {str(e)}")
 
             # pprint(f"Done preparing: {result}")
             # print("BREAKPOINT")
@@ -163,11 +157,7 @@ class UnifiedLogProcessor:
     def _validate_and_parse(self,
             log_path: Path,
             result: Dict,
-            form_email: Optional[str],
-            form_mode: Optional[str],
-            form_power: Optional[str],
-            form_station: Optional[str],
-            form_overlay: Optional[str]):
+            form_data: Dict) -> None:
 
         """Phase 1: Validate and parse header/QSOs"""
         qso_modes = set()
@@ -187,25 +177,54 @@ class UnifiedLogProcessor:
         if not has_end:
             result['errors'].append("Missing END-OF-LOG:")
             result['is_valid'] = False
-        
-        if not result['callsign']:
-            result['errors'].append("Missing CALLSIGN:")
-            result['is_valid'] = False
-        
-        if not result['has_valid_power']:
-            result['errors'].append("Missing CATEGORY-POWER:")
-            result['is_valid'] = False
-        
-        if not result['has_email']:
-            result['warnings'].append("Missing EMAIL: (recommended)")
+            
+        if form_data:
+            if form_data['callsign'] and result['callsign'] and result['callsign'] != form_data['callsign']:
+                    result['errors'].append(f"CALLSIGN mismatch: log has {result['callsign']}, form has {form_data['callsign']}")
+                    result['is_valid'] = False
+            else:
+                result['errors'].append("Missing CALLSIGN:")
+                result['is_valid'] = False
+            
+            if form_data['power'] and result['power_level'] and result['power_level'] != form_data['power']:
+                    result['errors'].append(f"POWER mismatch: log has {result['power_level']}, form has {form_data['power']}")
+                    result['is_valid'] = False
+            else:
+                result['errors'].append("Missing CATEGORY-POWER:")
+                result['is_valid'] = False
+            
+            if form_data['email'] and result['has_email'] and result['_header']['email'].lower() != form_data['email'].lower():
+                result['errors'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_data['email']}")
+                result['is_valid'] = False
+            else:
+                result['errors'].append("Missing EMAIL")
+                result['is_valid'] = False
+
+            if result['mode_category']:
+                if form_data['mode'] and result['_header']['mode_category'].lower() != form_data['mode'].lower():
+                    result['errors'].append(f"Mode mismatch: log has {result['_header']['mode_category']}, form has {form_data['mode']}")
+                    result['is_valid'] = False
+                else:
+                    result['errors'].append("Missing MODE")
+                    result['is_valid'] = False
+
+            if form_data['email'] and result['email']:
+                if form_data['email'] and result['_header']['email'].lower() != form_data['email'].lower():
+                    result['errors'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_data['email']}")
+                    result['is_valid'] = False
+                else:
+                    result['errors'].append("Missing EMAIL")
+                    result['is_valid'] = False
         
         if result['total_qsos'] == 0:
             result['errors'].append("No QSOs found in log")
             result['is_valid'] = False
+
+        if not result['is_valid']:
+            return
         
         # Determine mode category from actual QSOs
-        has_phone = any(mode in qso_modes for mode in ['PH', 'FM', 'SSB', 'LSB', 'USB'])
-        has_cw_digital = any(mode in qso_modes for mode in ['CW', 'RY', 'RTTY', 'DIG', 'FT8', 'FT4'])
+        ###################FIXIT NOOOOO do not want to do it this way, we want to get the mode category from the header and then check for consistency with the modes in the QSOs.  If there is a violation, we should mark this as an error and reject the log.  We do not want to categorize a log as MIXED just because it has some phone and some cw/digital QSOs if the header says it is PHONE or CW-DIGITAL.  The header should be the source of truth for categorization, and the QSOs should be checked against that for consistency.
         
         ## I think we would rather just get the mode from the stated mode in the Cabrillo File
         ## if a QSO has a mode that violates this, I think we mark this as an error and reject the log
@@ -222,13 +241,7 @@ class UnifiedLogProcessor:
         
         # Set overlay from header
         result['overlay'] = result['_header'].get('overlay', None)
-        
-        # Cross-check with form data if provided
-        if form_email and result['has_email']:
-            if result['_header']['email'].lower() != form_email.lower():
-                result['warnings'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_email}")
-                
-        # pprint(f"END validate + parse: errros: {result['errors']}, warnings: {result['warnings']}\nresult: {result}")
+
         # print("BREAKPOINT")
 
     # END of _validate_and_parse
@@ -261,15 +274,19 @@ class UnifiedLogProcessor:
                 
                 if key == 'callsign':
                     result['callsign'] = value.upper()
+                elif key == 'name':
+                    result['name'] = value
                 elif key == 'category-mode':
                     result['mode_category'] = value.upper()
                 elif key == 'email':
                     result['has_email'] = True
+                    result['email'] = value
                 elif key == 'category-power':
                     power_value = value.upper()
                     if power_value in ('QRP', 'LOW', 'HIGH'):
                         result['has_valid_power'] = True
                         result['_header']['power'] = power_value
+                        result['power_level'] = power_value
                     else:
                         result['has_valid_power'] = False
                         result['errors'].append(f"Unrecognized power level: {value}")
@@ -277,6 +294,7 @@ class UnifiedLogProcessor:
                     station_value = value.upper()
                     if station_value in ('FIXED', 'PORTABLE', 'MOBILE', 'ROVER'):
                         result['_header']['station'] = station_value
+                        result['mode_category'] = station_value
                     else:
                         result['warnings'].append(f"Unrecognized station type: {value}")
                 elif key == 'category-overlay':
@@ -324,6 +342,8 @@ class UnifiedLogProcessor:
         # Validate mode
         mode = parts[2]
         if mode not in PHONE_MODES and mode not in CW_DIGITAL_MODES:
+            result['errors'].append(f"QSO at line {line_num}: Unrecognized mode {mode}")
+            result['is_valid'] = False
             return f"Line {line_num}: Invalid mode {mode}"
         
         return None
@@ -430,7 +450,7 @@ class UnifiedLogProcessor:
         result['category'] = f"{loc_abbrev}_{mode_abbrev}_{power_abbrev}"
 
 
-        # pprint(f"location_type: {result['location_type']}, category: {result['category']}\nPrepared {len(prepared)} QSOs; QSO Line {line_num}: Prepared {prepared}")
+        pprint(f"location_type: {result['location_type']}, category: {result['category']}\nPrepared {len(prepared)} QSOs; QSO Line {line_num}: Prepared {prepared}")
         # print("BREAKPOINT")
         
         return prepared
@@ -452,7 +472,7 @@ class UnifiedLogProcessor:
             
             # Check if non-LA
             if sent_qth in self.states_provinces:
-                return 'NON-LA', 'PROVINCES'
+                return 'NON-LA'
             
             # Must be LA
             if sent_qth in self.parishes:
@@ -627,11 +647,12 @@ class UnifiedLogProcessor:
 ## End of UnifiedLogProcessor class
 
 # Convenience functions for single log processing in WEB app ONLY (not used for batch processing
-def process_single_log(log_path: Path = None,
-                       log_content: str = None,
-                      parish_file: Path = None,
-                      state_province_file: Path = None,
-                      **form_data) -> Dict:
+def process_single_log(
+        log_path: Path = None,
+        form_data: Dict = None,
+        log_content: str = None,
+        parish_file: Path = Path(LA_PARISHES_FILE),
+        state_province_file: Path = Path(WVE_ABBREVS_FILE)) -> Dict:
     """
     Process a single log file (for web uploads).
     
@@ -644,22 +665,19 @@ def process_single_log(log_path: Path = None,
     Returns:
         Result dictionary
     """
-    if parish_file is None:
-        parish_file = Path(LA_PARISHES_FILE)
-    if state_province_file is None:
-        state_province_file = Path(WVE_ABBREVS_FILE)
-    
+    # for debugging error messages
+    # result = {
+    #     'errors': ["This is a test error message", 'second message', 'third message'],
+    #     'callsign': 'KJ5BYZ',
+    # }
+    # return result
+
+
     processor = UnifiedLogProcessor(parish_file, state_province_file)
 
     return processor.process_log_details(
         log_path,
-        form_email=form_data.get('email'),
-        form_mode=form_data.get('mode'),
-        form_power=form_data.get('power'),
-        form_station=form_data.get('station'),
-        form_overlay=form_data.get('overlay')
-    )
-
+        form_data)
 
 def print_result(result):
     """Utility function to print result in a readable format"""
@@ -725,6 +743,7 @@ def process_batch_logs(log_dir: Path,
             pprint(f"\n================================================\nScore mismatch for {str(log_path).split('/')[-1].split('.')[0].upper()}: claimed / calculated {result['claimed_score']} / {result['final_score']}")
             print_result(result)
             pprint("BREAKPOINT")
+            result['warnings'].append(f"Score mismatch: claimed: {result['claimed_score']}  calculated: {result['final_score']}")
         else:
             pprint(f"\n================================================  SUCCESS!!! for {str(log_path).split('/')[-1].split('.')[0].upper()} Err: {len(result['errors'])} Wrn: {len(result['warnings'])}")
             pprint("BREAKPOINT")

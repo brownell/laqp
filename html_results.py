@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict
 
 
-def generate_html_result(result: Dict, output_dir: Path, year: str = '2026') -> Path:
+def generate_html_result(result: Dict, output_dir: Path, year: str = '2024') -> Path:
     """
     Generate an HTML results file for a single contestant.
     
@@ -182,7 +182,7 @@ def _generate_html_content(result: Dict) -> str:
         </main>
 
         <footer>
-            <p>&copy; 2026 Jefferson Amateur Radio Club | Louisiana QSO Party</p>
+            <p>&copy; 2024 Jefferson Amateur Radio Club | Louisiana QSO Party</p>
         </footer>
     </div>
 </body>
@@ -642,14 +642,14 @@ def _format_bands_worked_section(bands_worked: list) -> str:
 
 
 # Batch processing function
-def generate_all_html_results(results: list, output_dir: Path = Path('HTML_RESULTS'), year: str = '2026') -> list:
+def generate_all_html_results(results: list, output_dir: Path = Path('HTML_RESULTS'), year: str = '2024') -> list:
     """
     Generate HTML result files for all contestants.
     
     Args:
         results: List of result dictionaries from batch processing
         output_dir: Base directory to write HTML files (default: 'HTML_RESULTS')
-        year: Contest year (creates subdirectory, default: '2026')
+        year: Contest year (creates subdirectory, default: '2024')
     
     Returns:
         List of paths to generated HTML files
@@ -678,9 +678,9 @@ if __name__ == "__main__":
     print("  from html_results import generate_html_result, generate_all_html_results")
     print()
     print("  # Single result")
-    print("  html_file = generate_html_result(result, Path('HTML_RESULTS'), year='2026')")
+    print("  html_file = generate_html_result(result, Path('HTML_RESULTS'), year='2024')")
     print()
     print("  # Batch")
-    print("  html_files = generate_all_html_results(results, Path('HTML_RESULTS'), year='2026')")
+    print("  html_files = generate_all_html_results(results, Path('HTML_RESULTS'), year='2024')")
     print()
-    print("Results will be organized as: HTML_RESULTS/2026/CALLSIGN_results.html")
+    print("Results will be organized as: HTML_RESULTS/2024/CALLSIGN_results.html")
