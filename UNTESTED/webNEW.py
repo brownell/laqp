@@ -162,29 +162,21 @@ def upload_log():
     Handle log file upload and validation
     Returns JSON response with validation results and formatted data
     """
-
-    # return jsonify({
-    #         'success': False,
-    #         'error': 'Not accepting log content yet for 2026.'
-    #     }), 400
     try:
         # Get form data
-        form_data = {
-            'year': request.form.get('year', '').strip(),
-            'callsign': request.form.get('callsign', '').strip().upper(),
-            'email': request.form.get('email', '').strip(),
-            'mode': request.form.get('mode', '').strip(),
-            'power': request.form.get('power', '').strip(),
-            'station_type': request.form.get('station_type', '').strip(),
-            'overlay': request.form.get('overlay', '').strip()
-        }
+        year = request.form.get('year', '').strip()
+        email = request.form.get('email', '').strip()
+        mode = request.form.get('mode', '').strip()
+        power = request.form.get('power', '').strip()
+        station_type = request.form.get('station_type', '').strip()
+        overlay = request.form.get('overlay', '').strip()
         
         # Validate required fields
-        if not form_data['email'] and not form_data['callsign']:
-            return jsonify({
-                'success': False,
-                'error': 'Callsign and Email address are required'
-            }), 400
+        # if not email:
+        #     return jsonify({
+        #         'success': False,
+        #         'error': 'Email address is required'
+        #     }), 400
         
         # Get log content (either from file or pasted text)
         log_content = None
@@ -218,24 +210,19 @@ def upload_log():
             ## this function is ONLY called from the web interface
             result = process_single_log(
                 Path(tmp_path),
-                form_data
+                email=email,
+                mode=mode,
+                power=power,
+                station=station_type,
+                overlay=overlay
             )
             
             # Add year to result
-            if form_data['year']:
-                result['year'] = form_data['year']
+            if year:
+                result['year'] = year
             else:
                 # Default to current year if not provided
                 result['year'] = str(datetime.now().year)
-
-            # If errors, we are not going to proceed with saving the log or result, but we will return the errors to the user
-            if len(result.get('errors', [])) > 0:
-                print(f"⚠ There were errors in log for {result.get('callsign', 'unknown callsign')}")
-                return jsonify({
-                    'success': False,
-                    'error': '<div>ERRORS FOUND: Could not process log file.<br>Please review the errors and fix log file and/or change form responses and resubmit.<br>List of Errors:</div>',
-                    'errors': result.get('errors', [])
-                    }), 400
             
             # Initialize empty rankings dict
             result['rankings'] = {}

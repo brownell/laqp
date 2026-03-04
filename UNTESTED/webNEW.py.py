@@ -11,14 +11,13 @@ from werkzeug.utils import secure_filename
 import tempfile
 from pathlib import Path
 
-# Import the unified processor and database
+# Import the unified processor
 from processor import process_single_log
-from database import save_result
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
-app.config['UPLOAD_FOLDER'] = 'laqp/logs/incoming'
+app.config['UPLOAD_FOLDER'] = 'logs/incoming'
 app.config['ALLOWED_EXTENSIONS'] = {'log', 'txt', 'cbr'}
 
 # Ensure upload directory exists
@@ -77,7 +76,7 @@ def format_result_for_display(result):
     display_result['provinces_worked'] = format_set_as_list(result.get('provinces_worked', set()))
     display_result['dx_worked'] = format_set_as_list(result.get('dx_worked', set()))
     display_result['parishes_activated'] = format_set_as_list(result.get('parishes_activated', set()))
-    display_result['bands_worked'] = format_set_as_list(result.get('bands_worked', set()))
+    display_result['bands_worked'] = result.get('bands_worked', [])
     
     # Format QSOs by band
     qsos_by_band = result.get('qsos_by_band', {})
@@ -110,80 +109,29 @@ def format_result_for_display(result):
 
 @app.route('/')
 def home():
-    """Render the home page"""
-    return render_template('home.html')
-
-@app.route('/abbreviations')
-def abbreviations():
-    """Render the LA parish abbreviations page (placeholder)"""
-    return render_template('abbreviations.html')
-
-@app.route('/activate')
-def activate():
-    """Render the parish activation page (placeholder)"""
-    return render_template('activate.html')
-
-@app.route('/map')
-def map():
-    """ parish map """
-    return render_template('map.html')
-
-@app.route('/operations')
-def operations():
-    """  operations """
-    return render_template('operations.html')
-
-
-@app.route('/results')
-def results():
-    """ form for getting results based on callsign and email address (placeholder)"""
-    return render_template('results.html')
-
-@app.route('/rules')
-def rules():
-    """Render the contest rules page (placeholder)"""
-    return render_template('rules.html')
-
-@app.route('/upload')
-def upload():
-    """Render the log upload page with user upload form"""
+    """Render the log upload page"""
     return render_template('upload.html')
 
 
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok'})
-
-
-@app.route('/process', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_log():
     """
     Handle log file upload and validation
     Returns JSON response with validation results and formatted data
     """
-
-    # return jsonify({
-    #         'success': False,
-    #         'error': 'Not accepting log content yet for 2026.'
-    #     }), 400
     try:
         # Get form data
-        form_data = {
-            'year': request.form.get('year', '').strip(),
-            'callsign': request.form.get('callsign', '').strip().upper(),
-            'email': request.form.get('email', '').strip(),
-            'mode': request.form.get('mode', '').strip(),
-            'power': request.form.get('power', '').strip(),
-            'station_type': request.form.get('station_type', '').strip(),
-            'overlay': request.form.get('overlay', '').strip()
-        }
+        email = request.form.get('email', '').strip()
+        mode = request.form.get('mode', '').strip()
+        power = request.form.get('power', '').strip()
+        station_type = request.form.get('station_type', '').strip()
+        overlay = request.form.get('overlay', '').strip()
         
         # Validate required fields
-        if not form_data['email'] and not form_data['callsign']:
+        if not email:
             return jsonify({
                 'success': False,
-                'error': 'Callsign and Email address are required'
+                'error': 'Email address is required'
             }), 400
         
         # Get log content (either from file or pasted text)
@@ -215,48 +163,23 @@ def upload_log():
         
         try:
             # Process the log file (validate, prepare, score)
-            ## this function is ONLY called from the web interface
             result = process_single_log(
                 Path(tmp_path),
-                form_data
+                email=email,
+                mode=mode,
+                power=power,
+                station=station_type,
+                overlay=overlay
             )
-            
-            # Add year to result
-            if form_data['year']:
-                result['year'] = form_data['year']
-            else:
-                # Default to current year if not provided
-                result['year'] = str(datetime.now().year)
-
-            # If errors, we are not going to proceed with saving the log or result, but we will return the errors to the user
-            if len(result.get('errors', [])) > 0:
-                print(f"⚠ There were errors in log for {result.get('callsign', 'unknown callsign')}")
-                return jsonify({
-                    'success': False,
-                    'error': '<div>ERRORS FOUND: Could not process log file.<br>Please review the errors and fix log file and/or change form responses and resubmit.<br>List of Errors:</div>',
-                    'errors': result.get('errors', [])
-                    }), 400
-            
-            # Initialize empty rankings dict
-            result['rankings'] = {}
             
             # Check if processing succeeded
             if result.get('is_valid', True) and not result.get('errors'):
-                # Save the accepted log file
+                # Save the accepted log
                 final_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 with open(final_path, 'w') as f:
                     f.write(log_content)
                 
-                # Save result to database (will overwrite if exists)
-                try:
-                    if save_result(result):
-                        print(f"✓ Saved result to database: {result['callsign']} ({result['year']})")
-                    else:
-                        print(f"⚠ Failed to save result to database: {result['callsign']}")
-                except Exception as e:
-                    print(f"⚠ Database save error: {e}")
-                
-                # Format the result for display (HTML rendered in browser, not saved)
+                # Format the result for display
                 display_result = format_result_for_display(result)
                 
                 return jsonify({
@@ -283,6 +206,89 @@ def upload_log():
             'success': False,
             'error': f'Server error: {str(e)}'
         }), 500
+
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/results')
+def results():
+    """Render the results lookup page"""
+    return render_template('results.html')
+
+
+@app.route('/lookup_results', methods=['POST'])
+def lookup_results():
+    """
+    Look up results for a callsign and year.
+    
+    Expects JSON:
+        {
+            "callsign": "K5ABC",
+            "year": "2026"
+        }
+    
+    Returns JSON with result data or error.
+    """
+    try:
+        data = request.get_json()
+        callsign = data.get('callsign', '').strip().upper()
+        year = data.get('year', '').strip()
+        
+        if not callsign:
+            return jsonify({
+                'success': False,
+                'error': 'Callsign is required'
+            }), 400
+        
+        if not year:
+            return jsonify({
+                'success': False,
+                'error': 'Year is required'
+            }), 400
+        
+        # Look for the HTML results file
+        # Sanitize callsign for filename
+        safe_callsign = callsign.replace('/', '_')
+        html_file = Path(f'HTML_RESULTS/{year}/{safe_callsign}_results.html')
+        
+        if not html_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'No results found for {callsign} in {year}'
+            }), 404
+        
+        # Read the HTML file and extract just the results content
+        with open(html_file, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Extract just the results-content div
+        import re
+        match = re.search(r'<div class="results-content">(.*?)</div>\s*</section>', 
+                         html_content, re.DOTALL)
+        
+        if match:
+            results_html = match.group(1)
+            return jsonify({
+                'success': True,
+                'html': results_html
+            })
+        else:
+            # If we can't extract, return the whole thing
+            return jsonify({
+                'success': True,
+                'html': html_content
+            })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

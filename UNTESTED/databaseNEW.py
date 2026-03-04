@@ -16,7 +16,7 @@ from datetime import datetime
 class ContestDatabase:
     """Manages contest results in SQLite database"""
     
-    def __init__(self, db_path: str = 'laqp.db'):
+    def __init__(self, db_path: str = 'laqp/database/laqp.db'):
         """
         Initialize database connection.
         

@@ -5,7 +5,6 @@ Batch Control program to process ALL the logs in the incoming directory
 """
 
 from database import save_result
-from config import CONTEST_YEAR
 
 def main():
     import os, sys
@@ -19,9 +18,12 @@ def main():
 
     # Add project to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
+
+    # Get year (default to current year)
+    year = os.environ.get('CONTEST_YEAR', str(datetime.now().year))
     
     print("=" * 60)
-    print(f"Louisiana QSO Party - Batch Processing ({CONTEST_YEAR})")
+    print(f"Louisiana QSO Party - Batch Processing ({year})")
     print("=" * 60)
     print()
 
@@ -38,7 +40,7 @@ def main():
     
     for result in results:
         # Add year to result
-        result['year'] = CONTEST_YEAR
+        result['year'] = year
         
         # Initialize empty rankings dict
         result['rankings'] = {}
