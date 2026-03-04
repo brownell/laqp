@@ -184,6 +184,7 @@ DATABASE_FILE = BASE_DIR / 'data' / 'laqp.db'
 DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 
 
+
 # ============================================================
 # LEADERBOARDS
 # ============================================================
@@ -227,7 +228,7 @@ LEADERBOARDS = [
     ],
     [
         {'section_title': 'Top Level Categories - Stations in US States', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['parishes_worked', 'Parishes Worked'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
-        {'title': 'States - QRP Power', 'ands':[["(SUBSTRING(callsign, 1, 1) IN ('K', 'W', 'N')) OR (SUBSTRING(callsign, 1, 2) IN ())"], ['power_level', 'QRP']]},
+        {'title': 'SQ', 'ands':[["(SUBSTRING(callsign, 1, 1) IN ('K', 'W', 'N')) OR (SUBSTRING(callsign, 1, 2) IN ())"], ['power_level', 'QRP']]},
         {'title': 'SL', 'ands':[[STATES_SUBSTRING], ['power_level', 'LOW']]},
         {'title': 'SH', 'ands':[[STATES_SUBSTRING], ['power_level', 'HIGH']]},
         {'title': 'SC', 'ands':[[STATES_SUBSTRING], ['mode_category', 'CW/Digital']]},

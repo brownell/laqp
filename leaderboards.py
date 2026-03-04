@@ -17,7 +17,7 @@ from datetime import datetime
 class LeaderboardGenerator:
     """Generates leaderboards from database based on configuration"""
     
-    def __init__(self, db_path: str = 'laqp/database/laqp.db'):
+    def __init__(self, db_path: str = 'database/laqp.db'):
         """
         Initialize leaderboard generator.
         
@@ -56,6 +56,7 @@ class LeaderboardGenerator:
     
     def _clear_all_rankings(self, year: str):
         """Clear rankings field for all users in a year before regenerating"""
+        foo =  datetime.now().isoformat()
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -63,6 +64,7 @@ class LeaderboardGenerator:
                 SET rankings = ?, updated_at = ?
                 WHERE year = ?
             ''', (json.dumps({}), datetime.utcnow().isoformat(), year))
+
             conn.commit()
     
     def _generate_section(self, year: str, section_config: List[Dict], 
@@ -242,6 +244,8 @@ class LeaderboardGenerator:
                 field, operator, value = and_clause
                 where_conditions.append(f"{field} {operator} ?")
                 params.append(value)
+            elif len(and_clause) == 1:
+                where_conditions.append(and_clause[0])  # Raw SQL condition
             else:
                 raise ValueError(f"Invalid AND clause: {and_clause} (must be 2 or 3 elements)")
         
@@ -262,7 +266,7 @@ class LeaderboardGenerator:
 def generate_leaderboards(year: str, leaderboards_config: List, 
                          rankings_dict: Dict = None,
                          save_rankings: bool = True,
-                         db_path: str = 'laqp/database/laqp.db') -> List[Dict]:
+                         db_path: str = 'database/laqp.db') -> List[Dict]:
     """
     Generate leaderboards for a year.
     

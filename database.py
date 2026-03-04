@@ -423,7 +423,7 @@ class ContestDatabase:
 
 # Convenience functions
 
-def save_result(result: Dict, db_path: str = 'laqp/database/laqp.db') -> bool:
+def save_result(result: Dict, db_path: str = 'database/laqp.db') -> bool:
     """
     Save a result to the database.
     
@@ -438,7 +438,7 @@ def save_result(result: Dict, db_path: str = 'laqp/database/laqp.db') -> bool:
     return db.save_result(result)
 
 
-def get_result(year: str, callsign: str, db_path: str = 'laqp/database/laqp.db') -> Optional[Dict]:
+def get_result(year: str, callsign: str, db_path: str = 'database/laqp.db') -> Optional[Dict]:
     """
     Get a result from the database.
     
