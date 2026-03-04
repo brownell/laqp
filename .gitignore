@@ -7,8 +7,8 @@ __pycache__/
 *.so
 
 # log data
-data/logs/incoming/*.*
-data/logs/processed/*.*
+batch_input/*/*.*
+batch_results/*/*.*
 data/logs/validated/*.*
 data/logs/problems/*.*
 data/output/individual_results/*.*

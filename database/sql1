@@ -1,0 +1,1 @@
+SELECT callsign, final_score, overlay, mode_category, num_n5lcc_contacts location_type power_level  FROM contest_results WHERE power_level = 'LOW'           ORDER BY final_score DESC;

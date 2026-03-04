@@ -9,15 +9,16 @@ import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import tempfile
+from pathlib import Path
 
-# Import your existing validation module
-# Adjust the import path based on your project structure
-# from laqp.core.validator import validate_single_log
+# Import the unified processor and database
+from processor import process_single_log
+from database import save_result
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
-app.config['UPLOAD_FOLDER'] = 'logs/incoming'
+app.config['UPLOAD_FOLDER'] = 'laqp/logs/incoming'
 app.config['ALLOWED_EXTENSIONS'] = {'log', 'txt', 'cbr'}
 
 # Ensure upload directory exists
@@ -76,7 +77,7 @@ def format_result_for_display(result):
     display_result['provinces_worked'] = format_set_as_list(result.get('provinces_worked', set()))
     display_result['dx_worked'] = format_set_as_list(result.get('dx_worked', set()))
     display_result['parishes_activated'] = format_set_as_list(result.get('parishes_activated', set()))
-    display_result['bands_worked'] = result.get('bands_worked', [])
+    display_result['bands_worked'] = format_set_as_list(result.get('bands_worked', set()))
     
     # Format QSOs by band
     qsos_by_band = result.get('qsos_by_band', {})
@@ -109,29 +110,80 @@ def format_result_for_display(result):
 
 @app.route('/')
 def home():
-    """Render the log upload page"""
+    """Render the home page"""
+    return render_template('home.html')
+
+@app.route('/abbreviations')
+def abbreviations():
+    """Render the LA parish abbreviations page (placeholder)"""
+    return render_template('abbreviations.html')
+
+@app.route('/activate')
+def activate():
+    """Render the parish activation page (placeholder)"""
+    return render_template('activate.html')
+
+@app.route('/map')
+def map():
+    """ parish map """
+    return render_template('map.html')
+
+@app.route('/operations')
+def operations():
+    """  operations """
+    return render_template('operations.html')
+
+
+@app.route('/results')
+def results():
+    """ form for getting results based on callsign and email address (placeholder)"""
+    return render_template('results.html')
+
+@app.route('/rules')
+def rules():
+    """Render the contest rules page (placeholder)"""
+    return render_template('rules.html')
+
+@app.route('/upload')
+def upload():
+    """Render the log upload page with user upload form"""
     return render_template('upload.html')
 
 
-@app.route('/upload', methods=['POST'])
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/process', methods=['POST'])
 def upload_log():
     """
     Handle log file upload and validation
     Returns JSON response with validation results and formatted data
     """
+
+    # return jsonify({
+    #         'success': False,
+    #         'error': 'Not accepting log content yet for 2026.'
+    #     }), 400
     try:
         # Get form data
-        email = request.form.get('email', '').strip()
-        mode = request.form.get('mode', '').strip()
-        power = request.form.get('power', '').strip()
-        station_type = request.form.get('station_type', '').strip()
-        overlay = request.form.get('overlay', '').strip()
+        form_data = {
+            'year': request.form.get('year', '').strip(),
+            'callsign': request.form.get('callsign', '').strip().upper(),
+            'email': request.form.get('email', '').strip(),
+            'mode': request.form.get('mode', '').strip(),
+            'power': request.form.get('power', '').strip(),
+            'station_type': request.form.get('station_type', '').strip(),
+            'overlay': request.form.get('overlay', '').strip()
+        }
         
         # Validate required fields
-        if not email:
+        if not form_data['email'] and not form_data['callsign']:
             return jsonify({
                 'success': False,
-                'error': 'Email address is required'
+                'error': 'Callsign and Email address are required'
             }), 400
         
         # Get log content (either from file or pasted text)
@@ -162,70 +214,62 @@ def upload_log():
             tmp_path = tmp.name
         
         try:
-            # TODO: Replace this with your actual validation function
-            # result = validate_single_log(tmp_path)
+            # Process the log file (validate, prepare, score)
+            ## this function is ONLY called from the web interface
+            result = process_single_log(
+                Path(tmp_path),
+                form_data
+            )
             
-            # MOCK VALIDATION FOR TESTING - Replace with actual validation
-            # This simulates what your validate_single_log function should return
-            result = {
-                'success': True,  # or False if validation fails
-                'errors': [],  # List of error messages if validation fails
-                'callsign': 'K5ABC',
-                'category': 'nl_ph_lo',
-                'overlay': None,
-                'location_type': 'NON-LA',
-                'mode_category': 'Phone',
-                'power_level': 'Low',
-                'final_score': 1250,
-                'qso_points': 625,
-                'total_qsos': 350,
-                'valid_qsos': 313,
-                'total_multipliers': 2,
-                'parishes_worked': {'ORL', 'JEF', 'STB', 'PLQ', 'TAN'},
-                'parishes_worked_multiplier': 5,
-                'states_worked': set(),
-                'states_worked_multiplier': 0,
-                'provinces_worked': set(),
-                'provinces_multiplier': 0,
-                'dx_worked': set(),
-                'dx_worked_multiplier': 0,
-                'parishes_activated': set(),
-                'rover_bonus_points': 0,
-                'worked_n5lcc': True,
-                'num_n5lcc_contacts': 3,
-                'qsos_by_band': {'160': 0, '80': 45, '40': 123, '20': 142, '15': 3, '10': 0, '6': 0, '2': 0},
-                'qsos_by_mode': {'Phone': 313, 'CW/Digital': 0},
-                'qsos_by_hour': {0: 28, 1: 35, 2: 42, 3: 38, 4: 31, 5: 29, 6: 26, 7: 24, 8: 22, 9: 18, 10: 12, 11: 8},
-                'bands_worked': ['80', '40', '20', '15'],
-                'multipliers_by_band_mode': {
-                    '40-Phone': {'ORL', 'JEF', 'STB', 'PLQ'},
-                    '20-Phone': {'ORL', 'JEF', 'TAN'},
-                    '80-Phone': {'ORL', 'JEF'}
-                },
-                'name': 'John Smith',
-                'claimed_score': 1250
-            }
+            # Add year to result
+            if form_data['year']:
+                result['year'] = form_data['year']
+            else:
+                # Default to current year if not provided
+                result['year'] = str(datetime.now().year)
+
+            # If errors, we are not going to proceed with saving the log or result, but we will return the errors to the user
+            if len(result.get('errors', [])) > 0:
+                print(f"⚠ There were errors in log for {result.get('callsign', 'unknown callsign')}")
+                return jsonify({
+                    'success': False,
+                    'error': '<div>ERRORS FOUND: Could not process log file.<br>Please review the errors and fix log file and/or change form responses and resubmit.<br>List of Errors:</div>',
+                    'errors': result.get('errors', [])
+                    }), 400
             
-            if result.get('success', True):
-                # Save the accepted log
+            # Initialize empty rankings dict
+            result['rankings'] = {}
+            
+            # Check if processing succeeded
+            if result.get('is_valid', True) and not result.get('errors'):
+                # Save the accepted log file
                 final_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 with open(final_path, 'w') as f:
                     f.write(log_content)
                 
-                # Format the result for display
+                # Save result to database (will overwrite if exists)
+                try:
+                    if save_result(result):
+                        print(f"✓ Saved result to database: {result['callsign']} ({result['year']})")
+                    else:
+                        print(f"⚠ Failed to save result to database: {result['callsign']}")
+                except Exception as e:
+                    print(f"⚠ Database save error: {e}")
+                
+                # Format the result for display (HTML rendered in browser, not saved)
                 display_result = format_result_for_display(result)
                 
                 return jsonify({
                     'success': True,
-                    'message': 'Log file validated and accepted successfully!',
+                    'message': 'Log file processed successfully!',
                     'result': display_result
                 })
             else:
-                # Validation failed
-                errors = result.get('errors', ['Unknown validation error'])
+                # Processing failed - return errors
+                errors = result.get('errors', ['Unknown processing error'])
                 return jsonify({
                     'success': False,
-                    'error': 'Log validation failed',
+                    'error': 'Log processing failed',
                     'errors': errors
                 }), 400
                 
@@ -239,13 +283,6 @@ def upload_log():
             'success': False,
             'error': f'Server error: {str(e)}'
         }), 500
-
-
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'ok'})
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5100)

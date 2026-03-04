@@ -18,13 +18,13 @@ CONFIG_DIR = BASE_DIR / 'config'
 # ============================================================
 
 CONTEST_NAME = "Louisiana QSO Party"
-CONTEST_YEAR = 2026  # Update each year
+CONTEST_YEAR = 2024  # Update each year
 SPONSOR_NAME = "Jefferson Amateur Radio Club"
 SPONSOR_WEBSITE = "w5gad.org"
 
 # Contest dates (update each year)
-CONTEST_START_DAY1 = date(2024, 4, 6)  # April 6, 2024
-CONTEST_END_DAY1 = date(2024, 4, 7)    # April 7, 2024
+CONTEST_START_DAY1 = date(int(CONTEST_YEAR), 4, 6)  # April 6, 2024
+CONTEST_END_DAY1 = date(int(CONTEST_YEAR), 4, 7)    # April 7, 2024
 
 # Contest times (UTC)
 CONTEST_START_TIME = time(14, 0)  # 14:00 UTC
@@ -39,29 +39,14 @@ TIME_FORMAT = "%H%M"
 # ============================================================
 
 # Input logs
-DATA_DIR = BASE_DIR / 'data'
-INCOMING_LOGS = DATA_DIR / 'logs' / 'incoming'
-VALIDATED_LOGS = DATA_DIR / 'logs' / 'validated'
-PREPARED_LOGS = DATA_DIR / 'logs' / 'prepared'
-PROBLEMS_LOGS = DATA_DIR / 'logs' / 'problems'
-
-# Output directory structure (NEW)
-DATA_OUTPUT_DIR = DATA_DIR / 'output'
-INDIVIDUAL_RESULTS_DIR = DATA_OUTPUT_DIR / 'individual_results'
-
-# Legacy directories (to be removed)
-OLD_SCORES_DIR = DATA_DIR / 'output' / 'scores'
-OLD_STATISTICS_DIR = DATA_DIR / 'output' / 'statistics'
-
-# Keep for compatibility during transition
-SCORES_DIR = OLD_SCORES_DIR
-STATISTICS_DIR = OLD_STATISTICS_DIR
+INCOMING_LOGS = BASE_DIR / 'batch_input'
+HTML_RESULTS = BASE_DIR / 'batch_results'
 
 # ============================================================
 # REFERENCE DATA FILES
 # ============================================================
 
-REFERENCE_DATA_DIR = DATA_DIR / 'reference_data'
+REFERENCE_DATA_DIR = BASE_DIR / 'reference_data'
 LA_PARISHES_FILE = REFERENCE_DATA_DIR / 'la_parishes.txt'
 WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
 
@@ -198,29 +183,97 @@ The Jefferson Amateur Radio Club
 DATABASE_FILE = BASE_DIR / 'data' / 'laqp.db'
 DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 
+
+# ============================================================
+# LEADERBOARDS
+# ============================================================
+
+FINAL_REPORT_TXT = "this is the introductory text for the final report"
+STATES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','KA','KB','KC','KD','KE','KF','KG','KH','KI','KJ','KK','KL','KM','KN','KO','KP','KQ','KR','KS','KT','KU','KV','KW','KX','KY','KZ','NA','NB','NC','ND','NE','NF','NG','NH','NI','NJ','NK','NL','NM','NN','NO','NP','NQ','NR','NS','NT','NU','NV','NW','NX','NY','NZ','WA','WB','WC','WD','WE','WF','WG','WH','WI','WJ','WK','WL','WM','WN','WO','WP','WQ','WR','WS','WT','WU','WV','WW','WX','WY','WZ')"
+PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ','XJ', 'XK', 'XL', 'XM', 'XN', 'XO')"
+LEADERBOARDS = [
+    [
+        {'section_title': 'Top Level Categories - Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['overlay','Overlay'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'LFQ', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
+        {'title': 'LFL', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
+        {'title': 'LFH', 'ands':[['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
+        {'title': 'LFC', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'CW/Digital']]},
+        {'title': 'LFS', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'SSB']]},
+        {'title': 'LFM', 'ands':[['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
+        {'title': 'LRQ', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
+        {'title': 'LRL', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
+        {'title': 'LRH HIGH Power', 'ands':[['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
+        {'title': 'LA Rover CW or Digital Modes', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'CW/Digital']]},
+        {'title': 'LRS', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'SSB']]},
+        {'title': 'LRM', 'ands':[['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]}
+    ],
+    [
+        {'section_title': 'Top Level Categories Non-Louisiana Stations', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'NQ', 'ands':[['location_type', 'NON-LA'], ['power_level', 'QRP']]},
+        {'title': 'NL', 'ands':[['location_type', 'NON-LA'], ['power_level', 'LOW']]},
+        {'title': 'NH', 'ands':[['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
+        {'title': 'NC', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'CW/Digital']]},
+        {'title': 'NS', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'SSB']]},
+        {'title': 'NM', 'ands':[['location_type', 'NON-LA'], ['mode_category', 'MIXED']]}
+    ],
+    [
+        {'section_title': 'Top Level Categories - Stations in Canadian Provinces', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['parishes_worked', 'Parishes Worked'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'CQ', 'ands':[[PROVINCES_SUBSTRING], ['power_level', 'QRP']]},
+        {'title': 'CL', 'ands':[[PROVINCES_SUBSTRING], ['power_level', 'LOW']]},
+        {'title': 'CH', 'ands':[[PROVINCES_SUBSTRING], ['power_level', 'HIGH']]},
+        {'title': 'CC', 'ands':[[PROVINCES_SUBSTRING], ['mode_category', 'CW/Digital']]},
+        {'title': 'CS', 'ands':[[PROVINCES_SUBSTRING], ['mode_category', 'SSB']]},
+        {'title': 'CM', 'ands':[[PROVINCES_SUBSTRING], ['mode_category', 'MIXED']]},
+    ],
+    [
+        {'section_title': 'Top Level Categories - Stations in US States', 'show':[['callsign', 'CallSign'], ['final_score', 'Total Score'], ['mode_category','Mode'], ['parishes_worked', 'Parishes Worked'], ['num_n5lcc_contacts', 'N5LCC Contacts']]},
+        {'title': 'States - QRP Power', 'ands':[["(SUBSTRING(callsign, 1, 1) IN ('K', 'W', 'N')) OR (SUBSTRING(callsign, 1, 2) IN ())"], ['power_level', 'QRP']]},
+        {'title': 'SL', 'ands':[[STATES_SUBSTRING], ['power_level', 'LOW']]},
+        {'title': 'SH', 'ands':[[STATES_SUBSTRING], ['power_level', 'HIGH']]},
+        {'title': 'SC', 'ands':[[STATES_SUBSTRING], ['mode_category', 'CW/Digital']]},
+        {'title': 'SS', 'ands':[[STATES_SUBSTRING], ['mode_category', 'SSB']]},
+        {'title': 'SM', 'ands':[[STATES_SUBSTRING], ['mode_category', 'MIXED']]}
+    ]  
+]
+
+RANKINGS = {
+    'LFQ': 'Louisiana - Fixed QRP Power',
+    'LFL': 'Louisiana - Fixed LOW Power',
+    'LFH': 'Louisiana - Fixed HIGH Power',
+    'LFC': 'Louisiana - Fixed CW or Digital Modes',
+    'LFS': 'Louisiana - Fixed SSB (phone) Mode',
+    'LFM': 'Louisiana - Fixed MIXED Modes (SSB, CW, Digital',
+    'LRQ': 'Louisiana - Rover QRP Power',
+    'LRL': 'Louisiana - Rover LOW Power',
+    'LRH': 'Louisiana - Rover HIGH Power',
+    'LRC': 'Louisiana - Rover CW or Digital Modes',
+    'LRS': 'Louisiana - Rover SSB (phone) Mode',
+    'LRM': 'Louisiana - Rover MIXED Modes (SSB, CW, Digital',
+    'NQ': 'Non Louisiana - QRP Power',
+    'NL': 'Non Louisiana - LOW Power',
+    'NH': 'Non Louisiana - HIGH Power',
+    'NC': 'Non Louisiana - CW or Digital Modes',
+    'NS': 'Non Louisiana - SSB (phone) Mode',
+    'NM': 'Non Louisiana - MIXED Modes (SSB, CW, Digital',
+    'CQ': 'Canadian Provinces -  QRP Power',
+    'CL': 'Canadian Provinces -  LOW Power',
+    'CH': 'Canadian Provinces -  HIGH Power',
+    'CC': 'Canadian Provinces -  CW or Digital Modes',
+    'SB': 'Canadian Provinces -  SSB (phone) Mode',
+    'CM': 'Canadian Provinces -  MIXED Modes (SSB, CW, Digital',
+    'SQ': 'States - QRP Power',
+    'SL': 'States - LOW Power',
+    'SH': 'States - HIGH Power',
+    'SC': 'States - CW or Digital Modes',
+    'SS': 'States - SSB (phone) Mode',
+    'SM': 'States - MIXED Modes (SSB, CW, Digital',
+}
+
+
+
 # ============================================================
 # UTILITY FUNCTIONS
 # ============================================================
-
-def ensure_initial_directories():
-    """Ensure all required directories exist"""
-    initial_directories = [
-        # Log directories
-        VALIDATED_LOGS,
-        PREPARED_LOGS,
-        PROBLEMS_LOGS,
-        
-        # Output directories (NEW structure)
-        DATA_OUTPUT_DIR,
-        INDIVIDUAL_RESULTS_DIR
-    ]
-    
-    for directory in initial_directories:
-        path = Path(directory)
-        if path.exists():
-            shutil.rmtree(path)
-        path.mkdir(parents=True, exist_ok=True)
-
 
 def get_contest_year():
     """Get the current contest year"""
@@ -230,10 +283,6 @@ def get_contest_year():
 def get_contest_name():
     """Get the full contest name with year"""
     return f"{CONTEST_NAME} {CONTEST_YEAR}"
-
-
-# Ensure directories exist on import
-ensure_initial_directories()
 
 # Category definitions: (short_name, full_name)
 CATEGORIES = {

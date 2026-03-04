@@ -1,0 +1,232 @@
+web log upload flow:
+process_single_log (temp_file_path, form_data)
+        ONLY called by Web upload
+        creates UnifiedLogProcessor
+process_log_details (temp_file_path, form_data)
+        called by both Web and batch - batch has empty form_data
+        creates "result" object
+        calls in order: 
+            _validate_and_parse
+            _prepare_qsos
+            _prepare_qsos
+            _score_qsos
+
+
+_validate_and_parse(temp_file_path, result, form_data)
+        _log_line_by_line(log_file_object, result)
+
+_log_line_by_line(log_file_object, result)
+        processes Cabrillo keys
+        returns has_start, has_end
+        calls _validate_qso_line
+
+_validate_qso_line
+
+
+
+# cspell:ignore-file
+that's workijng great! Next step is to save the individual rankings for each operator in the database. We created a field in the content_results table called rankings that is a dict. The idea I had was to add each applicable ranking into this dict, with the key being a code for the "category" and the value being his numerical rank. I want you to think about whether this is a good way to go, or whether we should make another table that has the rankings for each operator, indexed the existing table by year+callsign. We might end up with literally dozens of ranking categories, but each individual user will probably only be ranked in less than a dozen. I have created a constant dict - RANKINGS - that has as its key  the short code for the category, and the value is the descriptive string for that category to be used in displays. For example:
+'LRS': 'Louisiana - Rover SSB (phone) Mode',
+ 'LRM': 'Louisiana - Rover MIXED Modes (SSB, CW, Digital',
+ 'NQ': 'Non Louisiana - QRP Power',
+ 'NL': ‘Non Louisiana - LOW Power' …
+I have also changed the LEADERBOARD list. The dicts that have a ‘title’ key used to have a string to display as the title of the grid, but I have changed it so that the value for the ‘title’ key is now the key from the RANKINGS dict. So where we used to have something like ‘title’: ‘Non Louisiana - QRP Power', you now have ‘title’: ‘NQ’. You need to use this key to get the title string from the RANKINGS dict. So here is my thinking on how to populate the rankings field in the contest_results table. Each query you make
+
+
+Members and friends,
+
+
+I want to ask for a favor. Actually a couple.
+
+
+We have taken on the job of running the Louisiana QSO Party this year and it is only one month from now on April 4.  This contest has languished in recent years, partly because those outside Louisiana complain there are not enough Louisiana operators: in 2023 there were only 13. We want to generate more interest, so if you have a Facebook account, please follow facebook.com/w5gad. Go to the LAQP event on Facebook and indicate you are participating. And encourage any ham friends, in or out of state to join us.
+
+
+The second favor is more work. Contact with a station we operate, N5LCC, yields operators 100 bonus points. So we need people to operate as much as possible. We can have as many operators using that call sign as we want, in different locations, at the same time, AS LONG as no two are on the same band&mode. So you can operate from home for the club. If you are interested, please email laqp.w5gad.org. You can only operate the strict schedule we end up making to avoid multiple operators using the sme band&mode at the same time.
+
+
+Houston,
+
+
+We are looking forward to your talk tonight. There is a short members business meeting beforehand - maybe 15 mins max.
+
+
+Some board members are meeting for dinner at 5:45 at a McAlister’s Deli near the club. We would love it if you could join us. Map link is: https://maps.app.goo.gl/7PjGZwxMj4ftYpSaA
+
+
+73
+Brownell  KJ5BYZ
+(504) 521-6744
+
+
+
+
+Please see HERE for details.
+
+
+73
+Brownell  KJ5BYZ
+(504) 521-6744
+
+
+To members of the Jefferson ARC:
+
+
+If you haven’t renewed your membership for 2026, you have until March 1. The good news is that you can fill out the form and pay COMPLETELY ONLINE. (You need a PayPal account to pay online and we ask you to pay $38 which includes the credit card processing fee.)
+
+
+Just go to this link and follow the instructions.
+
+
+https://docs.google.com/document/d/e/2PACX-1vR6qrGpBUPme8NMhxa1DIDgQSybub_ptHcHCclu7oMGz3bWmF-94LSClX0Dd8lwUFr0zoRK9cs1FnNZ/pub
+
+
+Also please fill out our survey about how we can make the club more useful and interesting for you. It is at
+
+https://forms.gle/ihRTwg7tHSPbw4ni7
+We hope to present the results of that survey this Thursday night, 2/26.
+
+
+After the General Members Meeting on Thursday, Houston, Polson, ARRL head of the Louisiana section, will talk to us about what ARRL is doing for clubs like ours.
+
+
+73
+Brownell  KJ5BYZ
+(504) 521-6744
+
+
+
+
+
+
+I have not yet integrated the Docker code you created, nor the individual user lookup. I want to work on storing all the individual info for the user in the database and creating the leaderboards. This is how I want it to work. First the sqlite3 log records need to be keyed on Year and Callsign. An operator may participate in the contest in different years and have multiple records in the database, one for each year. When a log file for a year and callsign is processed, it should OVERWRITE a record in the DB for that same year and callsign. In other words it is a replacement. The revised object that is used in scoring an individual log is below. Note that I have added the year. When we are finished scoring the user and have displayed his results in the upload form, we should write this object to the database, keyed by year and callsign. We do NOT need to include the _qso_lines nor the _headers. We do, however, need to add another field, called “rankings”,  that will be used for the rankings when all the logs are received. This is a python dict that has been jasonified to store in the db. It is of the form, {‘rank1’: int, ‘rank2’: int. . .} where the ‘rank1’ is the category that the user is being ranked in, and the integer is his place in that category among all the other operators who represent that category. So for example, if he used only CW, and he was 45th out of 125 operators who were in that category, then his rank dict might look like this: {‘cw’: 45} and when we display his ranking,   we display it at CW: 45/100. We will do this procedure in parts. First please modify the web.py code and the batch.py code (both uploaded in current form) to write the db record described above for each log successfully processed. The “rankings” field will of course be empty but present in the record.
+
+
+Here is the proposed method to do this, but if you have a better approach tell me and we can discuss it. There is a deadline for all the operators to have their logs uploaded. We will do the leaderboards on that date, using a batch program, called results.py. This program will operate as follows. For each category of ranking (which are listed below), the code will (a) get a list of all the logs in that category sorted by the operator’s total score. (b) remember the count of this list, (c) iterate through all the db records and update the “results” dict in the db record to reflect the operator’s rank in this category. Note that a single operator may be in multiple ranking categories, e.g. CW and POTA, and HIGH power, and will have a different ranking in each. The results.py batch app will do more, but let’s start with creating the database for each user
+result {
+            'year': '2026',
+            'callsign': '',
+            'name': '',
+            'category': '',  # Short category name (e.g., 'nl_ph_lo')
+            'overlay': None,  # 'WIRES', 'TB-WIRES', 'POTA', or None
+            'location_type': 'NON-LA',  # 'DX', 'NON-LA', 'LA-FIXED', 'LA-ROVER'
+            'mode_category': 'MIXED',  # 'PHONE', 'CW-DIGITAL', 'MIXED'
+            'power_level': 'LOW',  # 'QRP', 'LOW', 'HIGH'
+            'is_rover': False,
+            'final_score': 0,
+            'qso_points': 0,
+            'total_qsos': 0,
+            'valid_qsos': 0,
+            'total_multipliers': 0,
+            'parishes_worked': set(),
+            'parishes_worked_multiplier': 0,
+            'states_worked': set(),
+            'states_worked_multiplier': 0,
+            'provinces_worked': set(),
+            'provinces_worked_multiplier': 0,
+            'dx_worked': set(),
+            'dx_worked_multiplier': 0,
+            'parishes_activated': set(),
+            'rover_bonus_points': 0,
+            'worked_n5lcc': False,
+            'num_n5lcc_contacts': 0,
+            'qsos_by_band': {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0},
+            'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
+            'qsos_by_hour': {i: 0 for i in range(12)},
+            'bands_worked': set(),
+            'multipliers_by_band_mode': {},
+            'claimed_score': 0,
+            'errors': [],
+            'warnings': [],
+            'has_valid_power': True,
+            'has_valid_operator': True,
+            'has_email': False,
+            'is_valid': True,
+            # Store raw QSO lines for processing
+            '_qso_lines': [],
+            '_header': {}
+        }
+
+
+The next step is to create a batch app called results.py  It goes through a list of result categories - or leaderboards, that is in config.py called LEADERBOARDS. does two things. ItHere is the proposed method to do this, but if you have a better approach tell me and we can discuss it. There is a deadline for all the operators to have their logs uploaded. We will do the leaderboards on that date, using a batch program, called results.py. This program will operate as follows. For each category of ranking (which are listed below), the code will (a) get a list of all the logs in that category sorted by the operator’s total score. (b) remember the count of this list, (c) iterate through all the db records and update the “results” dict in the db record to reflect the operator’s rank in this category. Note that a single operator may be in multiple ranking categories, e.g. CW and POTA, and HIGH power, and will have a different ranking in each. 
+
+
+
+
+
+
+Ron,
+
+Let's go ahead with the Facebook advertising for the LAQP - that is if you are willing to manage the advertising. I also want to talk with you about the contest itself. Take a look at the contest website (see below)
+
+
+Don, can you get Ron the credit card for this? I would say let's plan to spend $150. I think I can approve that in advance and get board approval at the next meeting. (Ron, if Don doesn't get you the card, please use your own and get reimbursed or get a card from me.)
+
+As for the timing, we are already less than two months out, so let's start with 2-3 times a week. The website is already at laqp.wr5gad.org. It still needs some work, but it is good enough.
+
+Lets use the logo image that is on the home page, which I have attached below. This is a 192x192 PNG, but I can make you other sizes if you want.
+
+Key messages
+our club will be running the contest starting this April
+the LA contest has not had enough activity in the past few years, especially from LA residents, but we are working to change that.
+it will be easier to get your logs processed and get your results and everyone can download a certificate
+results will be available within 15 days of the contest.
+
+Check it out
+The site is up at laqp.w5gad.org. Right now hosted at my house, but moving to an external hosting service this week.
+
+The individual operator scoring is done (I think) with a GREAT DEAL of help from CW Chuck. The leaderboards still need doing.
+
+There is no link to the log upload page yet, but if you want to see how it looks right now, go to laqp.w5gad.org/upload and try one of the log files attached.
+
+----
+Brownell
+(504) 521-6744
+
+
+
+Ron,
+
+Let's go ahead with the Facebook advertising for the LAQP - that is if you are willing to manage it. Don, can you get Ron the credit card for this? I would say let's plan to spend $150. I think I can approve that in advance and get board approval at the next meeting.
+
+(Ron, if Don doesn't get you the card, please use your own and get reimbursed or get a card from me.)
+
+As for the timing, we are already less than two months out, so let's start with 2-3 times a week. The website will be laqp.wr5gad.org. It still needs some work, but it is good enough.
+
+Lets use the logo image that is on the home page, which I have attached below. This is a 192x192 PNG, but I can make you other sizes if you want.
+
+Key messages
+our club will be running the contest starting this April
+the LA contest has not gotten enough activity in the past few years, especially from LA residents, but we are working to change that.
+it will be easier to get your logs processed and get your results.
+results will be available within 15 days of the contest.
+
+Check it out
+The site is up at laqp.w5gad.org. Right now hosted at my house, but moving to an external hosting service this week.
+
+The individual operator scoring is done (I think) with a GREAT DEAL of help from CW Chuck. The leaderboards still need doing.
+
+There is no link to the log upload page yet, but if you want to see how it looks right now, go to laqp.w5gad.org/upload and try one of the log files attached.
+
+----
+Brownell
+(504) 521-6744
+
+
+purple  rgb(70, 29, 124)   #461D7C
+gold     rgb(253, 208, 35)  #FDD023
+
+
+Pamela,
+
+It could be that we are just caught up in the technical jargon of money ownership. I am not a tax or finance person nor an attorney, but here is some of what I have ready. I imagine most of your clients have access to tax and legal advice, which we don’t, so I am hoping the finance and legal folks at GNOF know what I am talking about here.
+
+It appears that to get the liability protection we want, we must technically give the GNOF "variance power" (ultimate legal control). In practice, foundations like GNOF will usually follow the client’s advice to release funds for our mission (repairing towers, etc.), but they legally must have the final say to validate the transfer of assets.
+
+It also seems that this approach is not 100% effective in shielding assets. Even though we would not legally own and control the funds, accounting rules (FASB ASC 958) often require us to still list them as an asset ("Beneficial Interest in Assets Held by Others") on our own financial statements. This means a savvy plaintiff's lawyer might see them on your balance sheet and try to argue they are available assets, even if legally they aren't.
+​
+
+73
+Brownell  KJ5BYZ
+(504) 521-6744
+

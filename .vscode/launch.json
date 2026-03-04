@@ -8,18 +8,59 @@
             "name": "Batch app",
             "type": "debugpy",
             "request": "launch",
-            "program": "scripts/process_all_logs.py",
+            "program": "batch.py",
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/venv/bin/python"
         },
-        
+        {
+            "name": "Final Report (batch)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "final_report.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
+        },
+                {
+            "name": "WIN Batch app",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "batch.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/Scripts/python"
+        },
+        {
+            "name": "WIN Final Report (batch)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "final_report.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/Scripts/python"
+        },        
         {
             "name": "Web app",
             "type": "debugpy",
             "request": "launch",
             "module": "flask",
             "env": {
-                "FLASK_APP": "app.py",
+                "FLASK_APP": "web.py",
+                "FLASK_DEBUG": "1"
+            },
+            "args": [
+                "run",
+                "--no-debugger",
+                "--no-reload"
+            ],
+            "jinja": true,
+            "justMyCode": true
+        },
+        {
+            "name": "WIN Web app",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "flask",
+            "python": "${workspaceFolder}/venv/Scripts/python",
+            "env": {
+                "FLASK_APP": "web.py",
                 "FLASK_DEBUG": "1"
             },
             "args": [

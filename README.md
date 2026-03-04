@@ -4,85 +4,11 @@ Contest log processing system for the Louisiana QSO Party, hosted by Jefferson A
 
 ### Adapted from Texas QSO Party software created by Charles Sanders, NO5W
 
-## Directory Structure
+## Leaderboards and Certificates
+The current rules specify awards for the following categories. In 2026, we are not sending out awards or certificates. For everyone - no matter were they placed - the may come to the website 15 days after the contest and see an HTML certificate, which they may print, that shows where they placed in all the relevent categories:
 
-```
-laqp_processor/
-├── README.md                  # This file
-├── requirements.txt           # Python dependencies
-├── setup.py                   # Package installation
-├── .gitignore
-│
-├── config/                    # Configuration
-│   ├── __init__.py
-│   ├── config.py             # Contest settings, categories, scoring rules
-│   └── database.py           # Database connection config
-│
-├── data/                      # Reference data files
-│   ├── LA_Parish_Abbrevs.txt # Louisiana parish abbreviations (64 parishes)
-│   ├── WVE_Abbrevs.txt       # US states and Canadian provinces
-│   └── Canadian_Provinces.txt # 13 recognized Canadian provinces
-│
-├── laqp/                      # Main package
-│   ├── __init__.py
-│   │
-│   ├── models/                # Database models
-│   │   ├── __init__.py
-│   │   ├── database.py       # SQLAlchemy models and DB manager
-│   │   └── log_entry.py      # Data classes for log parsing
-│   │
-│   ├── core/                  # Core processing modules
-│   │   ├── __init__.py
-│   │   ├── validator.py      # ✓ Log validation (completed)
-│   │   ├── preparation.py    # TODO: Adapt from TX preparation.py
-│   │   ├── scoring.py        # TODO: Adapt from TX scoring.py
-│   │   └── statistics.py     # TODO: Adapt from TX statistics.py
-│   │
-│   ├── utils/                 # Utility functions
-│   │   ├── __init__.py
-│   │   ├── cabrillo.py       # Cabrillo parsing utilities
-│   │   ├── callsign.py       # Callsign prefix/country lookup
-│   │   └── file_ops.py       # File operations helpers
-│   │
-│   └── cli/                   # Command-line interface
-│       ├── __init__.py
-│       └── commands.py        # CLI command definitions
-│
-├── web/                       # Flask web application (future)
-│   ├── __init__.py
-│   ├── app.py                # Flask app initialization
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── upload.py         # Log upload endpoint
-│   │   ├── validate.py       # Real-time validation
-│   │   └── results.py        # Results display
-│   ├── templates/            # Jinja2 templates
-│   └── static/               # CSS, JS, images
-│
-├── logs/                      # Log processing directories
-│   ├── incoming/             # Upload logs here
-│   ├── validated/            # Valid logs after validation
-│   ├── prepared/             # Logs prepared for scoring
-│   ├── problems/             # Invalid logs
-│   └── reports/              # Validation error reports
-│
-├── output/                    # Generated reports
-│   ├── scores/               # Score reports and leaderboards
-│   └── statistics/           # Contest statistics
-│
-├── tests/                     # Unit tests
-│   ├── __init__.py
-│   ├── test_validator.py
-│   ├── test_preparation.py
-│   ├── test_scoring.py
-│   ├── test_statistics.py
-│   └── sample_logs/          # Test log files
-│
-└── scripts/                   # Command-line scripts
-    ├── process_all_logs.py   # ✓ Main batch processor (completed)
-    ├── generate_reports.py   # TODO: Generate leaderboards/certificates
-    └── init_database.py      # TODO: Initialize/reset database
-```
+### Leaderboard Categories
+- 
 
 ## Setup
 
