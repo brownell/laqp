@@ -25,7 +25,7 @@ from config.config import (
     LA_PARISHES_FILE, WVE_ABBREVS_FILE,
     US_PREFIXES, CANADIAN_PREFIXES,
     PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
-    N5LCC_BONUS, ROVER_PARISH_BONUS,
+    CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS,
     PHONE_MODES, CW_DIGITAL_MODES, PROVINCES, CONTEST_YEAR
 )
 
@@ -600,7 +600,7 @@ class UnifiedLogProcessor:
 
         ## add bonus points for one or more N5LCC contacts
         if result['worked_n5lcc']:
-            result['final_score'] += N5LCC_BONUS
+            result['final_score'] += CALLSIGN_BONUS_POINTS
 
         ## Add rover bonus points for activated parishes
         if result['location_type'] == 'LA-ROVER':

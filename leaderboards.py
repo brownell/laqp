@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Tuple
 from datetime import datetime
-from config.config import DATABASE_FILE
+from config.config import DATABASE_FILE, BONUS_CALLSIGN
 
 
 class LeaderboardGenerator:
@@ -142,7 +142,7 @@ class LeaderboardGenerator:
             # row[0] is callsign (always included in query)
             # row[1:] are the display fields
             callsign = row[0]
-            display_values = row[1:]
+            display_values = row[0:]
             
             # Save this user's ranking if requested
             if save_rankings:
@@ -231,8 +231,8 @@ class LeaderboardGenerator:
             select_clause = ', '.join(select_fields)
         
         # Build WHERE clause
-        where_conditions = ['year = ?', 'is_valid = 1']
-        params = [year]
+        where_conditions = ['year = ?', 'is_valid = 1',  """callsign IS NOT ?"""]
+        params = [year, BONUS_CALLSIGN]
         
         for and_clause in ands:
             if len(and_clause) == 2:

@@ -34,19 +34,20 @@ CONTEST_END_TIME = time(2, 0)     # 02:00 UTC (next day)
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H%M"
 
+
+DATA_DIR = BASE_DIR / 'data'
 # ============================================================
 # LOG DIRECTORIES
 # ============================================================
 
 # Input logs
-INCOMING_LOGS = BASE_DIR / 'batch_input'
-HTML_RESULTS = BASE_DIR / 'batch_results'
+INCOMING_LOGS = DATA_DIR / 'batch_input'
+HTML_RESULTS = DATA_DIR / 'batch_results'
 
 # ============================================================
 # REFERENCE DATA FILES
 # ============================================================
 
-DATA_DIR = BASE_DIR / 'data'
 REFERENCE_DATA_DIR = DATA_DIR / 'reference_data'
 LA_PARISHES_FILE = REFERENCE_DATA_DIR / 'la_parishes.txt'
 WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
@@ -101,7 +102,8 @@ PHONE_QSO_POINTS = 2
 CW_DIGITAL_QSO_POINTS = 4
 
 # Bonus points
-N5LCC_BONUS = 100  # Bonus for working N5LCC (Louisiana Contest Club)
+BONUS_CALLSIGN = 'N5LCC'  # Bonus for working N5LCC (Louisiana Contest Club)
+CALLSIGN_BONUS_POINTS = 100  # Bonus for working N5LCC (Louisiana Contest Club)
 ROVER_PARISH_BONUS = 50  # Bonus per parish activated (rovers only)
 
 # ============================================================
@@ -190,6 +192,7 @@ DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 # LEADERBOARDS
 # ============================================================
 
+FINAL_REPORTS_DIR = DATA_DIR / 'final_reports'
 FINAL_REPORT_TXT = "this is the introductory text for the final report"
 STATES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','KA','KB','KC','KD','KE','KF','KG','KH','KI','KJ','KK','KL','KM','KN','KO','KP','KQ','KR','KS','KT','KU','KV','KW','KX','KY','KZ','NA','NB','NC','ND','NE','NF','NG','NH','NI','NJ','NK','NL','NM','NN','NO','NP','NQ','NR','NS','NT','NU','NV','NW','NX','NY','NZ','WA','WB','WC','WD','WE','WF','WG','WH','WI','WJ','WK','WL','WM','WN','WO','WP','WQ','WR','WS','WT','WU','WV','WW','WX','WY','WZ')"
 PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ','XJ', 'XK', 'XL', 'XM', 'XN', 'XO')"
