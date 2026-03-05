@@ -46,7 +46,8 @@ HTML_RESULTS = BASE_DIR / 'batch_results'
 # REFERENCE DATA FILES
 # ============================================================
 
-REFERENCE_DATA_DIR = BASE_DIR / 'reference_data'
+DATA_DIR = BASE_DIR / 'data'
+REFERENCE_DATA_DIR = DATA_DIR / 'reference_data'
 LA_PARISHES_FILE = REFERENCE_DATA_DIR / 'la_parishes.txt'
 WVE_ABBREVS_FILE = REFERENCE_DATA_DIR / 'wve_abbrevs.txt'
 
@@ -180,7 +181,7 @@ The Jefferson Amateur Radio Club
 # DATABASE CONFIGURATION
 # ============================================================
 
-DATABASE_FILE = BASE_DIR / 'data' / 'laqp.db'
+DATABASE_FILE = DATA_DIR / 'database' / 'laqp.db'
 DATABASE_URI = f'sqlite:///{DATABASE_FILE}'
 
 

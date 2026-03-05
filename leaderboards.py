@@ -12,12 +12,13 @@ import json
 from pathlib import Path
 from typing import List, Dict, Tuple
 from datetime import datetime
+from config.config import DATABASE_FILE
 
 
 class LeaderboardGenerator:
     """Generates leaderboards from database based on configuration"""
     
-    def __init__(self, db_path: str = 'database/laqp.db'):
+    def __init__(self, db_path: str = DATABASE_FILE):
         """
         Initialize leaderboard generator.
         
@@ -266,7 +267,7 @@ class LeaderboardGenerator:
 def generate_leaderboards(year: str, leaderboards_config: List, 
                          rankings_dict: Dict = None,
                          save_rankings: bool = True,
-                         db_path: str = 'database/laqp.db') -> List[Dict]:
+                         db_path: str = DATABASE_FILE) -> List[Dict]:
     """
     Generate leaderboards for a year.
     
