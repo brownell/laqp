@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
+from config.config import DATABASE_FILE
 
 
 class ContestDatabase:
@@ -383,28 +384,28 @@ class ContestDatabase:
             # Total logs
             cursor.execute('''
                 SELECT COUNT(*) FROM contest_results
-                WHERE year = ?
+                WHERE year = ? AND callsign IS NOT 'N5LCC
             ''', (year,))
             total_logs = cursor.fetchone()[0]
             
             # Valid logs
             cursor.execute('''
                 SELECT COUNT(*) FROM contest_results
-                WHERE year = ? AND is_valid = 1
+                WHERE year = ? AND is_valid = 1 AND callsign IS NOT 'N5LCC
             ''', (year,))
             valid_logs = cursor.fetchone()[0]
             
             # Total QSOs
             cursor.execute('''
                 SELECT SUM(total_qsos) FROM contest_results
-                WHERE year = ? AND is_valid = 1
+                WHERE year = ? AND is_valid = 1 AND callsign IS NOT 'N5LCC
             ''', (year,))
             total_qsos = cursor.fetchone()[0] or 0
             
             # Top score
             cursor.execute('''
                 SELECT callsign, final_score FROM contest_results
-                WHERE year = ? AND is_valid = 1
+                WHERE year = ? AND is_valid = 1 AND callsign IS NOT 'N5LCC
                 ORDER BY final_score DESC
                 LIMIT 1
             ''', (year,))
@@ -423,7 +424,7 @@ class ContestDatabase:
 
 # Convenience functions
 
-def save_result(result: Dict, db_path: str = 'laqp/database/laqp.db') -> bool:
+def save_result(result: Dict, db_path: str = DATABASE_FILE) -> bool:
     """
     Save a result to the database.
     
@@ -438,7 +439,7 @@ def save_result(result: Dict, db_path: str = 'laqp/database/laqp.db') -> bool:
     return db.save_result(result)
 
 
-def get_result(year: str, callsign: str, db_path: str = 'laqp/database/laqp.db') -> Optional[Dict]:
+def get_result(year: str, callsign: str, db_path: str = DATABASE_FILE) -> Optional[Dict]:
     """
     Get a result from the database.
     
@@ -465,4 +466,4 @@ if __name__ == "__main__":
     print("  save_result(result)")
     print()
     print("  # Get a result")
-    print("  result = get_result('2024', 'K5ABC')")
+    print("  result = get_result('2026', 'K5ABC')")

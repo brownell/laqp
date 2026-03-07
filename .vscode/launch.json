@@ -13,10 +13,18 @@
             "python": "${workspaceFolder}/venv/bin/python"
         },
         {
-            "name": "Final Report (batch)",
+            "name": "Gen Final Rpt batch app",
             "type": "debugpy",
             "request": "launch",
-            "program": "final_report.py",
+            "program": "generate_final_report.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
+        },
+        {
+            "name": "Generate Rankings (batch)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "generate_rankings.py",
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/venv/bin/python"
         },

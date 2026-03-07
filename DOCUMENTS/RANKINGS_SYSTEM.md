@@ -94,7 +94,7 @@ LEADERBOARDS = [
 
 ```bash
 # Run after all logs processed
-python generate_rankings.py 2024
+python generate_rankings.py 2026
 ```
 
 This:
@@ -155,7 +155,7 @@ from leaderboards import generate_leaderboards
 from config.config import LEADERBOARDS, RANKINGS
 
 # Generate and save rankings
-sections = generate_leaderboards('2024', LEADERBOARDS, RANKINGS, save_rankings=True)
+sections = generate_leaderboards('2026', LEADERBOARDS, RANKINGS, save_rankings=True)
 ```
 
 ### Get User's Rankings
@@ -163,7 +163,7 @@ sections = generate_leaderboards('2024', LEADERBOARDS, RANKINGS, save_rankings=T
 ```python
 from database import get_result
 
-result = get_result('2024', 'K5ABC')
+result = get_result('2026', 'K5ABC')
 rankings = result['rankings']
 
 # Display to user
@@ -205,11 +205,11 @@ python web.py  # or python batch.py
 
 ```bash
 # Step 1: Generate rankings
-python generate_rankings.py 2024
+python generate_rankings.py 2026
 # All users now have their rankings populated
 
 # Step 2: Generate HTML reports (next phase)
-python generate_reports.py 2024
+python generate_reports.py 2026
 # Creates HTML files for each user with their rankings
 
 # Step 3: Publish results
@@ -220,7 +220,7 @@ python generate_reports.py 2024
 
 ```python
 {
-    'year': '2024',
+    'year': '2026',
     'callsign': 'K5ABC',
     'final_score': 1250,
     'location_type': 'NON-LA',
@@ -252,7 +252,7 @@ Regenerate rankings if:
 
 ```bash
 # Regenerate rankings
-python generate_rankings.py 2024
+python generate_rankings.py 2026
 ```
 
 This clears and recalculates all rankings.
@@ -285,10 +285,10 @@ from leaderboards import generate_leaderboards
 from database import get_result
 
 # Generate
-sections = generate_leaderboards('2024', LEADERBOARDS, RANKINGS)
+sections = generate_leaderboards('2026', LEADERBOARDS, RANKINGS)
 
 # Check a user
-result = get_result('2024', 'K5ABC')
+result = get_result('2026', 'K5ABC')
 print(f"Rankings: {result['rankings']}")
 # {'NQ': 1, 'NS': 2, 'NL': 5}
 

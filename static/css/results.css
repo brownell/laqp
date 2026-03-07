@@ -1,0 +1,264 @@
+/* Louisiana QSO Party - Results Page CSS */
+
+.results-type-selection {
+    margin: 30px 0;
+}
+
+.results-type-selection h4 {
+    color: #8B0000;
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.option-card {
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 25px;
+    margin: 20px 0;
+}
+
+.option-card h5 {
+    color: #8B0000;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.option-card p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.option-divider {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #8B0000;
+    margin: 20px 0;
+}
+
+/* Certificate Styling */
+.certificate-section {
+    margin: 30px 0;
+}
+
+.certificate-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.certificate {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px;
+    border: 15px solid;
+    border-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23859969" width="100" height="100"/></svg>') 15;
+    background: #fff;
+    position: relative;
+}
+
+.certificate-border {
+    border: 3px double #859969;
+    padding: 30px;
+}
+
+.certificate-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.certificate-org {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 2rem;
+    color: #000;
+    margin-bottom: 10px;
+}
+
+.certificate-subtitle {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.certificate-fleur {
+    width: 100px;
+    height: auto;
+    margin: 0 20px;
+}
+
+.certificate-callsign {
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: #008000;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.certificate-recognition {
+    text-align: center;
+    font-size: 1.1rem;
+    margin: 20px 0;
+}
+
+.certificate-contest {
+    text-align: center;
+    font-size: 2rem;
+    color: #0000CD;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.certificate-score {
+    text-align: center;
+    font-size: 1.3rem;
+    margin: 15px 0;
+}
+
+.certificate-rankings {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.certificate-ranking-item {
+    font-size: 1.1rem;
+    margin: 5px 0;
+}
+
+.certificate-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 40px;
+}
+
+.certificate-signature {
+    width: 200px;
+    height: 80px;
+    background: #f0f0f0;
+    border: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.certificate-logo {
+    width: 150px;
+    height: auto;
+}
+
+/* Statistics Section */
+.statistics-section {
+    margin: 30px 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Final Report */
+.final-report-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.final-report-container h2 {
+    color: #8B0000;
+    font-size: 2rem;
+    margin: 30px 0 20px 0;
+    border-bottom: 3px solid #8B0000;
+    padding-bottom: 10px;
+}
+
+.final-report-container h3 {
+    color: #8B0000;
+    font-size: 1.5rem;
+    margin: 20px 0 15px 0;
+}
+
+.final-report-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0 30px 0;
+}
+
+.final-report-container table th,
+.final-report-container table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.final-report-container table th {
+    background: #8B0000;
+    color: #fff;
+    font-weight: bold;
+}
+
+.final-report-container table tr:nth-child(even) {
+    background: #f5f5f5;
+}
+
+/* Print Styles */
+@media print {
+    .container {
+        box-shadow: none;
+    }
+
+    .banner, .separator, footer, .btn-print, .section-header button {
+        display: none !important;
+    }
+
+    /* Print certificate only */
+    body.print-certificate .statistics-section,
+    body.print-certificate .final-report-section,
+    body.print-certificate .lookup-section {
+        display: none !important;
+    }
+
+    /* Print statistics only */
+    body.print-statistics .certificate-section,
+    body.print-statistics .final-report-section,
+    body.print-statistics .lookup-section {
+        display: none !important;
+    }
+
+    /* Print final report only */
+    body.print-final-report .certificate-section,
+    body.print-final-report .statistics-section,
+    body.print-final-report .lookup-section {
+        display: none !important;
+    }
+
+    .certificate {
+        page-break-inside: avoid;
+    }
+}
+
+@media (max-width: 768px) {
+    .certificate {
+        padding: 20px;
+    }
+
+    .certificate-callsign {
+        font-size: 2.5rem;
+    }
+
+    .certificate-contest {
+        font-size: 1.5rem;
+    }
+
+    .certificate-footer {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
