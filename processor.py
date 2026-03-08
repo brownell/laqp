@@ -21,24 +21,17 @@ from unittest import result
 # Import your existing modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.config import (
-    freq_to_band,
-    LA_PARISHES_FILE, WVE_ABBREVS_FILE,
+    LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, WVE_ABBREVS_FILE,
     US_PREFIXES, CANADIAN_PREFIXES,
     PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
     CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS,
-    PHONE_MODES, CW_DIGITAL_MODES, PROVINCES, CONTEST_YEAR
+    PHONE_MODES, CW_DIGITAL_MODES, PROVINCES, CONTEST_YEAR, BAND_RANGES
 )
 
 
 class UnifiedLogProcessor:
     """
     Unified processor that combines validation, preparation, and scoring.
-    
-    Uses consistent naming throughout:
-    - location_type: 'DX', 'NON-LA', 'LA-FIXED', 'LA-ROVER'
-    - mode_category: 'PHONE', 'CW-DIGITAL', 'MIXED'
-    - power_level: 'QRP', 'LOW', 'HIGH'
-    - overlay: None, 'WIRES', 'TB-WIRES', 'POTA'
     """
     
     def __init__(self, parish_file: Path, state_province_file: Path):
@@ -179,42 +172,45 @@ class UnifiedLogProcessor:
             result['is_valid'] = False
             
         if form_data:
-            if form_data['callsign'] and result['callsign'] and result['callsign'] != form_data['callsign']:
-                    result['errors'].append(f"CALLSIGN mismatch: log has {result['callsign']}, form has {form_data['callsign']}")
+            if form_data['callsign'] and result['callsign']:
+                if result['callsign'].upper() != form_data['callsign'].upper():
+                    result['errors'].append(f"CALLSIGN mismatch: log has {result['callsign'].upper()}, form has {form_data['callsign'].upper()}")
                     result['is_valid'] = False
             else:
-                result['errors'].append("Missing CALLSIGN:")
+                result['errors'].append("Callsign is missing from log or form:")
                 result['is_valid'] = False
             
-            if form_data['power'] and result['power_level'] and result['power_level'] != form_data['power']:
-                    result['errors'].append(f"POWER mismatch: log has {result['power_level']}, form has {form_data['power']}")
+            if form_data['power'] and result['power_level']:
+                if result['power_level'].lower() != form_data['power'].lower():
+                    result['errors'].append(f"POWER mismatch: log has {result['power_level'].upper()}, form has {form_data['power'].upper()}")
                     result['is_valid'] = False
             else:
-                result['errors'].append("Missing CATEGORY-POWER:")
+                result['errors'].append("Power is missing from log or form:")
                 result['is_valid'] = False
             
-            if form_data['email'] and result['has_email'] and result['_header']['email'].lower() != form_data['email'].lower():
-                result['errors'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_data['email']}")
-                result['is_valid'] = False
+            if form_data['email'] and result['has_email']:
+                if result['_header']['email'].lower() != form_data['email'].lower():
+                    result['errors'].append(f"Email mismatch: log has {result['_header']['email'].lower()}, form has {form_data['email'].lower()}")
+                    result['is_valid'] = False
             else:
-                result['errors'].append("Missing EMAIL")
+                result['errors'].append("Email is missing from log or form:")
                 result['is_valid'] = False
 
-            if result['mode_category']:
-                if form_data['mode'] and result['_header']['mode_category'].lower() != form_data['mode'].lower():
-                    result['errors'].append(f"Mode mismatch: log has {result['_header']['mode_category']}, form has {form_data['mode']}")
+            if form_data['mode'] and result['_header']['category-mode']:
+                if form_data['mode'] and result['_header']['category-mode'].lower() != form_data['mode'].lower():
+                    result['errors'].append(f"Mode mismatch: log has {result['_header']['category-mode'].upper()}, form has {form_data['mode'].upper()}")
                     result['is_valid'] = False
-                else:
-                    result['errors'].append("Missing MODE")
-                    result['is_valid'] = False
+            else:
+                result['errors'].append("Mode is missing from log or form:")
+                result['is_valid'] = False
 
-            if form_data['email'] and result['email']:
-                if form_data['email'] and result['_header']['email'].lower() != form_data['email'].lower():
-                    result['errors'].append(f"Email mismatch: log has {result['_header']['email']}, form has {form_data['email']}")
+            if form_data['station_type'] and result['_header']['category-station']:
+                if form_data['station_type'] and result['_header']['category-station'].lower() != form_data['station_type'].lower():
+                    result['errors'].append(f"Station mismatch: log has {result['_header']['category-station'].upper()}, form has {form_data['station_type'].upper()}")
                     result['is_valid'] = False
-                else:
-                    result['errors'].append("Missing EMAIL")
-                    result['is_valid'] = False
+            else:
+                result['errors'].append("Station is missing from log or form:")
+                result['is_valid'] = False
         
         if result['total_qsos'] == 0:
             result['errors'].append("No QSOs found in log")
@@ -283,7 +279,7 @@ class UnifiedLogProcessor:
                     result['email'] = value
                 elif key == 'category-power':
                     power_value = value.upper()
-                    if power_value in ('QRP', 'LOW', 'HIGH'):
+                    if power_value in POWER_VALUE_OPTIONS:
                         result['has_valid_power'] = True
                         result['_header']['power'] = power_value
                         result['power_level'] = power_value
@@ -292,14 +288,14 @@ class UnifiedLogProcessor:
                         result['errors'].append(f"Unrecognized power level: {value}")
                 elif key == 'category-station':
                     station_value = value.upper()
-                    if station_value in ('FIXED', 'PORTABLE', 'MOBILE', 'ROVER'):
+                    if station_value in STATION_VALUE_OPTIONS:
                         result['_header']['station'] = station_value
-                        result['mode_category'] = station_value
+                        result['location_type'] = station_value
                     else:
                         result['warnings'].append(f"Unrecognized station type: {value}")
                 elif key == 'category-overlay':
                     overlay_value = value.upper()
-                    if overlay_value in ('WIRES', 'TB-WIRES', 'POTA'):
+                    if overlay_value in OVERLAY_VALUE_OPTIONS:
                         result['_header']['overlay'] = overlay_value
                     else:
                         result['warnings'].append(f"Unrecognized overlay: {value}")
@@ -751,6 +747,21 @@ def process_batch_logs(log_dir: Path,
         results.append(result)
     
     return results
+
+def freq_to_band(freq_khz: int) -> int:
+    """
+    Convert frequency in kHz to band in meters.
+    
+    Args:
+        freq_khz: Frequency in kHz
+    
+    Returns:
+        Band in meters (e.g., 20, 40, 80) or None if not in a valid band
+    """
+    for band, (min_freq, max_freq) in BAND_RANGES.items():
+        if min_freq <= freq_khz <= max_freq:
+            return band
+    return None
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ def main():
     # Import the unified processor
     from processor import process_batch_logs
 
-    from config.config import INCOMING_LOGS
+    from config.config import BATCH_INPUT_DIR
 
     # Add project to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,7 +28,7 @@ def main():
     print()
 
     # Process all logs
-    results = process_batch_logs(INCOMING_LOGS)
+    results = process_batch_logs(BATCH_INPUT_DIR)
     
     print(f"Processed {len(results)} logs")
     print()

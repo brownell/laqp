@@ -1,0 +1,47 @@
+# Fly.io Configuration for Louisiana QSO Party
+# https://fly.io/docs/reference/configuration/
+
+app = "laqp-contest"
+primary_region = "iad"  # Washington DC (change to closest: iad, dfw, lax, etc.)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # Application settings
+  CONTEST_YEAR = "2026"
+  FLASK_ENV = "production"
+  
+  # Paths (use /data volume for persistence)
+  DATABASE_PATH = "/data/database/laqp.db"
+  UPLOAD_FOLDER = "/data/logs/incoming"
+  HTML_RESULTS_DIR = "/data/HTML_RESULTS"
+  TEMP_DIR = "/tmp"
+  
+  # Config directory
+  CONFIG_DIR = "/app/config"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0  # Scale to zero when idle (saves money)
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+# Persistent storage for database, logs, and results
+[mounts]
+  source = "laqp_data"
+  destination = "/data"
+
+# Health check
+[[http_service.http_checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
