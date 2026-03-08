@@ -7,6 +7,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -18,16 +19,20 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories for data persistence
-RUN mkdir -p /app/data \
-    /app/logs/incoming \
-    /app/HTML_RESULTS \
-    /app/database \
-    /app/temp
+# Create directories (will be overridden by volume mounts in production)
+RUN mkdir -p /app/data/batch_input \
+    /app/data/database \
+    /app/data/final_reports \
+    /app/data/reference_data \
+    /app/temp \
+    /data/batch_input \
+    /data/database \
+    /data/final_reports \
+    /data/reference_data
 
 # Create non-root user for running the app
 RUN useradd -m -u 1000 laqp && \
-    chown -R laqp:laqp /app
+    chown -R laqp:laqp /app /data
 
 # Switch to non-root user
 USER laqp
@@ -35,17 +40,18 @@ USER laqp
 # Expose port
 EXPOSE 5000
 
-# Environment variables
-ENV FLASK_APP=app.py \
+# Environment variables (can be overridden)
+ENV FLASK_APP=web.py \
     PYTHONUNBUFFERED=1 \
-    DATABASE_PATH=/app/database/laqp.db \
-    UPLOAD_FOLDER=/app/logs/incoming \
-    HTML_RESULTS_DIR=/app/HTML_RESULTS \
-    TEMP_DIR=/app/temp
+    DATABASE_PATH=${DATABASE_PATH:-/data/database/laqp.db} \
+    BATCH_INPUT_DIR=${BATCH_INPUT_DIR:-/data/batch_input} \
+    FINAL_REPORTS_DIR=${FINAL_REPORTS_DIR:-/data/final_reports} \
+    REFERENCE_DATA_DIR=${REFERENCE_DATA_DIR:-/data/reference_data} \
+    TEMP_DIR=${TEMP_DIR:-/tmp}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/health')" || exit 1
+    CMD curl -f http://localhost:5000/health || exit 1
 
 # Run with gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "web:app"]

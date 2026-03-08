@@ -8,38 +8,33 @@ services:
       - "5000:5000"
     volumes:
       # Persist database
-      - laqp-database:/app/database
+      - laqp-data:/data
       
-      # Persist uploaded logs
-      - laqp-logs:/app/logs
+      # Mount reference data files (read-only from host)
+      - ./data/reference_data:/data/reference_data:ro
       
-      # Persist HTML results (so they survive container restarts)
-      - laqp-results:/app/HTML_RESULTS
-      
-      # Mount data files (parishes, states) - read-only
-      - ./data:/app/data:ro
-      
-      # Optional: Mount config if you want to modify it without rebuilding
+      # Mount config (read-only) - allows updates without rebuild
       - ./config:/app/config:ro
       
       # Temporary files (doesn't need persistence)
-      - laqp-temp:/app/temp
+      - laqp-temp:/tmp
     
     environment:
       # Flask settings
       - FLASK_ENV=production
-      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      - SECRET_KEY=${SECRET_KEY}
       
-      # Database
-      - DATABASE_PATH=/app/database/laqp.db
+      # Database (in volume)
+      - DATABASE_PATH=/data/database/laqp.db
       
-      # File paths
-      - UPLOAD_FOLDER=/app/logs/incoming
-      - HTML_RESULTS_DIR=/app/HTML_RESULTS
-      - TEMP_DIR=/app/temp
+      # File paths (in volumes)
+      - BATCH_INPUT_DIR=/data/batch_input
+      - FINAL_REPORTS_DIR=/data/final_reports
+      - REFERENCE_DATA_DIR=/data/reference_data
+      - TEMP_DIR=/tmp
       
-      # Contest year (optional)
-      - CONTEST_YEAR=2026
+      # Contest settings
+      - CONTEST_YEAR=${CONTEST_YEAR:-2024}
     
     restart: unless-stopped
     
@@ -52,16 +47,12 @@ services:
 
 # Named volumes for data persistence
 volumes:
-  laqp-database:
-    driver: local
-  laqp-logs:
-    driver: local
-  laqp-results:
+  laqp-data:
     driver: local
   laqp-temp:
     driver: local
 
-# Networks (optional, for future expansion)
+# Networks
 networks:
   default:
     name: laqp-network

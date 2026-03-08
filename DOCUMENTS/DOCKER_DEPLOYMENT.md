@@ -433,7 +433,7 @@ echo "Backup complete: $BACKUP_DIR"
 ```
 
 ### Restore from Backup
-
+r
 ```bash
 #!/bin/bash
 # restore.sh
