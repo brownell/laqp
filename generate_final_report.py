@@ -14,7 +14,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from leaderboards import generate_leaderboards
-from config.config import FINAL_REPORTS_DIR, LEADERBOARDS, RANKINGS, FINAL_REPORT_TXT
+from config.config import FINAL_REPORTS_DIR, LEADERBOARDS, RANKINGS, FINAL_REPORT_TXT, FINAL_REPORTS_DIR
 
 
 def generate_final_report_html(year: str, output_dir: str = FINAL_REPORTS_DIR):
@@ -95,7 +95,7 @@ def _create_html_document(year: str, sections: list) -> str:
         </div>
 """)
     
-    # Generate sections
+    # Generate HTML for each section
     for section in sections:
         html_parts.append(_generate_section_html(section))
     
@@ -367,12 +367,13 @@ body {
 
 
 if __name__ == "__main__":
-    import os
+    import sys
+    from config.config import CONTEST_YEAR, FINAL_REPORTS_DIR
     
     # Get year from environment or command line
     if len(sys.argv) > 1:
         year = sys.argv[1]
     else:
-        year = os.environ.get('CONTEST_YEAR', str(datetime.now().year))
+        year = CONTEST_YEAR
     
     generate_final_report_html(year, FINAL_REPORTS_DIR)

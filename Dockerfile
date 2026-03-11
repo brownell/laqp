@@ -42,12 +42,7 @@ EXPOSE 5000
 
 # Environment variables (can be overridden)
 ENV FLASK_APP=web.py \
-    PYTHONUNBUFFERED=1 \
-    DATABASE_PATH=${DATABASE_PATH:-/data/database/laqp.db} \
-    BATCH_INPUT_DIR=${BATCH_INPUT_DIR:-/data/batch_input} \
-    FINAL_REPORTS_DIR=${FINAL_REPORTS_DIR:-/data/final_reports} \
-    REFERENCE_DATA_DIR=${REFERENCE_DATA_DIR:-/data/reference_data} \
-    TEMP_DIR=${TEMP_DIR:-/tmp}
+    PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

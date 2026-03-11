@@ -21,7 +21,7 @@ from unittest import result
 # Import your existing modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.config import (
-    LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, WVE_ABBREVS_FILE,
+    BONUS_CALLSIGN, LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, WVE_ABBREVS_FILE,
     US_PREFIXES, CANADIAN_PREFIXES,
     PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
     CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS,
@@ -46,60 +46,7 @@ class UnifiedLogProcessor:
         
         # Ambiguous QTH that need DX suffix
         self.ambiguous_dx_qth = {"ON", "PA", "CT", "TN", "LA", "HI", "OK", "CO", "OH"}
-    
-    def process_log_details(self,
-        log_path: Path = None,
-        form_data: Dict = None) -> Dict:
-
-        """
-        Complete processing pipeline: validate → prepare → score
-        
-        Args:
-            log_path: Path to Cabrillo log file
-            form_*: Optional web form values to cross-check
-        
-        Returns:
-            Complete result dictionary with all statistics
-        """
-        # Initialize result with your standardized structure
-        result = self._init_result()
-        
-        # Phase 1: Validate and parse
-        try:
-            self._validate_and_parse(log_path, result, form_data)
-        except Exception as e:
-            result['is_valid'] = False
-            result['errors'].append(f"Validation failed: {str(e)}")
-            return result
-        
-        # If validation failed, return early
-        if not result['is_valid']:
-            return result
-        
-        # Phase 2: Prepare QSOs (in memory)
-        try:
-            prepared_qsos = self._prepare_qsos(result)
-            result['valid_qsos'] = len(prepared_qsos)
-        except Exception as e:
-            result['is_valid'] = False
-            result['errors'].append(f": {str(e)}")
-
-            # pprint(f"Done preparing: {result}")
-            # print("BREAKPOINT")
-            return result
-        
-        # Phase 3: Score
-        try:
-            self._score_qsos(prepared_qsos, result)
-        except Exception as e:
-            result['is_valid'] = False
-            result['errors'].append(f"Scoring failed: {str(e)}")
-
-            # pprint(f"Done scoring: {result}")
-            # print("BREAKPOINT")
-            return result
-        
-        return result
+        self.first_call_qth = None  # To track the sent QTH in a log for checking other QSOs against it
     
     def _init_result(self) -> Dict:
         """Initialize result dictionary with standardized structure"""
@@ -107,10 +54,9 @@ class UnifiedLogProcessor:
             'year': CONTEST_YEAR,
             'callsign': '',
             'name': '',
-            'category': '',  # Short category name (e.g., 'nl_ph_lo')
             'overlay': None,  # 'WIRES', 'TB-WIRES', 'POTA', or None
             'location_type': 'NON-LA',  # 'DX', 'NON-LA', 'LA-FIXED', 'LA-ROVER'
-            'mode_category': 'MIXED',  # 'PHONE', 'CW-DIGITAL', 'MIXED'
+            'mode_category': 'MIXED',  # 'PHONE', 'CW/DIGITAL', 'MIXED'
             'power_level': 'LOW',  # 'QRP', 'LOW', 'HIGH'
             'is_rover': False,
             'final_score': 0,
@@ -147,31 +93,79 @@ class UnifiedLogProcessor:
             '_header': {}
         }
     
+    def process_log_details(self,
+        log_path: Path = None,
+        form_data: Dict = None) -> Dict:
+
+        """
+        Complete processing pipeline: validate → prepare → score
+        
+        Args:
+            log_path: Path to Cabrillo log file
+            form_*: Optional web form values to cross-check
+        
+        Returns:
+            Complete result dictionary with all statistics
+        """
+        # Initialize result with your standardized structure
+        result = self._init_result()
+        
+        # Phase 1: Validate and parse
+        try:
+            self._validate_and_parse(log_path, result, form_data)
+        except Exception as e:
+            result['is_valid'] = False
+            result['errors'].append(f"Validation failed: {str(e)}")
+            return result
+        
+        # If validation failed, return early
+        if not result['is_valid']:
+            return result
+        
+        #############################################
+        # Phase 2: Prepare QSOs (in memory)
+        #############################################
+        try:
+            prepared_qsos = self._prepare_qsos(result)
+            result['valid_qsos'] = len(prepared_qsos)
+        except Exception as e:
+            result['is_valid'] = False
+            result['errors'].append(f": {str(e)}")
+            return result
+        
+        #############################################
+        # Phase 3: Score
+        #############################################
+        try:
+            self._score_qsos(prepared_qsos, result)
+        except Exception as e:
+            result['is_valid'] = False
+            result['errors'].append(f"Scoring failed: {str(e)}")
+
+            # pprint(f"Done scoring: {result}")
+            # print("BREAKPOINT")
+            return result
+        
+        return result
+    
     def _validate_and_parse(self,
             log_path: Path,
             result: Dict,
             form_data: Dict) -> None:
 
-        """Phase 1: Validate and parse header/QSOs"""
+
+        #############################################
+        #Phase 1: Validate and parse header and QSO lines
+        #############################################
         qso_modes = set()
         
         if log_path:
             with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
-                has_start, has_end = self._log_line_by_line(f, result)
-
-        # pprint(f' AFTER process log headers: result: {result}')
-        # print("BREAKPOINT")   
+                self._log_line_by_line(f, result) 
         
-        # Check required fields
-        if not has_start:
-            result['errors'].append("Missing START-OF-LOG: 3.0")
-            result['is_valid'] = False
-        
-        if not has_end:
-            result['errors'].append("Missing END-OF-LOG:")
-            result['is_valid'] = False
+        # Check required fields and cross-check with form data
             
-        if form_data:
+        if form_data and result['is_valid']:
             if form_data['callsign'] and result['callsign']:
                 if result['callsign'].upper() != form_data['callsign'].upper():
                     result['errors'].append(f"CALLSIGN mismatch: log has {result['callsign'].upper()}, form has {form_data['callsign'].upper()}")
@@ -188,9 +182,9 @@ class UnifiedLogProcessor:
                 result['errors'].append("Power is missing from log or form:")
                 result['is_valid'] = False
             
-            if form_data['email'] and result['has_email']:
-                if result['_header']['email'].lower() != form_data['email'].lower():
-                    result['errors'].append(f"Email mismatch: log has {result['_header']['email'].lower()}, form has {form_data['email'].lower()}")
+            if form_data['email'] and result['email']:
+                if result['email'].lower() != form_data['email'].lower():
+                    result['errors'].append(f"Email mismatch: log has {result['email'].lower()}, form has {form_data['email'].lower()}")
                     result['is_valid'] = False
             else:
                 result['errors'].append("Email is missing from log or form:")
@@ -204,13 +198,20 @@ class UnifiedLogProcessor:
                 result['errors'].append("Mode is missing from log or form:")
                 result['is_valid'] = False
 
-            if form_data['station_type'] and result['_header']['category-station']:
-                if form_data['station_type'] and result['_header']['category-station'].lower() != form_data['station_type'].lower():
-                    result['errors'].append(f"Station mismatch: log has {result['_header']['category-station'].upper()}, form has {form_data['station_type'].upper()}")
+            if form_data['station_type'] and result['location_type']:
+                if form_data['station_type'] and result['location_type'].lower() != form_data['station_type'].lower():
+                    result['errors'].append(f"Station mismatch: log has {result['location_type'].upper()}, form has {form_data['station_type'].upper()}")
                     result['is_valid'] = False
             else:
                 result['errors'].append("Station is missing from log or form:")
                 result['is_valid'] = False
+
+            if form_data['overlay'] and result['location_type']:
+                if form_data['station_type'] and result['location_type'].lower() != form_data['station_type'].lower():
+                    result['errors'].append(f"Station mismatch: log has {result['location_type'].upper()}, form has {form_data['station_type'].upper()}")
+                    result['is_valid'] = False
+
+        ## Done with Cabrillo Header, now do QSOs
         
         if result['total_qsos'] == 0:
             result['errors'].append("No QSOs found in log")
@@ -220,7 +221,7 @@ class UnifiedLogProcessor:
             return
         
         # Determine mode category from actual QSOs
-        ###################FIXIT NOOOOO do not want to do it this way, we want to get the mode category from the header and then check for consistency with the modes in the QSOs.  If there is a violation, we should mark this as an error and reject the log.  We do not want to categorize a log as MIXED just because it has some phone and some cw/digital QSOs if the header says it is PHONE or CW-DIGITAL.  The header should be the source of truth for categorization, and the QSOs should be checked against that for consistency.
+        ################### TODO FIXIT NOOOOO do not want to do it this way, we want to get the mode category from the header and then check for consistency with the modes in the QSOs.  If there is a violation, we should mark this as an error and reject the log.  We do not want to categorize a log as MIXED just because it has some phone and some cw/digital QSOs if the header says it is PHONE or CW-DIGITAL.  The header should be the source of truth for categorization, and the QSOs should be checked against that for consistency.
         
         ## I think we would rather just get the mode from the stated mode in the Cabrillo File
         ## if a QSO has a mode that violates this, I think we mark this as an error and reject the log
@@ -231,14 +232,6 @@ class UnifiedLogProcessor:
         #     result['mode_category'] = 'PHONE'
         # elif has_cw_digital:
         #     result['mode_category'] = 'CW-DIGITAL'
-        
-        # Set power level from header
-        result['power_level'] = result['_header'].get('power', 'LOW')
-        
-        # Set overlay from header
-        result['overlay'] = result['_header'].get('overlay', None)
-
-        # print("BREAKPOINT")
 
     # END of _validate_and_parse
 
@@ -246,6 +239,7 @@ class UnifiedLogProcessor:
         
         has_start = False
         has_end = False
+        first_qso_line = True
         
         for line_num, line in enumerate(log_path, 1):
             # print(f'Processing line {line_num}: {line.strip()}')
@@ -261,7 +255,7 @@ class UnifiedLogProcessor:
                 has_end = True
                 continue
             
-            # Parse header fields (CALLSIGN, EMAIL, CATEGORY-POWER, etc.)
+            # Parse header fields (CALLSIGN, NAME, EMAIL, CATEGORY-POWER, CATEGORY-MODE, CATEGORY-STATION, CATEGORY-OVERLAY, CLAIMED-SCORE)
             if ':' in line and not line.startswith('QSO:'):
                 key, value = line.split(':', 1)
                 key = key.strip().lower()
@@ -275,74 +269,88 @@ class UnifiedLogProcessor:
                 elif key == 'category-mode':
                     result['mode_category'] = value.upper()
                 elif key == 'email':
-                    result['has_email'] = True
                     result['email'] = value
                 elif key == 'category-power':
                     power_value = value.upper()
                     if power_value in POWER_VALUE_OPTIONS:
-                        result['has_valid_power'] = True
-                        result['_header']['power'] = power_value
                         result['power_level'] = power_value
                     else:
-                        result['has_valid_power'] = False
                         result['errors'].append(f"Unrecognized power level: {value}")
+
                 elif key == 'category-station':
                     station_value = value.upper()
                     if station_value in STATION_VALUE_OPTIONS:
-                        result['_header']['station'] = station_value
                         result['location_type'] = station_value
                     else:
                         result['warnings'].append(f"Unrecognized station type: {value}")
+
                 elif key == 'category-overlay':
                     overlay_value = value.upper()
                     if overlay_value in OVERLAY_VALUE_OPTIONS:
-                        result['_header']['overlay'] = overlay_value
+                        result['overlay'] = overlay_value
                     else:
                         result['warnings'].append(f"Unrecognized overlay: {value}")
+
                 elif key == 'claimed-score':
                     try:
                         result['claimed_score'] = int(value)
                     except ValueError:
-                        result['claimed_score'] = 0
+                        result['claimed_score'] = -1
                         result['warnings'].append(f"Invalid claimed score format: {value}")
                 
                 continue
             
             # Validate QSO lines and collect them for later processing
             if line.startswith('QSO:'):
-                qso_error = self._validate_qso_line(line, line_num)
-                if qso_error:
-                    result['errors'].append(qso_error)
-                    result['is_valid'] = False
-                else:
+                qso_ok = self._validate_qso_line(result, line, line_num, first_qso_line)
+                if qso_ok:
                     result['_qso_lines'].append((line_num, line))
                     result['total_qsos'] += 1
+                first_qso_line = False
 
-        return has_start, has_end
+        return
+    ## END of _log_line_by_line
+    
+    def _validate_qso_line(self, result, line: str, line_num: int, first_qso_line: bool) -> Optional[bool]:
 
-    def _validate_qso_line(self, line: str, line_num: int) -> Optional[str]:
-        """Basic QSO line validation - returns error message or None"""
         parts = line.split()
         if len(parts) < 11:
-            return f"Line {line_num}: Insufficient QSO fields"
+            result['warnings'].append(f"Line {line_num}: {line} Insufficient number of QSO fields")
+            return False
         
         # Validate frequency
         try:
             freq = int(parts[1])
             band = freq_to_band(freq)
             if band == 0:
-                return f"Line {line_num}: Invalid frequency {freq} kHz"
+                result['warnings'].append(f"Line {line_num}: {line} Invalid frequency {freq} kHz")
+                return False
         except (ValueError, IndexError):
-            return f"Line {line_num}: Invalid frequency format"
+            result['warnings'].append(f"Line {line_num}: {line} Invalid frequency format")
+            return False
         
         # Validate mode
         mode = parts[2]
-        if mode not in PHONE_MODES and mode not in CW_DIGITAL_MODES:
-            result['errors'].append(f"QSO at line {line_num}: Unrecognized mode {mode}")
-            result['is_valid'] = False
-            return f"Line {line_num}: Invalid mode {mode}"
+        if mode not in PHONE_MODES and mode not in CW_DIGITAL_MODES and mode != 'MIXED':
+            result['warnings'].append(f"QSO at line {line_num}: {line} Unrecognized mode {mode}")
+            return False
+            
+        if result['mode_category'] == 'SSB' and mode not in PHONE_MODES and mode != 'MIXED':
+            result['warnings'].append(f"QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
+            return False
+            
+        if result['mode_category'] == 'CW/DIGITAL' and mode not in CW_DIGITAL_MODES and mode != 'MIXED':
+            result['warnings'].append(f"QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
+            return False
         
-        return None
+        if first_qso_line:
+            self.first_call_qth = parts[7]
+        else:
+            if parts[7] != self.first_call_qth:
+                result['warnings'].append(f"QSO at line {line_num}: {line} Sent QTH {parts[7]} does not match first QSO sent QTH {self.first_call_qth}")
+                return False
+   
+        return True
     
     def _prepare_qsos(self, result: Dict) -> List[Dict]:
         """Phase 2: Prepare QSOs (convert freq, expand multi-parish, etc.)"""
@@ -377,6 +385,7 @@ class UnifiedLogProcessor:
             else:
                 mode_cat = 'CW/Digital'
             
+            # TODO check what this means and when it happens
             # Handle multi-parish QTH (split on /)
             rcvd_qth_list = rcvd_qth.split('/')
             
@@ -391,7 +400,7 @@ class UnifiedLogProcessor:
                 if self._is_dx_callsign(rcvd_call) and qth in self.ambiguous_dx_qth:
                     rcvd_qth_final = qth + 'DX'
 
-                # check if sender in state or province
+                # TODO check if sender in state or province
                 
             prepared.append({
                 'band': band,
@@ -407,54 +416,18 @@ class UnifiedLogProcessor:
                 'rcvd_qth': rcvd_qth_final,
                 'line_num': line_num
             })
-            # print(f"After append #{len(prepared)}:")
-            # print(f"  - prepared id: {id(prepared)}")
-            # print(f"  - Last item id: {id(prepared[-1])}")
-            # print(f"  - Last item: {prepared[-1]}")
-            # print(f"  - band={band}, mode={mode}")
-
-
-            # pprint(f"Prepared QSO Line {line_num}: {prepared}")
-            # pprint("-----")
         
         # Get info that is NOT specific to each QSO but is needed for scoring (e.g., location type)
         # Determine location type from prepared QSOs
-        result['location_type'] = self._determine_location_type(prepared, result['_header'])
+        result['location_type'] = self._determine_location_type(result, prepared, result['_header'])
         result['is_rover'] = (result['location_type'] == 'LA-ROVER')
-        
-        # Generate category short name
-        loc_abbrev = {
-            'DX': 'dx',
-            'NON-LA': 'nl',
-            'LA-FIXED': 'lf',
-            'LA-ROVER': 'lr'
-        }[result['location_type']]
-        pprint(f"mode_category = {result['mode_category']}")
-        mode_abbrev = {
-            'SSB': 'ph',
-            'PHONE': 'ph',
-            'CW/DIGITAL': 'cw',
-            'MIXED': 'mx'
-        }[result['mode_category']]
-        
-        power_abbrev = {
-            'QRP': 'qp',
-            'LOW': 'lo',
-            'HIGH': 'hi'
-        }[result['power_level']]
-        
-        result['category'] = f"{loc_abbrev}_{mode_abbrev}_{power_abbrev}"
-
-
-        pprint(f"location_type: {result['location_type']}, category: {result['category']}\nPrepared {len(prepared)} QSOs; QSO Line {line_num}: Prepared {prepared}")
-        # print("BREAKPOINT")
         
         return prepared
     
     ## END of prepare_qsos
     
     # get location type of a QSO's sender
-    def _determine_location_type(self, qsos: List[Dict], header: Dict) -> str:
+    def _determine_location_type(self, result, qsos: List[Dict], header: Dict) -> str:
         """Determine location type from QSOs"""
         sent_qths = []
         
@@ -476,7 +449,7 @@ class UnifiedLogProcessor:
         
         # Determine if fixed or rover
         unique_parishes = list(set(sent_qths))
-        station = header.get('station', 'FIXED')
+        station = result['location_type']  # Get station type
         
         if station in ('MOBILE', 'ROVER'):
             return 'LA-ROVER'
@@ -490,7 +463,8 @@ class UnifiedLogProcessor:
     def _score_qsos(self, qsos: List[Dict], result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
-        # a mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These should be allowed but not count for multipliers.  A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points.
+        # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These sqso points but not  multipliers.  
+        # A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points or multipliers.
         mult_dups = []
         qso_dups = []
         # pprint(f"QSO Scoring for {result['callsign'].upper()}")
@@ -500,18 +474,10 @@ class UnifiedLogProcessor:
             sent_call = qso['sent_call']
             rcvd_call = qso['rcvd_call']
             rcvd_qth = qso['rcvd_qth'].replace('DX', '')
-
-            # Create checks for both types of duplicates - one for points (band/mode/rcvd_call) and one for multipliers (band/mode/rcvd_qth)
-            mult_check = band + mode_cat + rcvd_qth
-            qso_check = band + mode_cat + rcvd_call
             
             # if not a duplicate for QSO points purposes, get the points. Else add to the dup list and skip points
             qso_check = band + mode_cat + rcvd_call
-            if qso_check in qso_dups:
-                index = qso_dups.index(qso_check)
-                # pprint(f"in qso_dups {index} / {qso_dups[index]} / {qso_check}")
-                # pprint(f"Duplicate QSO detected band/mode/call worked: Line {qso['line_num']} band {band} mode {mode_cat} call worked {rcvd_call}")
-                # pprint(f"QSO Dup Line {qso['line_num']} {qso['band']} {qso['mode_category']} {rcvd_call} {rcvd_qth}")
+            if qso_check in qso_dups and result['callsign'].upper() != BONUS_CALLSIGN:
                 result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
             else:  ## not a duplicate for points, so get points
                 qso_dups.append(qso_check)
@@ -540,17 +506,10 @@ class UnifiedLogProcessor:
                 if rcvd_call == 'N5LCC':
                     result['worked_n5lcc'] = True
                     result['num_n5lcc_contacts'] += 1
-                    # pprint(f"Found N5LCC contact, total now: {result['num_n5lcc_contacts']}")
-
             ## add to correct multiplier list even if a dup for points, but check for mult dup first and warn if so.  This allows the multiplier to be counted for the first QSO but not for subsequent dup QSOs.
-            if mult_check in mult_dups:
-                # index = mult_dups.index(mult_check)
-                # pprint(f"in mult_dups {index} / {mult_dups[index]} / {mult_check}")
-                # pprint(f"Duplicate Multiplier detected band/mode/qth worked: Line {qso['line_num']} band {band} mode {mode_cat} qth worked {rcvd_qth}")
-                # pprint(f"Mult Dup Line {qso['line_num']} {qso['band']} {qso['mode_category']} {rcvd_call} {rcvd_qth}")
+            mult_check = band + mode_cat + rcvd_qth
+            if mult_check in mult_dups and result['callsign'].upper() != BONUS_CALLSIGN:
                 result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{rcvd_qth}")
-                # pprint(f"warnings: {result['warnings']}")
-                # print("BREAKPOINT")
 
             else:
                 mult_dups.append(mult_check)
@@ -578,21 +537,14 @@ class UnifiedLogProcessor:
                     if result['is_rover'] and qso['sent_qth'] in self.parishes:
                         result['parishes_activated'].add(qso['sent_qth'])
 
-        # pprint(f"Done qso_points: {result['qso_points']}")
-        # print("BREAKPOINT")
 
         # Finished with points, now sum the individual multipliers
         for i in ['parishes', 'states', 'provinces', 'dx']:
             result['total_multipliers'] += result[f'{i}_worked_multiplier']
           
-        # pprint(f"L TOTAL MULT: {result['total_multipliers']} basic multipliers: Parishes {result['parishes_worked_multiplier']}, States {result['states_worked_multiplier']}, Provinces {result['provinces_worked_multiplier']}, DX {result['dx_worked_multiplier']}")
-        # print("BREAKPOINT")
 
         ## score before bonuses
         result['final_score'] = result['qso_points'] * max(1, result['total_multipliers'])
-
-        # pprint(f'Final score before bonuses: {result["final_score"]}')
-        # print('BREAKPOINT')
 
         ## add bonus points for one or more N5LCC contacts
         if result['worked_n5lcc']:
@@ -602,9 +554,6 @@ class UnifiedLogProcessor:
         if result['location_type'] == 'LA-ROVER':
             result['rover_bonus_points'] = len(result['parishes_activated']) * ROVER_PARISH_BONUS
             result['final_score'] += result['rover_bonus_points']
-            
-        # pprint(f'Final score with bonuses: {result["final_score"]}')
-        # print('BREAKPOINT')
 
     ## END of score_qsos
     
@@ -642,7 +591,7 @@ class UnifiedLogProcessor:
     
 ## End of UnifiedLogProcessor class
 
-# Convenience functions for single log processing in WEB app ONLY (not used for batch processing
+# Convenience functions for single log processing in WEB app ONLY (not used for batch processing)
 def process_single_log(
         log_path: Path = None,
         form_data: Dict = None,
@@ -650,7 +599,7 @@ def process_single_log(
         parish_file: Path = Path(LA_PARISHES_FILE),
         state_province_file: Path = Path(WVE_ABBREVS_FILE)) -> Dict:
     """
-    Process a single log file (for web uploads).
+    Process a single log file (for web uploads ONLY).
     
     Args:
         log_path: Path to log file
@@ -661,14 +610,7 @@ def process_single_log(
     Returns:
         Result dictionary
     """
-    # for debugging error messages
-    # result = {
-    #     'errors': ["This is a test error message", 'second message', 'third message'],
-    #     'callsign': 'KJ5BYZ',
-    # }
-    # return result
-
-
+    print
     processor = UnifiedLogProcessor(parish_file, state_province_file)
 
     return processor.process_log_details(
@@ -678,7 +620,6 @@ def process_single_log(
 def print_result(result):
     """Utility function to print result in a readable format"""
     print(f"Callsign: {result['callsign']} Errors: {len(result['errors'])}  Warnings: {len(result['warnings'])}")
-    print(f"Category: {result['category']}")
     print(f"Location Type: {result['location_type']}")
     print(f"Mode Category: {result['mode_category']}")
     print(f"Power Level: {result['power_level']}")
@@ -735,15 +676,6 @@ def process_batch_logs(log_dir: Path,
     results = []
     for log_path in log_dir.glob('*.log'):
         result = processor.process_log_details(log_path)
-        if result['claimed_score'] != result['final_score']:
-            pprint(f"\n================================================\nScore mismatch for {str(log_path).split('/')[-1].split('.')[0].upper()}: claimed / calculated {result['claimed_score']} / {result['final_score']}")
-            print_result(result)
-            pprint("BREAKPOINT")
-            result['warnings'].append(f"Score mismatch: claimed: {result['claimed_score']}  calculated: {result['final_score']}")
-        else:
-            pprint(f"\n================================================  SUCCESS!!! for {str(log_path).split('/')[-1].split('.')[0].upper()} Err: {len(result['errors'])} Wrn: {len(result['warnings'])}")
-            pprint("BREAKPOINT")
-            
         results.append(result)
     
     return results
