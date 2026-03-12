@@ -6,9 +6,8 @@ Batch Control program to process ALL the logs in the incoming directory
 
 from database import save_result
 
-def main():
-    import os, sys
-    from datetime import datetime
+def main(contest_year: str):
+    import sys
     from pathlib import Path
 
     # Import the unified processor
@@ -19,19 +18,12 @@ def main():
     # Add project to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
-    # Get year (default to current year)
-    year = os.environ.get('CONTEST_YEAR', str(datetime.now().year))
-    
-    print("=" * 60)
-    print(f"Louisiana QSO Party - Batch Processing ({year})")
-    print("=" * 60)
-    print()
+    input_dir = Path(f"{BATCH_INPUT_DIR}/{contest_year}")
 
     # Process all logs
-    results = process_batch_logs(BATCH_INPUT_DIR)
-    
-    print(f"Processed {len(results)} logs")
-    print()
+    # print(f"before process_batch_logs, input_dir: {input_dir}")
+    results = process_batch_logs(input_dir)
+
 
     # Save results to database (valid and invalid)
     valid_count = 0
@@ -40,7 +32,7 @@ def main():
     
     for result in results:
         # Add year to result
-        result['year'] = year
+        result['year'] = contest_year
         
         # Initialize empty rankings dict
         result['rankings'] = {}
@@ -50,7 +42,7 @@ def main():
         else:
             invalid_count += 1
             print(f"✗ {result['callsign']}: Invalid log")
-            for error in result.get('errors', [])[:3]:  # Show first 3 errors
+            for error in result.get('errors', [])[:5]:  # Show first 3 errors
                 print(f"    ERROR: {error}")
         
         # Save to database (both valid and invalid for record-keeping)
@@ -58,7 +50,7 @@ def main():
             if save_result(result):
                 saved_count += 1
                 status = "✓" if result['is_valid'] else "✗"
-                print(f"{status} {result['callsign']}: Saved to database")
+                # print(f"{status} {result['callsign']}: Saved to database")
             else:
                 print(f"✗ {result['callsign']}: Database save failed")
         except Exception as e:
@@ -77,4 +69,13 @@ def main():
     print()
 
 if __name__ == "__main__":
-    main()
+    import os, sys
+    from datetime import datetime
+    from config.config import CONTEST_YEAR
+    
+    # Get year from environment or command line
+    if len(sys.argv) > 1:
+        year = sys.argv[1]
+    else:
+        year = CONTEST_YEAR
+    main(year)

@@ -61,13 +61,14 @@ def generate_rankings(year: str):
 
 
 if __name__ == "__main__":
-    import os
+    import os, sys
     from datetime import datetime
+    from config.config import CONTEST_YEAR
     
     # Get year from environment or command line
     if len(sys.argv) > 1:
         year = sys.argv[1]
     else:
-        year = os.environ.get('CONTEST_YEAR', str(datetime.now().year))
+        year = CONTEST_YEAR
     
     generate_rankings(year)

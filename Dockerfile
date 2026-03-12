@@ -1,6 +1,9 @@
 # Louisiana QSO Party Web Application - Dockerfile
 FROM python:3.11-slim
 
+ARG CACHEBUST=999
+RUN echo "Cache bust: $CACHEBUST"
+
 # Set working directory
 WORKDIR /app
 
@@ -20,15 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create directories (will be overridden by volume mounts in production)
-RUN mkdir -p /app/data/batch_input \
-    /app/data/database \
-    /app/data/final_reports \
-    /app/data/reference_data \
-    /app/temp \
-    /data/batch_input \
+RUN mkdir -p /data/batch_input \
     /data/database \
-    /data/final_reports \
-    /data/reference_data
+    /data/final_reports 
 
 # Create non-root user for running the app
 RUN useradd -m -u 1000 laqp && \
@@ -42,12 +39,7 @@ EXPOSE 5000
 
 # Environment variables (can be overridden)
 ENV FLASK_APP=web.py \
-    PYTHONUNBUFFERED=1 \
-    DATABASE_PATH=${DATABASE_PATH:-/data/database/laqp.db} \
-    BATCH_INPUT_DIR=${BATCH_INPUT_DIR:-/data/batch_input} \
-    FINAL_REPORTS_DIR=${FINAL_REPORTS_DIR:-/data/final_reports} \
-    REFERENCE_DATA_DIR=${REFERENCE_DATA_DIR:-/data/reference_data} \
-    TEMP_DIR=${TEMP_DIR:-/tmp}
+    PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

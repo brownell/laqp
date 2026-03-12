@@ -85,6 +85,7 @@ def upload_log():
             'errors': errors
         }), 400
     
+    #### TODO: Change so uploaded log filed are
     # Process the log
     temp_log_path = None
     

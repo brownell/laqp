@@ -4,34 +4,51 @@ Application logic and contest rules (NOT secrets/credentials)
 """
 import os
 
+from pathlib import Path
+
+# Load environment variables from .env file (for local development)
+# In production (Fly.io), environment variables are already set
+try:
+    from dotenv import load_dotenv
+    # Find .env file in parent directory
+    env_path = Path(__file__).parent.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    # dotenv not installed (production), that's OK
+    pass
+
 # ============================================================================
 # ENVIRONMENT VARIABLES (read from .env)
 # ============================================================================
+
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY not set in environment!")
 
-FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
 # Paths
-DATABASE_FILE = os.environ.get('DATABASE_FILE', 'laqp/data/database/laqp.db')
-BATCH_INPUT_DIR = os.environ.get('BATCH_INPUT_DIR', 'laqp/data/batch_input')
-FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', 'laqp/data/final_reports')
-REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', 'laqp/data/reference_data')
+DATABASE_FILE = os.environ.get('DATABASE_FILE', 'data/database/laqp.db')
+BATCH_INPUT_DIR = os.environ.get('BATCH_INPUT_DIR', 'data/batch_input')
+FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', 'data/final_reports')
+REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', 'reference_data')
+ALLOWED_LOG_EXTENSIONS = os.environ.get('ALLOWED_LOG_EXTENSIONS', 'log,txt,cbr'.split(','))
 
 # ============================================================================
 # REFERENCE DATA FILES
 # ============================================================================
-LA_PARISHES_FILE = os.path.join(REFERENCE_DATA_DIR, 'la_parishes.txt')
-WVE_ABBREVS_FILE = os.path.join(REFERENCE_DATA_DIR, 'wve_abbrevs.txt')
+LA_PARISHES_FILE = REFERENCE_DATA_DIR + '/la_parishes.txt'
+WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
 
 # ============================================================================
 # CONTEST CONFIGURATION
 # ============================================================================
 
 # Available years for results lookup
-CONTEST_YEARS = ['2026', '2025', '2024', '2023']
+CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2026,2025,2024,2023').split(',')
+CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
 # Scoring rules
 PHONE_QSO_POINTS = 2
@@ -63,7 +80,7 @@ BAND_RANGES = {
 PHONE_MODES = ['PH', 'FM', 'SSB', 'LSB', 'USB']
 
 # CW/Digital modes (for scoring)
-CW_DIGITAL_MODES = ['CW', 'RY', 'DIG', 'RTTY', 'FT8', 'FT4']
+CW_DIGITAL_MODES = ['CW/DIGITAL', 'CW', 'RY', 'DIG', 'RTTY', 'FT8', 'FT4']
 
 # ============================================================================
 # CATEGORIES
@@ -158,7 +175,7 @@ LEADERBOARDS = [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
                 ['name', 'Name'],
-                ['location', 'Location'],
+                ['location_type', 'Location'],
             ]
         },
         
@@ -186,7 +203,7 @@ LEADERBOARDS = [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
                 ['name', 'Name'],
-                ['location', 'Location'],
+                ['location_type', 'Location'],
             ]
         },
         
@@ -206,7 +223,7 @@ LEADERBOARDS = [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
                 ['name', 'Name'],
-                ['location', 'Location'],
+                ['location_type', 'Location'],
             ]
         },
         

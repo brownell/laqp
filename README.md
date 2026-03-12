@@ -8,7 +8,21 @@ Contest log processing system for the Louisiana QSO Party, hosted by Jefferson A
 The current rules specify awards for the following categories. In 2026, we are not sending out awards or certificates. For everyone - no matter were they placed - the may come to the website 15 days after the contest and see an HTML certificate, which they may print, that shows where they placed in all the relevent categories:
 
 ### Leaderboard Categories
-- 
+TBH
+
+### Clarifications to the Rules
+- Users fill out a web form to upload the Cabrillo log file. If anything in the header section of the log file disagrees with what was entered - or is missing -  the log file is rejected immediately and the user is asked to fix the log file or change the responses on the form, and resubmit. A log file may be resubmitted any number of times, with each new upload replacing the previous ones. Fields required on the form and in the Cabrillo log file are: call sign, email, power, mode, and station type. Overlay is an OPTIONAL field, but if included the values on the upload form and in the Cabrillo file must match.
+
+- QSOs that do not match the “CATEGORY-MODE” are ignored and receive no points. For example, Phone QSOs are ignored if the mode is “CW/DIGITAL”. Of course, "MIXED" mode allows any mode in QSOs.
+
+- The operator’s QTH is taken from the QSOs present, and not the "LOCATION" element in the Cabrillo file. Except for someone who has declared himself as a “Rover” all QSOs after the first must have the same QTH as the first. Any that do not meet that requirement are ignored and receive no points.
+
+- QSOs from one non-LA operator to another are ignored and receive no points. But QSOs from one LA operator to another are valid for points and multipliers.
+
+- The "bonus" LA call sign used is N5LCC. One OR MORE QSOs to N5LCC, regardless of band or mode, receive 100 bonus points. Contacting N5LCC multiple times does not increase bonus points. This callsign is not part of the rankings in the contest. Also it may have multiple calling QTH, and may be operating at two different frequencies on the same band as long as the mode is different.
+
+- Warning messages are generated for all these situations so the user knows which QSOs were ignored. The log has been accepted for scoring if there are warning messages, but if the user wants to make corrections and resubmit, the last submission is used for scoring and ranking.
+
 
 ## Setup
 

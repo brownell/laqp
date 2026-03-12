@@ -7,28 +7,24 @@ Web interface for contestants to submit and validate Cabrillo log files
 from flask import Flask, render_template, request, jsonify
 import os
 from datetime import datetime
-from werkzeug.utils import secure_filename
 import tempfile
 from pathlib import Path
 
 # Import the unified processor and database
 from processor import process_single_log
 from database import save_result
+from config.config import SECRET_KEY, CONTEST_YEAR, BATCH_INPUT_DIR, ALLOWED_LOG_EXTENSIONS
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
-app.config['UPLOAD_FOLDER'] = 'laqp/logs/incoming'
-app.config['ALLOWED_EXTENSIONS'] = {'log', 'txt', 'cbr'}
 
 # Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(BATCH_INPUT_DIR, exist_ok=True)
 
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_LOG_EXTENSIONS
 
 
 def format_set_as_list(s):
@@ -276,11 +272,11 @@ def upload_log():
         form_data = {
             'year': request.form.get('year', '').strip(),
             'callsign': request.form.get('callsign', '').strip().upper(),
-            'email': request.form.get('email', '').strip(),
-            'mode': request.form.get('mode', '').strip(),
-            'power': request.form.get('power', '').strip(),
-            'station_type': request.form.get('station_type', '').strip(),
-            'overlay': request.form.get('overlay', '').strip()
+            'email': request.form.get('email', '').strip().lower(),
+            'mode': request.form.get('mode', '').strip().upper(),
+            'power': request.form.get('power', '').strip().upper(),
+            'station_type': request.form.get('station_type', '').strip().upper(),
+            'overlay': request.form.get('overlay', '').strip().upper()
         }
         
         # Validate required fields
@@ -292,48 +288,46 @@ def upload_log():
         
         # Get log content (either from file or pasted text)
         log_content = None
-        filename = None
         
         if 'logfile' in request.files:
             file = request.files['logfile']
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                log_content = file.read().decode('utf-8', errors='ignore')
+            if file:
+                if file.filename and allowed_file(file.filename):
+                    log_content = file.read().decode('utf-8', errors='ignore')
         
         if not log_content:
             log_text = request.form.get('log_text', '').strip()
             if log_text:
                 log_content = log_text
-                filename = f"pasted_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        
-        if not log_content:
-            return jsonify({
-                'success': False,
-                'error': 'No log file provided. Please upload a file or paste log content.'
-            }), 400
-        
-        # Save to temporary file for validation
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as tmp:
-            tmp.write(log_content)
-            tmp_path = tmp.name
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'No log file provided. Please upload a file or paste log content.'
+                }), 400
+            
+        ## Write this to data/batch_input/<year> as {callsign}.log
+        log_file = f"{BATCH_INPUT_DIR}/{CONTEST_YEAR}/{form_data['callsign']}.log"
+        with open(log_file, 'w') as f:
+            f.write(log_content)
         
         try:
             # Process the log file (validate, prepare, score)
             ## this function is ONLY called from the web interface
             result = process_single_log(
-                Path(tmp_path),
+                Path(log_file),
                 form_data
             )
-            
-            # Add year to result
-            if form_data['year']:
-                result['year'] = form_data['year']
-            else:
-                # Default to current year if not provided
-                result['year'] = str(datetime.now().year)
 
-            # If errors, we are not going to proceed with saving the log or result, but we will return the errors to the user
+            ## if there were errors, delete the saved log file (don't keep invalid logs in batch input) and tell user
             if len(result.get('errors', [])) > 0:
+                try:
+                    os.remove(log_file)
+                except FileNotFoundError:
+                    result[errors].append("Log file not found for deletion after processing errors.")
+                except PermissionError:
+                    result[errors].append("Permission error when trying to delete log file after processing errors.")
+                except OSError as e:
+                    result[errors].append(f"OS error when trying to delete log file after processing errors: {str(e)}")
                 print(f"⚠ There were errors in log for {result.get('callsign', 'unknown callsign')}")
                 return jsonify({
                     'success': False,
@@ -346,10 +340,6 @@ def upload_log():
             
             # Check if processing succeeded
             if result.get('is_valid', True) and not result.get('errors'):
-                # Save the accepted log file
-                final_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                with open(final_path, 'w') as f:
-                    f.write(log_content)
                 
                 # Save result to database (will overwrite if exists)
                 try:
@@ -376,11 +366,8 @@ def upload_log():
                     'error': 'Log processing failed',
                     'errors': errors
                 }), 400
-                
         finally:
-            # Clean up temporary file
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+            pass
     
     except Exception as e:
         return jsonify({
