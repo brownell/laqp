@@ -7,13 +7,17 @@
 # C extensions
 **/*.so
 
-# Exclude data directories from Docker build
+# Exclude venv at root level
+venv/
+venv
+
+# Exclude data directories
+data/batch_input/
 data/batch_input
+data/database/
 data/database
+data/final_reports/
 data/final_reports
-**/data/batch_input
-**/data/database
-**/data/final_reports
 
 # Exclude file types
 *.db
