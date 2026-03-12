@@ -7,13 +7,29 @@
 # C extensions
 **/*.so
 
-# log data
-**/batch_input/*/*.*
-**/batch_results/*/*.*
-**/data/logs/validated/*.*
-**/data/logs/problems/*.*
-**/data/output/individual_results/*.*
-**/data/output/Summary_Report.*
+# Exclude data directories from Docker build
+data/batch_input
+data/database
+data/final_reports
+**/data/batch_input
+**/data/database
+**/data/final_reports
+
+# Exclude file types
+*.db
+*.log
+*.pyc
+
+# Exclude Python cache
+__pycache__
+
+# Exclude environment files
+.env
+.env.*
+
+# Exclude git
+.git
+.gitignore
 
 # Distribution / packaging
 **/.Python

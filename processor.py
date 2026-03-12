@@ -242,7 +242,6 @@ class UnifiedLogProcessor:
         first_qso_line = True
         
         for line_num, line in enumerate(log_path, 1):
-            # print(f'Processing line {line_num}: {line.strip()}')
             line = line.strip()
             if not line:
                 continue
@@ -610,7 +609,6 @@ def process_single_log(
     Returns:
         Result dictionary
     """
-    print
     processor = UnifiedLogProcessor(parish_file, state_province_file)
 
     return processor.process_log_details(
@@ -666,6 +664,7 @@ def process_batch_logs(log_dir: Path,
     Returns:
         List of result dictionaries
     """
+
     if parish_file is None:
         parish_file = Path(LA_PARISHES_FILE)
     if state_province_file is None:
@@ -674,8 +673,10 @@ def process_batch_logs(log_dir: Path,
     processor = UnifiedLogProcessor(parish_file, state_province_file)
 
     results = []
+    # print(f"ready to process_log_details for logs in {log_dir}")
     for log_path in log_dir.glob('*.log'):
         result = processor.process_log_details(log_path)
+        print(f"Finished processing {log_path.name}: Score {result['final_score']} Errors: {len(result['errors'])} Warnings: {len(result['warnings'])}")
         results.append(result)
     
     return results

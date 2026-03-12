@@ -1,6 +1,9 @@
 # Louisiana QSO Party Web Application - Dockerfile
 FROM python:3.11-slim
 
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
+
 # Set working directory
 WORKDIR /app
 
@@ -20,15 +23,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create directories (will be overridden by volume mounts in production)
-RUN mkdir -p /app/data/batch_input \
-    /app/data/database \
-    /app/data/final_reports \
-    /app/data/reference_data \
-    /app/temp \
-    /data/batch_input \
+RUN mkdir -p /data/batch_input \
     /data/database \
-    /data/final_reports \
-    /data/reference_data
+    /data/final_reports 
 
 # Create non-root user for running the app
 RUN useradd -m -u 1000 laqp && \

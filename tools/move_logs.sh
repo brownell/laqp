@@ -20,7 +20,7 @@ tar -czf temp/contest_logs.tar.gz -C $LOCAL_DIR .
 echo "📤 Uploading to Fly.io... for year $YEAR"
 flyctl ssh sftp shell << EOF
 put temp/contest_logs.tar.gz app/temp/contest_logs.tar.gz
-ls  /app/temp
+ls -lh  /app/temp
 exit
 EOF
 
@@ -28,7 +28,6 @@ EOF
 flyctl ssh console << EOF
 echo "📂 Extracting on Fly.io...$YEAR"
 cd $REMOTE_DIR
-pwd
 tar -xzf /app/temp/contest_logs.tar.gz`
 rm /app/temp/contest_logs.tar.gz
 echo "✅ Extracted files:"

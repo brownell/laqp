@@ -30,10 +30,10 @@ FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
 # Paths
-DATABASE_FILE = os.environ.get('DATABASE_FILE', '/app/data/database/laqp.db')
-BATCH_INPUT_DIR = os.environ.get('BATCH_INPUT_DIR', '/app/data/batch_input')
-FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', '/app/data/final_reports')
-REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', '/app/data/reference_data')
+DATABASE_FILE = os.environ.get('DATABASE_FILE', 'data/database/laqp.db')
+BATCH_INPUT_DIR = os.environ.get('BATCH_INPUT_DIR', 'data/batch_input')
+FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', 'data/final_reports')
+REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', 'data/reference_data')
 ALLOWED_LOG_EXTENSIONS = os.environ.get('ALLOWED_LOG_EXTENSIONS', 'log,txt,cbr'.split(','))
 
 # ============================================================================

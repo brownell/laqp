@@ -21,6 +21,7 @@ def main(contest_year: str):
     input_dir = Path(f"{BATCH_INPUT_DIR}/{contest_year}")
 
     # Process all logs
+    # print(f"before process_batch_logs, input_dir: {input_dir}")
     results = process_batch_logs(input_dir)
 
 
@@ -49,23 +50,23 @@ def main(contest_year: str):
             if save_result(result):
                 saved_count += 1
                 status = "✓" if result['is_valid'] else "✗"
-                print(f"{status} {result['callsign']}: Saved to database")
+                # print(f"{status} {result['callsign']}: Saved to database")
             else:
                 print(f"✗ {result['callsign']}: Database save failed")
         except Exception as e:
             print(f"✗ {result['callsign']}: Database error - {e}")
     
-    # print()
-    # print("=" * 60)
-    # print("Summary")
-    # print("=" * 60)
-    # print(f"Total processed: {len(results)}")
-    # print(f"Valid logs: {valid_count}")
-    # print(f"Invalid logs: {invalid_count}")
-    # print(f"Saved to database: {saved_count}")
-    # print()
-    # print("Next step: Calculate rankings and generate HTML reports")
-    # print()
+    print()
+    print("=" * 60)
+    print("Summary")
+    print("=" * 60)
+    print(f"Total processed: {len(results)}")
+    print(f"Valid logs: {valid_count}")
+    print(f"Invalid logs: {invalid_count}")
+    print(f"Saved to database: {saved_count}")
+    print()
+    print("Next step: Calculate rankings and generate HTML reports")
+    print()
 
 if __name__ == "__main__":
     import os, sys
