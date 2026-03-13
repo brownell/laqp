@@ -29,18 +29,25 @@ if not SECRET_KEY:
 FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
-# Paths
-DATABASE_FILE = os.environ.get('DATABASE_FILE', 'data/database/laqp.db')
-BATCH_INPUT_DIR = os.environ.get('BATCH_INPUT_DIR', 'data/batch_input')
-FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', 'data/final_reports')
-REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', 'reference_data')
-ALLOWED_LOG_EXTENSIONS = os.environ.get('ALLOWED_LOG_EXTENSIONS', 'log,txt,cbr'.split(','))
 
 # ============================================================================
 # REFERENCE DATA FILES
+# Reference data (from repo, in /app/)
 # ============================================================================
+# 
+REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', '/app/reference_data')
+# Reference files
 LA_PARISHES_FILE = REFERENCE_DATA_DIR + '/la_parishes.txt'
 WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
+
+
+# ============================================================================
+# PERSISTENT DATA FILES
+# User data (on volume, in /data/)
+# ============================================================================
+BATCH_INPUT_DIR = os.environ.get('BATCH_INPUT_DIR', '/data/batch_input')
+DATABASE_FILE = os.environ.get('DATABASE_FILE', '/data/database/laqp.db')
+FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', '/data/final_reports')
 
 # ============================================================================
 # CONTEST CONFIGURATION
@@ -49,6 +56,9 @@ WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
 # Available years for results lookup
 CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2026,2025,2024,2023').split(',')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
+
+# Log file extensions allowed for upload
+ALLOWED_LOG_EXTENSIONS = {'log', 'txt', 'cbr'}
 
 # Scoring rules
 PHONE_QSO_POINTS = 2

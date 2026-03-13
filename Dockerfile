@@ -1,8 +1,6 @@
 # Louisiana QSO Party Web Application - Dockerfile
 FROM python:3.11-slim
 
-ARG CACHEBUST=999
-RUN echo "Cache bust: $CACHEBUST"
 
 # Set working directory
 WORKDIR /app
