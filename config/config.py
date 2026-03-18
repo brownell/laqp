@@ -124,6 +124,7 @@ PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', '
 # ============================================================================
 
 RANKINGS = {
+    'ALL': 'All Operators',
     # Louisiana Fixed
     'LFQ': 'Louisiana - Fixed QRP Power',
     'LFL': 'Louisiana - Fixed LOW Power',
@@ -176,90 +177,109 @@ PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF
 # ============================================================================
 
 LEADERBOARDS = [
-    # Section 1: Louisiana Stations
+
     [
-        # Section header
+
         {
-            'section_title': 'Louisiana Stations',
+            'section_title': 'ALL OPERATORS',
             'show': [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
-                ['name', 'Name'],
-                ['location_type', 'Location'],
-            ]
+                ['claimed_score', 'Claimed'],
+                ['total_qsos', 'QSOs'],
+                ['total_multipliers', 'Mults'],
+           ]
         },
-        
-        # Tables in this section
-        {'title': 'LFQ', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
-        {'title': 'LFL', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
-        {'title': 'LFH', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
-        {'title': 'LFC', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'CW-DIGITAL']]},
-        {'title': 'LFS', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'PHONE']]},
-        {'title': 'LFM', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
-        
-        {'title': 'LRQ', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
-        {'title': 'LRL', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
-        {'title': 'LRH', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
-        {'title': 'LRC', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'CW-DIGITAL']]},
-        {'title': 'LRS', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'PHONE']]},
-        {'title': 'LRM', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]},
+        {'title': 'ALL', 'ands': []}
     ],
     
-    # Section 2: Non-Louisiana Stations
-    [
-        {
-            'section_title': 'Non-Louisiana Stations',
-            'show': [
-                ['callsign', 'CallSign'],
-                ['final_score', 'Score'],
-                ['name', 'Name'],
-                ['location_type', 'Location'],
-            ]
-        },
+    # # Section 1: Louisiana Stations
+    # [
+
+    #     # Section header
+    #     {
+    #         'section_title': 'Louisiana Stations',
+    #         'show': [
+    #             ['callsign', 'CallSign'],
+    #             ['final_score', 'Score'],
+    #             ['claimed_score', 'Claimed'],
+    #             ['name', 'Name'],
+    #             ['location_type', 'Location'],
+    #         ]
+    #     },
+
         
-        {'title': 'NQ', 'ands': [['location_type', 'NON-LA'], ['power_level', 'QRP']]},
-        {'title': 'NL', 'ands': [['location_type', 'NON-LA'], ['power_level', 'LOW']]},
-        {'title': 'NH', 'ands': [['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
-        {'title': 'NC', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'CW-DIGITAL']]},
-        {'title': 'NS', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'PHONE']]},
-        {'title': 'NM', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'MIXED']]},
-    ],
+    #     # Tables in this section
+    #     {'title': 'LFQ', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
+    #     {'title': 'LFL', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
+    #     {'title': 'LFH', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
+    #     {'title': 'LFC', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'CW-DIGITAL']]},
+    #     {'title': 'LFS', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'PHONE']]},
+    #     {'title': 'LFM', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
+        
+    #     {'title': 'LRQ', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
+    #     {'title': 'LRL', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
+    #     {'title': 'LRH', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
+    #     {'title': 'LRC', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'CW-DIGITAL']]},
+    #     {'title': 'LRS', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'PHONE']]},
+    #     {'title': 'LRM', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]},
+    # ],
     
-    # Section 3: DX Stations
-    [
-        {
-            'section_title': 'DX Stations',
-            'show': [
-                ['callsign', 'CallSign'],
-                ['final_score', 'Score'],
-                ['name', 'Name'],
-                ['location_type', 'Location'],
-            ]
-        },
+    # # Section 2: Non-Louisiana Stations
+    # [
+    #     {
+    #         'section_title': 'Non-Louisiana Stations',
+    #         'show': [
+    #             ['callsign', 'CallSign'],
+    #             ['final_score', 'Score'],
+    #             ['name', 'Name'],
+    #             ['location_type', 'Location'],
+    #         ]
+    #     },
         
-        {'title': 'DQ', 'ands': [['location_type', 'DX'], ['power_level', 'QRP']]},
-        {'title': 'DL', 'ands': [['location_type', 'DX'], ['power_level', 'LOW']]},
-        {'title': 'DH', 'ands': [['location_type', 'DX'], ['power_level', 'HIGH']]},
-        {'title': 'DC', 'ands': [['location_type', 'DX'], ['mode_category', 'CW-DIGITAL']]},
-        {'title': 'DS', 'ands': [['location_type', 'DX'], ['mode_category', 'PHONE']]},
-        {'title': 'DM', 'ands': [['location_type', 'DX'], ['mode_category', 'MIXED']]},
-    ],
+    #     {'title': 'NQ', 'ands': [['location_type', 'NON-LA'], ['power_level', 'QRP']]},
+    #     {'title': 'NL', 'ands': [['location_type', 'NON-LA'], ['power_level', 'LOW']]},
+    #     {'title': 'NH', 'ands': [['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
+    #     {'title': 'NC', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'CW-DIGITAL']]},
+    #     {'title': 'NS', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'PHONE']]},
+    #     {'title': 'NM', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'MIXED']]},
+    # ],
     
-    # Section 4: Special Categories
-    [
-        {
-            'section_title': 'Special Categories',
-            'show': [
-                ['callsign', 'CallSign'],
-                ['final_score', 'Score'],
-                ['overlay', 'Overlay'],
-            ]
-        },
+    # # Section 3: DX Stations
+    # [
+    #     {
+    #         'section_title': 'DX Stations',
+    #         'show': [
+    #             ['callsign', 'CallSign'],
+    #             ['final_score', 'Score'],
+    #             ['name', 'Name'],
+    #             ['location_type', 'Location'],
+    #         ]
+    #     },
         
-        {'title': 'WIRES', 'ands': [['overlay', 'WIRES']]},
-        {'title': 'TB-WIRES', 'ands': [['overlay', 'TB-WIRES']]},
-        {'title': 'POTA', 'ands': [['overlay', 'POTA']]},
-    ],
+    #     {'title': 'DQ', 'ands': [['location_type', 'DX'], ['power_level', 'QRP']]},
+    #     {'title': 'DL', 'ands': [['location_type', 'DX'], ['power_level', 'LOW']]},
+    #     {'title': 'DH', 'ands': [['location_type', 'DX'], ['power_level', 'HIGH']]},
+    #     {'title': 'DC', 'ands': [['location_type', 'DX'], ['mode_category', 'CW-DIGITAL']]},
+    #     {'title': 'DS', 'ands': [['location_type', 'DX'], ['mode_category', 'PHONE']]},
+    #     {'title': 'DM', 'ands': [['location_type', 'DX'], ['mode_category', 'MIXED']]},
+    # ],
+    
+    # # Section 4: Special Categories
+    # [
+    #     {
+    #         'section_title': 'Special Categories',
+    #         'show': [
+    #             ['callsign', 'CallSign'],
+    #             ['final_score', 'Score'],
+    #             ['overlay', 'Overlay'],
+    #         ]
+    #     },
+        
+    #     {'title': 'WIRES', 'ands': [['overlay', 'WIRES']]},
+    #     {'title': 'TB-WIRES', 'ands': [['overlay', 'TB-WIRES']]},
+    #     {'title': 'POTA', 'ands': [['overlay', 'POTA']]},
+    # ],
 ]
 
 # ============================================================================

@@ -61,8 +61,8 @@ class UnifiedLogProcessor:
             'is_rover': False,
             'final_score': 0,
             'qso_points': 0,
-            'total_qsos': 0,
-            'valid_qsos': 0,
+            'total_qsos': 0, # total number validated, whether dups or not
+            'valid_qsos': 0, #number of qsos that are not dups and contribute to the score
             'total_multipliers': 0,
             'parishes_worked': set(),
             'parishes_worked_multiplier': 0,
@@ -127,7 +127,6 @@ class UnifiedLogProcessor:
         #############################################
         try:
             prepared_qsos = self._prepare_qsos(result)
-            result['valid_qsos'] = len(prepared_qsos)
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f": {str(e)}")
@@ -476,9 +475,12 @@ class UnifiedLogProcessor:
             
             # if not a duplicate for QSO points purposes, get the points. Else add to the dup list and skip points
             qso_check = band + mode_cat + rcvd_call
-            if qso_check in qso_dups and result['callsign'].upper() != BONUS_CALLSIGN:
+            if qso_check in qso_dups:
+                # print(f"!!! DUPLICATEte QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
                 result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
             else:  ## not a duplicate for points, so get points
+                result['valid_qsos'] += 1
+                # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
                 qso_dups.append(qso_check)
 
                 # Track bands worked and QSO by band (for display only, does not impact score)
@@ -496,9 +498,11 @@ class UnifiedLogProcessor:
                 # Award points
                 if mode_cat == 'Phone':
                     result['qso_points'] += PHONE_QSO_POINTS
+                    # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
                     result['qsos_by_mode']['Phone'] += 1
                 else:  # CW/Digital
                     result['qso_points'] += CW_DIGITAL_QSO_POINTS
+                    # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
                     result['qsos_by_mode']['CW/Digital'] += 1
 
                 # Check for N5LCC
@@ -507,34 +511,38 @@ class UnifiedLogProcessor:
                     result['num_n5lcc_contacts'] += 1
             ## add to correct multiplier list even if a dup for points, but check for mult dup first and warn if so.  This allows the multiplier to be counted for the first QSO but not for subsequent dup QSOs.
             mult_check = band + mode_cat + rcvd_qth
-            if mult_check in mult_dups and result['callsign'].upper() != BONUS_CALLSIGN:
+            if mult_check in mult_dups:
+                print(f"!!! DUPLICATEte MULT: line {qso['line_num']} band/mode/QTH worked:  {band}/{mode_cat}/{rcvd_qth}")
                 result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{rcvd_qth}")
 
             else:
+                print(f"NOT DUP MULT: line {qso['line_num']} band/mode/QTH worked:  {band}/{mode_cat}/{rcvd_qth}")
                 mult_dups.append(mult_check)
                 ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
                 if rcvd_qth in self.parishes:
-                        result['parishes_worked'].add(rcvd_qth)
-                        result['parishes_worked_multiplier'] += 1
+                    result['parishes_worked'].add(rcvd_qth)
+                    result['parishes_worked_multiplier'] += 1
+                else:  # qth is NOT a parish
+                    print(f"have a qth that is NOT a parish: rcvd_qth {rcvd_qth}")
                 
-                # LA stations get state, province, and DX multipliers
-                elif result['location_type'] == 'LA-FIXED' or result['location_type'] == 'LA-ROVER':
-                    # LA: states, provinces, DX are multipliers
-                    if rcvd_qth in self.states_provinces:
-                        if rcvd_qth in PROVINCES:
-                            result['provinces_worked'].add(rcvd_qth)
-                            result['provinces_worked_multiplier'] += 1
-                        else:
-                            result['states_worked'].add(rcvd_qth)
-                            result['states_worked_multiplier'] += 1
+                    # LA stations get state, province, and DX multipliers
+                    if result['location_type'] == 'LA-FIXED' or result['location_type'] == 'LA-ROVER':
+                        # LA: states, provinces, DX are multipliers
+                        if rcvd_qth in self.states_provinces:
+                            if rcvd_qth in PROVINCES:
+                                result['provinces_worked'].add(rcvd_qth)
+                                result['provinces_worked_multiplier'] += 1
+                            else:
+                                result['states_worked'].add(rcvd_qth)
+                                result['states_worked_multiplier'] += 1
 
-                    else:
-                        result['dx_worked'].add(rcvd_qth)
-                        result['dx_worked_multiplier'] += 1
-                    
-                    # Track parish activations for rovers
-                    if result['is_rover'] and qso['sent_qth'] in self.parishes:
-                        result['parishes_activated'].add(qso['sent_qth'])
+                        else:
+                            result['dx_worked'].add(rcvd_qth)
+                            result['dx_worked_multiplier'] += 1
+                        
+                        # Track parish activations for rovers
+                        if result['is_rover'] and qso['sent_qth'] in self.parishes:
+                            result['parishes_activated'].add(qso['sent_qth'])
 
 
         # Finished with points, now sum the individual multipliers
@@ -543,7 +551,7 @@ class UnifiedLogProcessor:
           
 
         ## score before bonuses
-        result['final_score'] = result['qso_points'] * max(1, result['total_multipliers'])
+        result['final_score'] = result['qso_points'] * result['total_multipliers']
 
         ## add bonus points for one or more N5LCC contacts
         if result['worked_n5lcc']:

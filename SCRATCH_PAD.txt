@@ -2,6 +2,7 @@ web log upload flow:
 process_single_log (temp_file_path, form_data)
         ONLY called by Web upload
         creates UnifiedLogProcessor
+
 process_log_details (temp_file_path, form_data)
         called by both Web and batch - batch has empty form_data
         creates "result" object
