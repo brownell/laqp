@@ -178,6 +178,9 @@ PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF
 
 LEADERBOARDS = [
 
+    # # Section 1: Louisiana Stations
+    # [
+
     [
 
         {
