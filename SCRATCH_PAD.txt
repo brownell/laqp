@@ -9,7 +9,6 @@ process_log_details (temp_file_path, form_data)
         calls in order: 
             _validate_and_parse
             _prepare_qsos
-            _prepare_qsos
             _score_qsos
 
 

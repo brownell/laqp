@@ -49,16 +49,3 @@ WV
 WI
 WY
 DC
-AB
-BC
-MB
-NB
-NL
-NS
-NT
-NU
-ON
-PE
-QC
-SK
-YT

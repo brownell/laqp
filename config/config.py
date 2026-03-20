@@ -38,7 +38,12 @@ CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', '/app/reference_data')
 # Reference files
 LA_PARISHES_FILE = REFERENCE_DATA_DIR + '/la_parishes.txt'
-WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
+# STATES_FILE = REFERENCE_DATA_DIR + '/states.txt'
+# PROVINCES_FILE = REFERENCE_DATA_DIR + '/provinces.txt'
+COUNTRY_FILE = REFERENCE_DATA_DIR + '/cty.plist'
+QRZ_CALLSIGN='KJ5BYZ'
+QRZ_PASSWORD=os.environ.get('QRZ_PASSWORD')
+# WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
 
 
 # ============================================================================
@@ -170,7 +175,7 @@ RANKINGS = {
 FINAL_REPORT_TXT = "this is the introductory text for the final report"
 
 STATES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','KA','KB','KC','KD','KE','KF','KG','KH','KI','KJ','KK','KL','KM','KN','KO','KP','KQ','KR','KS','KT','KU','KV','KW','KX','KY','KZ','NA','NB','NC','ND','NE','NF','NG','NH','NI','NJ','NK','NL','NM','NN','NO','NP','NQ','NR','NS','NT','NU','NV','NW','NX','NY','NZ','WA','WB','WC','WD','WE','WF','WG','WH','WI','WJ','WK','WL','WM','WN','WO','WP','WQ','WR','WS','WT','WU','WV','WW','WX','WY','WZ')"
-PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ','XJ', 'XK', 'XL', 'XM', 'XN', 'XO')"
+#  PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CY', 'CZ','XJ', 'XK', 'XL', 'XM', 'XN', 'XO')"
 
 # ============================================================================
 # LEADERBOARDS - Declarative configuration
@@ -178,11 +183,9 @@ PROVINCES_SUBSTRING = "SUBSTRING(callsign, 1, 2) IN ('VA', 'VE', 'VY', 'VO', 'CF
 
 LEADERBOARDS = [
 
-    # # Section 1: Louisiana Stations
-    # [
-
+    ## Section 0: ALL Stations
     [
-
+        #     # Section header
         {
             'section_title': 'ALL OPERATORS',
             'show': [
