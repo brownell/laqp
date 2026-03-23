@@ -5,6 +5,9 @@
         },
         {
             "path": "../javascript_safe"
+        },
+        {
+            "path": "../LCC_site"
         }
     ]
 }
