@@ -38,10 +38,11 @@ CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', '/app/reference_data')
 # Reference files
 LA_PARISHES_FILE = REFERENCE_DATA_DIR + '/la_parishes.txt'
-# STATES_FILE = REFERENCE_DATA_DIR + '/states.txt'
-# PROVINCES_FILE = REFERENCE_DATA_DIR + '/provinces.txt'
+STATES_FILE = REFERENCE_DATA_DIR + '/states.txt'
+PROVINCES_FILE = REFERENCE_DATA_DIR + '/provinces.txt'
 COUNTRY_FILE = REFERENCE_DATA_DIR + '/cty.plist'
-QRZ_CALLSIGN='KJ5BYZ'
+DXCC_ENTITIES_FILE = REFERENCE_DATA_DIR + '/dxcc_entities.csv'
+QRZ_CALLSIGN=os.environ.get('QRZ_CALLSIGN')
 QRZ_PASSWORD=os.environ.get('QRZ_PASSWORD')
 # WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
 
@@ -73,6 +74,9 @@ CW_DIGITAL_QSO_POINTS = 4
 BONUS_CALLSIGN = 'N5LCC'  # Bonus for working N5LCC (Louisiana Contest Club)
 CALLSIGN_BONUS_POINTS = 100  # Bonus for working N5LCC (Louisiana Contest Club)
 ROVER_PARISH_BONUS = 50  # Bonus per parish activated (rovers only)
+EXTRA_BONUS_CALLS = os.environ.get('EXTRA_BONUS_CALLS', [])
+EXTRA_BONUS_POINTS = os.environ.get('EXTRA_BONUS_POINTS', 0)
+EXTRA_BONUS_YEAR = os.environ.get('EXTRA_BONUS_YEAR', '')
 
 # ============================================================
 # BAND AND MODE DEFINITIONS
