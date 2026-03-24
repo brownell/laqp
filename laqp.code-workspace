@@ -8,6 +8,9 @@
         },
         {
             "path": "../laqp_data"
+        },
+        {
+            "path": "../LCC_web_site"
         }
     ]
 }

@@ -122,6 +122,8 @@ body.custom-background { background-color: #fdd023; }
 <link rel="apple-touch-icon" href="https://laqp.w5gad.org/wp-content/uploads/2019/11/cropped-LCC-Logo-150-180x180.jpg" />
 <meta name="msapplication-TileImage" content="https://laqp.w5gad.org/wp-content/uploads/2019/11/cropped-LCC-Logo-150-270x270.jpg" />
 
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}"/>
+
 	</head>
 
 	<body class="wp-singular page-template-default page page-id-34 custom-background wp-embed-responsive wp-theme-twentytwenty singular enable-search-modal missing-post-thumbnail has-no-pagination not-showing-comments show-avatars footer-top-visible">
@@ -165,11 +167,13 @@ body.custom-background { background-color: #fdd023; }
 
 								<ul class="primary-menu reset-list-style">
 
-<li class="page_item page-item-34"><div class="ancestor-wrapper"><a href="{{ url_for('activate') }}">Activate A Parish</a>></div></li>
-<li class="page_item page-item-45"><div class="ancestor-wrapper"><a href="https://laqp.w5gad.org/" aria-current="page">Louisiana QSO Party</a></div></li>
-<li class="page_item page-item-22"><div class="ancestor-wrapper"><a href="{{ url_for('rules') }}">LAQP Rules</a></div></li>
-<li class="page_item page-item-36"><div class="ancestor-wrapper"><a href="{{ url_for('map') }}">Louisiana Parish Map</a></div></li>
-<li class="page_item page-item-32"><div class="ancestor-wrapper"><a href="{{ url_for('abbreviations') }}">Parish Abbreviations</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="{{ url_for('home') }}" aria-current="page_item">Louisiana QSO Party</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="{{ url_for('rules') }}" aria-current="page_item">LAQP Rules</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="{{ url_for('map') }}" aria-current="page_item">Louisiana Parish Map</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="{{ url_for('abbreviations') }}" aria-current="page_item">Parish Abbreviations</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="{{ url_for('activate') }}" aria-current="page_item">Activate A Parish</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="https://laqp.contesting.com/laqpsubmitlog.php" aria-current="page_item">Upload Your Log</a></div></li>
+<li class="page_item"><div class="ancestor-wrapper"><a href="{{ url_for('results') }}" aria-current="page_item">Results</a></div></li>
 
 								</ul>
 
@@ -234,11 +238,13 @@ body.custom-background { background-color: #fdd023; }
 
 						<ul class="modal-menu reset-list-style">
 
-<li class="page_item page-item-34"><a href="{{ url_for('activate') }}">Activate A Parish</a></li>
-<li class="page_item page-item-22"><a href="{{ url_for('rules')}}">LAQP Rules</a></li>
-<li class="page_item page-item-22"><a href="https://laqp.contesting.com/laqpsubmitlog.php">Upload Your Log</a></li>
-<li class="page_item page-item-36"><a href="{{ url_for('map')}}">Louisiana Parish Map</a></li>
-<li class="page_item page-item-32 "><a href="{{ url_for('abbreviations')}}" aria-current="page">Parish Abbreviations</a></li>
+<li class="page_item"><a href="{{ url_for('home')}}" aria-current="page">Louisiana QSO Party</a></li>
+<li class="page_item"><a href="{{ url_for('rules')}}" aria-current="page">LAQP Rules</a></li>
+<li class="page_item"><a href="{{ url_for('map')}}" aria-current="page">Louisiana Parish Map</a></li>
+<li class="page_item"><a href="{{ url_for('abbreviations')}}" aria-current="page">Parish Abbreviations</a></li>
+<li class="page_item"><a href="{{ url_for('activate') }}" aria-current="page">Activate A Parish</a></li>
+<li class="page_item"><a href="https://laqp.contesting.com/laqpsubmitlog.php" aria-current="page">Upload Your Log</a></li>
+<li class="page_item"><a href="{{ url_for('results') }}" aria-current="page">Results</a></li>
 
 						</ul>
 
