@@ -124,10 +124,10 @@ def map():
     """ parish map """
     return render_template('map.html')
 
-@app.route('/operations')
-def operations():
-    """  operations """
-    return render_template('operations.html')
+# @app.route('/operations')
+# def operations():
+#     """  operations """
+#     return render_template('operations.html')
 
 
 @app.route('/results')

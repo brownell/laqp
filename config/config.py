@@ -59,7 +59,7 @@ FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', '/data/final_reports')
 # ============================================================================
 
 # Available years for results lookup
-CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2026,2025,2024,2023').split(',')
+CONTEST_YEARS = os.environ.get('CONTEST_YEARS', 'Coming soon . . .').split(',')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
 # Log file extensions allowed for upload
