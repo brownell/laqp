@@ -108,7 +108,7 @@
 			}
 		
 </style>
-<script src="{{ url_for('static', filename='/js/home.js') }}" id="twentytwenty-js-js" defer data-wp-strategy="defer"></script>
+<script src="{{ url_for('static', filename='js/home.js') }}" id="twentytwenty-js-js" defer data-wp-strategy="defer"></script>
 <script src="{{ url_for('static', filename='css/home.min.css') }}"></script>
 <link rel="canonical" href="https://laqp.w5gad.org/" />
 <link rel="shortlink" href="https://laqp.w5gad.org/" />
@@ -118,7 +118,7 @@
 	<style id="custom-background-css">
 body.custom-background { background-color: #fdd023; }
 </style>
-<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}"/>
 	</head>
 
 	<body class="home wp-singular page-template-default page page-id-45 custom-background wp-embed-responsive wp-theme-twentytwenty singular enable-search-modal has-post-thumbnail has-no-pagination not-showing-comments show-avatars footer-top-visible">
