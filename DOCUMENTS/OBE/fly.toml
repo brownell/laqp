@@ -3,20 +3,17 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "laqp"
+app = 'laqp'
 primary_region = 'iad'
 
 [build]
   dockerfile = 'Dockerfile'
-  ignorefile = ".dockerignore"
 
 [env]
   CONFIG_DIR = '/app/config'
-  CONTEST_YEAR = "2026"
-  DATABASE_PATH = "/data/laqp.db"
 
 [[mounts]]
-  source = 'laqp_data'
+  source = '../laqp_data'
   destination = '/data'
 
 [http_service]
@@ -30,18 +27,3 @@ primary_region = 'iad'
   memory = '256mb'
   cpus = 1
   memory_mb = 256
-
-  [[services]]
-  http_checks = []
-  internal_port = 5000
-  processes = ["app"]
-  protocol = "tcp"
-
-  [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
