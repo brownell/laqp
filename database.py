@@ -69,13 +69,9 @@ class ContestDatabase:
                     qsos_by_mode TEXT,
                     qsos_by_hour TEXT,
                     bands_worked TEXT,
-                    multipliers_by_band_mode TEXT,
                     claimed_score INTEGER,
                     errors TEXT,
                     warnings TEXT,
-                    has_valid_power INTEGER,
-                    has_valid_operator INTEGER,
-                    has_email INTEGER,
                     is_valid INTEGER,
                     rankings TEXT,
                     created_at TEXT,
@@ -125,8 +121,8 @@ class ContestDatabase:
         
         # Boolean fields (convert to 0/1)
         bool_fields = [
-            'is_rover', 'worked_n5lcc', 'has_valid_power',
-            'has_valid_operator', 'has_email', 'is_valid'
+            'is_rover', 'worked_n5lcc',
+              'is_valid'
         ]
         
         for field in bool_fields:
@@ -145,16 +141,12 @@ class ContestDatabase:
         
         # Dict/list fields (convert to JSON)
         json_fields = [
-            'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour',
-            'multipliers_by_band_mode'
+            'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour'
         ]
         
         for field in json_fields:
             value = result.get(field, {})
             # Convert sets in dict values to lists
-            if field == 'multipliers_by_band_mode':
-                value = {k: sorted(list(v)) if isinstance(v, set) else v 
-                        for k, v in value.items()}
             db_result[field] = json.dumps(value)
         
         # List fields (convert to JSON)
@@ -184,8 +176,8 @@ class ContestDatabase:
         
         # Convert boolean fields back
         bool_fields = [
-            'is_rover', 'worked_n5lcc', 'has_valid_power',
-            'has_valid_operator', 'has_email', 'is_valid'
+            'is_rover', 'worked_n5lcc',
+            'is_valid'
         ]
         
         for field in bool_fields:
@@ -197,7 +189,7 @@ class ContestDatabase:
             'parishes_worked', 'states_worked', 'provinces_worked',
             'dx_worked', 'parishes_activated', 'bands_worked',
             'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour',
-            'multipliers_by_band_mode', 'errors', 'warnings', 'rankings'
+            'errors', 'warnings', 'rankings'
         ]
         
         for field in json_fields:
@@ -210,11 +202,7 @@ class ContestDatabase:
                                'provinces_worked', 'dx_worked', 
                                'parishes_activated', 'bands_worked']:
                         result[field] = set(result[field])
-                    
-                    # Convert multipliers_by_band_mode lists back to sets
-                    if field == 'multipliers_by_band_mode':
-                        result[field] = {k: set(v) if isinstance(v, list) else v 
-                                       for k, v in result[field].items()}
+
                 except json.JSONDecodeError:
                     result[field] = [] if field in ['errors', 'warnings'] else {}
         

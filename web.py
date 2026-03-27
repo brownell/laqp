@@ -34,20 +34,6 @@ def format_set_as_list(s):
     return sorted(list(s))
 
 
-def format_multipliers_by_band_mode(mult_dict):
-    """Format the multipliers_by_band_mode dictionary for display"""
-    if not mult_dict:
-        return []
-    
-    result = []
-    for key, value in sorted(mult_dict.items()):
-        result.append({
-            'band_mode': key,
-            'multipliers': sorted(list(value)) if isinstance(value, set) else value
-        })
-    return result
-
-
 def format_result_for_display(result):
     """
     Convert the result dictionary to a format suitable for HTML display
@@ -95,11 +81,6 @@ def format_result_for_display(result):
         {'hour': hour, 'count': count}
         for hour, count in sorted(qsos_by_hour.items())
     ]
-    
-    # Format multipliers by band/mode
-    display_result['multipliers_by_band_mode'] = format_multipliers_by_band_mode(
-        result.get('multipliers_by_band_mode', {})
-    )
     
     return display_result
 

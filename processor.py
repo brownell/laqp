@@ -79,7 +79,6 @@ class UnifiedLogProcessor:
             'dxcc_entity': '',
             'mode_category': 'MIXED',  # 'PHONE', 'CW/DIGITAL', 'MIXED'
             'power_level': 'LOW',  # 'QRP', 'LOW', 'HIGH'
-            'is_rover': False,
             'final_score': 0,
             'qso_points': 0,
             'total_qsos': 0, # total number validated, whether dups or not
@@ -101,16 +100,12 @@ class UnifiedLogProcessor:
             'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
             'qsos_by_hour': {i: 0 for i in range(12)},
             'bands_worked': set(),
-            'multipliers_by_band_mode': {},
             'claimed_score': 0,
             'errors': [],
             'warnings': [],
-            'has_valid_power': True,
-            'has_valid_operator': True,
-            'has_email': False,
             'is_valid': True,
-            # Store raw QSO lines for processing
-            '_qso_lines': [],
+            'qsos': [],
+            # for processing the Cabrillo header records
             '_header': {}
         }
     
@@ -450,7 +445,8 @@ class UnifiedLogProcessor:
                 'rcvd_call': rcvd_call,
                 'rcvd_rst': rcvd_rst,
                 'rcvd_qth': rcvd_qth,
-                'line_num': line_num
+                'line_num': line_num,
+                'xcheck': ''
             })
         
         # Get info that is NOT specific to each QSO but is needed for scoring (e.g., location type)
@@ -494,12 +490,16 @@ class UnifiedLogProcessor:
     def _score_qsos(self, qsos: List[Dict], result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
-        # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These sqso points but not  multipliers.  
+        # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
         # A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points or multipliers.
         mult_dups = []
         qso_dups = []
         # pprint(f"QSO Scoring for {result['callsign'].upper()}")
         for qso in qsos:
+            # Skip QSOs flagged by cross-checking
+            if qso.get('xcheck', '') != '':
+                continue  # This QSO is NIL, B, or XCH - skip it
+        
             band = qso['band']
             mode_cat = qso['mode_category']
             sent_call = qso['sent_call']
@@ -535,9 +535,14 @@ class UnifiedLogProcessor:
                 qso_check = band + mode_cat + rcvd_call
                     
             if qso_check in qso_dups:
-                    result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band: {band}mode: {mode_cat} remote op: {rcvd_call}")
-                    continue
-            result['valid_qsos'] += 1
+                # print(f"!!! DUPLICATEte QSO line {qso['line_num']} {result['parishes_worked_multiplier'] + result['states_worked_multiplier'] + result['provinces_worked_multiplier'] + result['dx_worked_multiplier']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+                result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+                qso['xcheck'] = 'DQ'
+            else:  ## not a duplicate for points, so get points
+                result['valid_qsos'] += 1
+                # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+                print(f"valid_qsos {result['valid_qsos']} qso_check {qso_check} band/sentqth/rcvd_call: {qso['band']} {qso['rcvd_qth']} {qso['rcvd_call']}")
+                qso_dups.append(qso_check)
 
             # Track bands worked and QSO by band (for display only, does not impact score)
             result['bands_worked'].add(band)
@@ -573,7 +578,8 @@ class UnifiedLogProcessor:
             mult_check = band + mode_cat + rcvd_qth
             if mult_check in mult_dups:
                 # print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
-                result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth} already")
+                result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+                qso['xcheck'] = 'DM'
 
             else:
                 # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
@@ -599,6 +605,7 @@ class UnifiedLogProcessor:
                         # print(f"rcvd_qth: {rcvd_qth}")
                         result['states_worked_multiplier'] += 1
 
+        # print("break before points")
         # Finished with points, now sum the individual multipliers
         for i in ['parishes', 'states', 'provinces', 'dx']:
             result['total_multipliers'] += result[f'{i}_worked_multiplier']

@@ -27,13 +27,7 @@ def test_format_functions():
     print(f"✓ Set formatted: {formatted_set}")
     assert isinstance(formatted_set, list)
     assert len(formatted_set) == 5
-    
-    # Test dict formatting
-    from web import format_multipliers_by_band_mode
-    formatted_dict = format_multipliers_by_band_mode(test_dict)
-    print(f"✓ Dict formatted: {len(formatted_dict)} items")
-    assert isinstance(formatted_dict, list)
-    assert len(formatted_dict) == 3
+
     
     print("✓ All format function tests passed!\n")
 
@@ -73,11 +67,6 @@ def test_result_formatting():
         'qsos_by_mode': {'Phone': 313, 'CW/Digital': 0},
         'qsos_by_hour': {0: 28, 1: 35, 2: 42, 3: 38, 4: 31, 5: 29, 6: 26, 7: 24, 8: 22, 9: 18, 10: 12, 11: 8},
         'bands_worked': ['80', '40', '20', '15'],
-        'multipliers_by_band_mode': {
-            '40-Phone': {'ORL', 'JEF', 'STB', 'PLQ'},
-            '20-Phone': {'ORL', 'JEF', 'TAN'},
-            '80-Phone': {'ORL', 'JEF'}
-        },
         'name': 'John Smith',
         'claimed_score': 1250
     }
@@ -91,7 +80,6 @@ def test_result_formatting():
     assert isinstance(display_result['parishes_worked'], list)
     assert len(display_result['parishes_worked']) == 5
     assert isinstance(display_result['qsos_by_band'], list)
-    assert isinstance(display_result['multipliers_by_band_mode'], list)
     
     print("✓ Result formatting successful!")
     print(f"  - Callsign: {display_result['callsign']}")
@@ -174,8 +162,7 @@ def test_json_serialization():
         'callsign': 'K5ABC',
         'final_score': 1250,
         'parishes_worked': {'ORL', 'JEF', 'STB'},
-        'qsos_by_band': {'80': 45, '40': 123},
-        'multipliers_by_band_mode': {'40-Phone': {'ORL', 'JEF'}}
+        'qsos_by_band': {'80': 45, '40': 123}
     }
     
     # Format the result (should convert sets to lists)

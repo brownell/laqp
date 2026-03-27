@@ -139,27 +139,6 @@ function generateResultsHTML(result) {
 
     html += '</div>';
 
-    // Multipliers by Band/Mode
-    if (result.multipliers_by_band_mode && result.multipliers_by_band_mode.length > 0) {
-        html += '<div class="result-group">';
-        html += '<h4>Multipliers by Band/Mode</h4>';
-        html += '<div class="multipliers-grid">';
-        result.multipliers_by_band_mode.forEach(item => {
-            html += '<div class="multiplier-card">';
-            html += `<h5>${item.band_mode}</h5>`;
-            html += '<div class="multiplier-list">';
-            if (Array.isArray(item.multipliers)) {
-                html += item.multipliers.join(', ');
-            } else {
-                html += item.multipliers;
-            }
-            html += '</div>';
-            html += '</div>';
-        });
-        html += '</div>';
-        html += '</div>';
-    }
-
     // Bonuses
     let hasBonuses = false;
     let bonusesHTML = '<div class="result-group">';
