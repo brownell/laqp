@@ -45,9 +45,10 @@ class ContestDatabase:
                     category TEXT,
                     overlay TEXT,
                     location_type TEXT,
+                    dxcc_code INTEGER,
+                    dxcc_entity TEXT,
                     mode_category TEXT,
                     power_level TEXT,
-                    is_rover INTEGER,
                     final_score INTEGER,
                     qso_points INTEGER,
                     total_qsos INTEGER,
@@ -73,6 +74,7 @@ class ContestDatabase:
                     errors TEXT,
                     warnings TEXT,
                     is_valid INTEGER,
+                    qsos TEXT,
                     rankings TEXT,
                     created_at TEXT,
                     updated_at TEXT,
@@ -121,7 +123,7 @@ class ContestDatabase:
         
         # Boolean fields (convert to 0/1)
         bool_fields = [
-            'is_rover', 'worked_n5lcc',
+            'worked_n5lcc',
               'is_valid'
         ]
         
@@ -141,7 +143,7 @@ class ContestDatabase:
         
         # Dict/list fields (convert to JSON)
         json_fields = [
-            'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour'
+            'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour', 'qsos'
         ]
         
         for field in json_fields:
@@ -152,6 +154,9 @@ class ContestDatabase:
         # List fields (convert to JSON)
         db_result['errors'] = json.dumps(result.get('errors', []))
         db_result['warnings'] = json.dumps(result.get('warnings', []))
+
+        # QSOs field (NEW - ADD THIS)
+        db_result['qsos'] = json.dumps(result.get('qsos', []))
         
         # Rankings field (empty dict initially)
         db_result['rankings'] = json.dumps(result.get('rankings', {}))
@@ -176,7 +181,7 @@ class ContestDatabase:
         
         # Convert boolean fields back
         bool_fields = [
-            'is_rover', 'worked_n5lcc',
+            'worked_n5lcc',
             'is_valid'
         ]
         
@@ -189,7 +194,7 @@ class ContestDatabase:
             'parishes_worked', 'states_worked', 'provinces_worked',
             'dx_worked', 'parishes_activated', 'bands_worked',
             'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour',
-            'errors', 'warnings', 'rankings'
+            'errors', 'warnings', 'rankings', 'qsos'
         ]
         
         for field in json_fields:

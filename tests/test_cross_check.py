@@ -3,6 +3,10 @@ Test script for LAQP cross-checking module
 
 This creates synthetic test data to verify cross-checking logic works correctly.
 Run this before processing real contest data.
+
+NOTE: This test requires:
+- UnifiedLogProcessor class in processor.py with _score_qsos() method
+- Reference data files (parishes, states, provinces, DXCC entities)
 """
 
 import json

@@ -2,36 +2,39 @@
 
 ## What You Need to Do
 
-### 1. Update your `_score_qsos()` function in processor.py
+### 1. Update your `_score_qsos()` method in UnifiedLogProcessor class
 
 Add this check at the beginning of your QSO processing loop:
 
 ```python
-def _score_qsos(result):
-    """Score all QSOs and calculate multipliers"""
+class UnifiedLogProcessor:
+    # ... your __init__ and other methods ...
     
-    # Reset counters
-    result['qso_points'] = 0
-    result['parishes_worked'] = set()
-    result['states_worked'] = set()
-    # ... etc
-    
-    # Process each QSO
-    for qso in result['qsos']:
-        # NEW: Skip QSOs flagged by cross-checking
-        if qso.get('xcheck', '') != '':
-            continue  # This QSO is NIL, B, or XCH - skip it
+    def _score_qsos(self, result):
+        """Score all QSOs and calculate multipliers"""
         
-        # Your existing scoring logic
-        points = calculate_points(qso)
-        result['qso_points'] += points
+        # Reset counters
+        result['qso_points'] = 0
+        result['parishes_worked'] = set()
+        result['states_worked'] = set()
+        # ... etc
         
-        # Track multipliers
-        # ... your existing multiplier logic
-    
-    # Calculate final score
-    result['final_score'] = result['qso_points'] * result['total_multipliers']
-    # ... any other final calculations
+        # Process each QSO
+        for qso in result['qsos']:
+            # NEW: Skip QSOs flagged by cross-checking
+            if qso.get('xcheck', '') != '':
+                continue  # This QSO is NIL, B, or XCH - skip it
+            
+            # Your existing scoring logic
+            points = self.calculate_points(qso)  # or however you calculate
+            result['qso_points'] += points
+            
+            # Track multipliers
+            # ... your existing multiplier logic
+        
+        # Calculate final score
+        result['final_score'] = result['qso_points'] * result['total_multipliers']
+        # ... any other final calculations
 ```
 
 That's it! Just add the 2-line check to skip invalid QSOs.
@@ -78,7 +81,8 @@ python generate_final_report.py 2026
 - Loads all logs from database
 - Finds reciprocal QSOs
 - Sets `xcheck` to 'NIL', 'B', or 'XCH' for invalid QSOs
-- Calls `_score_qsos(result)` to recalculate
+- Creates `UnifiedLogProcessor` instance
+- Calls `processor._score_qsos(result)` for each operator to recalculate
 - Saves updated results with `final_score`
 
 **_score_qsos()** (modified):

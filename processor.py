@@ -61,9 +61,6 @@ class UnifiedLogProcessor:
                 self.dxcc_entities[int(row[0])] = row[1].split('  ')[0]
         print(f"***** canada {self.dxcc_entities[1]} kosovo {self.dxcc_entities[522]}")
         
-        
-        # Ambiguous QTH that need DX suffix
-        # self.ambiguous_dx_qth = {"ON", "PA", "CT", "TN", "LA", "HI", "OK", "CO", "OH"}
         self.first_call_qth = None  # To track the sent QTH in a log for checking other QSOs against it
     
     def _init_result(self) -> Dict:
@@ -145,7 +142,9 @@ class UnifiedLogProcessor:
         #############################################
         # print("BREAK")
         try:
-            prepared_qsos = self._prepare_qsos(result)
+            qso_lines = result['qsos']
+            result['qsos'] = []
+            self._prepare_qsos(qso_lines, result)
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f": {str(e)}")
@@ -156,7 +155,7 @@ class UnifiedLogProcessor:
         # Phase 3: Score
         #############################################
         try:
-            self._score_qsos(prepared_qsos, result)
+            self._score_qsos(result)
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f"Scoring failed: {str(e)}")
@@ -335,7 +334,7 @@ class UnifiedLogProcessor:
             if line.startswith('QSO:'):
                 qso_ok = self._validate_qso_line(result, line, line_num, first_qso_line)
                 if qso_ok:
-                    result['_qso_lines'].append((line_num, line))
+                    result['qsos'].append((line_num, line))
                     result['total_qsos'] += 1
                 first_qso_line = False
 
@@ -383,12 +382,10 @@ class UnifiedLogProcessor:
    
         return True
     
-    def _prepare_qsos(self, result: Dict) -> List[Dict]:
+    def _prepare_qsos(self, qso_lines, result: Dict) -> List[Dict]:
         """Phase 2: Prepare QSOs (convert freq, expand multi-parish, etc.)"""
-        prepared = []
-        # print(f"Initial prepared: {id(prepared)}")
         
-        for line_num, qso_line in result['_qso_lines']:
+        for line_num, qso_line in qso_lines:
             parts = qso_line.split()
             if len(parts) < 11:
                 print("break qso loop")
@@ -416,24 +413,7 @@ class UnifiedLogProcessor:
                 mode_cat = 'Phone'
             else:
                 mode_cat = 'CW/Digital'  
-            
-            # TODO check what this means and when it happens
-            # Handle multi-parish QTH (split on /)
-            # rcvd_qth_list = rcvd_qth.split('/')
-            
-            # for qth in rcvd_qth_list:
-            #     qth = qth.strip()
-                
-            #     # Check if DX suffix needed
-            #     sent_qth_final = sent_qth
-            #     rcvd_qth_final = qth
-            #     if self._is_dx_callsign(sent_call) and sent_qth in self.ambiguous_dx_qth:
-            #         sent_qth_final = sent_qth + 'DX'
-            #     if self._is_dx_callsign(rcvd_call) and qth in self.ambiguous_dx_qth:
-            #         rcvd_qth_final = qth + 'DX'
-
-                
-            prepared.append({
+            new_qso = {
                 'band': band,
                 'mode': mode,
                 'mode_category': mode_cat,
@@ -447,23 +427,21 @@ class UnifiedLogProcessor:
                 'rcvd_qth': rcvd_qth,
                 'line_num': line_num,
                 'xcheck': ''
-            })
+            }    
+            result['qsos'].append(new_qso)
         
         # Get info that is NOT specific to each QSO but is needed for scoring (e.g., location type)
         # Determine location type from prepared QSOs
-        result['location_type'] = self._determine_location_type(result, prepared, result['_header'])
-        result['is_rover'] = (result['location_type'] == 'LA-ROVER')
+        result['location_type'] = self._determine_location_type(result)
         
-        return prepared
     
     ## END of prepare_qsos
     
     # get location type of a QSO's sender
-    def _determine_location_type(self, result, qsos: List[Dict], header: Dict) -> str:
+    def _determine_location_type(self, result: Dict) -> str:
         """Determine location type from QSOs"""
-        sent_qths = []
         
-        for qso in qsos:
+        for qso in result['qsos']:
             sent_qth = qso['sent_qth'].replace('DX', '')
             sent_call = qso['sent_call']
             
@@ -487,7 +465,7 @@ class UnifiedLogProcessor:
         else:
             return 'LA-FIXED'
     
-    def _score_qsos(self, qsos: List[Dict], result: Dict):
+    def _score_qsos(self, result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
         # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
@@ -495,7 +473,7 @@ class UnifiedLogProcessor:
         mult_dups = []
         qso_dups = []
         # pprint(f"QSO Scoring for {result['callsign'].upper()}")
-        for qso in qsos:
+        for qso in result['qsos']:
             # Skip QSOs flagged by cross-checking
             if qso.get('xcheck', '') != '':
                 continue  # This QSO is NIL, B, or XCH - skip it
@@ -541,7 +519,7 @@ class UnifiedLogProcessor:
             else:  ## not a duplicate for points, so get points
                 result['valid_qsos'] += 1
                 # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
-                print(f"valid_qsos {result['valid_qsos']} qso_check {qso_check} band/sentqth/rcvd_call: {qso['band']} {qso['rcvd_qth']} {qso['rcvd_call']}")
+                # print(f"valid_qsos {result['valid_qsos']} qso_check {qso_check} band/sentqth/rcvd_call: {qso['band']} {qso['rcvd_qth']} {qso['rcvd_call']}")
                 qso_dups.append(qso_check)
 
             # Track bands worked and QSO by band (for display only, does not impact score)
@@ -706,7 +684,7 @@ def print_result(result):
     print(f"Final Score: {result['final_score']} (Claimed: {result['claimed_score']})")
     print(f"Total QSOs: {result['total_qsos']}  Valid QSOs: {result['valid_qsos']}  QSO Points: {result['qso_points']}")
     print(f"Total Multipliers: {result['total_multipliers']} (Parishes: {result['parishes_worked_multiplier']}, States: {result['states_worked_multiplier']}, Provinces: {result['provinces_worked_multiplier']}, DX: {result['dx_worked_multiplier']})")
-    if result['is_rover']:
+    if result['location_type'] == 'LA_ROVER':
         print(f"Rover Bonus Points: {result['rover_bonus_points']} for activating parishes: {', '.join(result['parishes_activated'])}")
     if result['worked_n5lcc']:
         print(f"N5LCC Contacts: {result['num_n5lcc_contacts']} (Bonus points applied)")

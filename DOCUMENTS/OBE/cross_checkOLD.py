@@ -80,12 +80,7 @@ def cross_check_all_logs(year=CONTEST_YEAR):
     
     # Create processor instance for recalculation
     print("\nInitializing processor for score recalculation...")
-    processor = UnifiedLogProcessor(
-        parishes_file=Path(LA_PARISHES_FILE),
-        states_file=Path(STATES_FILE),
-        provinces_file=Path(PROVINCES_FILE),
-        dxcc_entities_file=Path(DXCC_ENTITIES_FILE)
-    )
+    processor = UnifiedLogProcessor(Path(LA_PARISHES_FILE), Path(STATES_FILE), Path(PROVINCES_FILE), Path(DXCC_ENTITIES_FILE))
     
     # Recalculate final scores
     print("Recalculating final scores...")
@@ -111,9 +106,17 @@ def load_all_results(year):
     Returns:
         list: List of result dictionaries
     """
-    db = ContestDatabase(DATABASE_FILE)
-    # Load ALL results (not just valid ones) for cross-checking
-    results = db.get_results_by_year(str(year), valid_only=False)
+    conn = get_connection()
+    cursor = conn.execute(
+        'SELECT data FROM contest_results WHERE year = ?',
+        (str(year),)
+    )
+    
+    results = []
+    for row in cursor:
+        result = json.loads(row[0])
+        results.append(result)
+    
     return results
 
 
@@ -299,12 +302,12 @@ def find_matching_qso(operator, qso, qso_index, all_callsigns):
             fuzzy_match = find_fuzzy_callsign_match(rcvd_call, all_callsigns)
             if fuzzy_match:
                 return {
-                    'status': 'busted',
+                    'status': 'BUSTED',
                     'actual_call': fuzzy_match
                 }
         
         # No log from this station - UNIQUE (not penalized)
-        return {'status': 'unique'}
+        return {'status': 'UNIQUE'}
     
     # Look for reciprocal QSO in their log
     their_qsos = qso_index.get(operator, [])  # They should have worked us
@@ -313,7 +316,7 @@ def find_matching_qso(operator, qso, qso_index, all_callsigns):
     try:
         our_time = parse_qso_timestamp(qso['date'], qso['time'])
     except:
-        return {'status': 'nil'}  # Can't parse time, can't match
+        return {'status': 'NIL'}  # Can't parse time, can't match
     
     # Find matching QSO
     for their_qso in their_qsos:
@@ -345,15 +348,15 @@ def find_matching_qso(operator, qso, qso_index, all_callsigns):
         if our_sent != their_rcvd:
             # Exchange mismatch
             return {
-                'status': 'exchange_error',
+                'status': 'EXCHANGE_ERROR',
                 'their_rcvd': their_rcvd
             }
         
         # Everything matches!
-        return {'status': 'confirmed'}
+        return {'status': 'CONFIRMED'}
     
     # No matching QSO found in their log
-    return {'status': 'nil'}
+    return {'status': 'NIL'}
 
 
 def modes_match(mode1, mode2):
