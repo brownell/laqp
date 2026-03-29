@@ -373,14 +373,15 @@ class UnifiedLogProcessor:
             result['warnings'].append(f"QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
             return False
         
-        if first_qso_line:
-            self.first_call_qth = parts[7]
-        else:
-            if parts[7] != self.first_call_qth:
-                result['warnings'].append(f"QSO at line {line_num}: {line} Sent QTH {parts[7]} does not match first QSO sent QTH {self.first_call_qth}")
-                return False
+        ## TODO makd sure this is what we want
+        # if first_qso_line:
+        #     self.first_call_qth = parts[7]
+        # else:
+        #     if parts[7] != self.first_call_qth:
+        #         result['warnings'].append(f"QSO at line {line_num}: {line} Sent QTH {parts[7]} does not match first QSO sent QTH {self.first_call_qth}")
+        #         return False
    
-        return True
+        # return True
     
     def _prepare_qsos(self, qso_lines, result: Dict) -> List[Dict]:
         """Phase 2: Prepare QSOs (convert freq, expand multi-parish, etc.)"""
