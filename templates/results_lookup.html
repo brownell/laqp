@@ -26,7 +26,6 @@
                 <div class="form-group">
                     <label for="year">Contest Year: <span class="required">*</span></label>
                     <select id="year" name="year" required>
-                        <option value="">Select year...</option>
                         {% for year in available_years %}
                         <option value="{{ year }}">{{ year }}</option>
                         {% endfor %}

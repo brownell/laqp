@@ -59,7 +59,6 @@ class UnifiedLogProcessor:
             reader = csv.reader(f)
             for row in reader:
                 self.dxcc_entities[int(row[0])] = row[1].split('  ')[0]
-        print(f"***** canada {self.dxcc_entities[1]} kosovo {self.dxcc_entities[522]}")
         
         self.first_call_qth = None  # To track the sent QTH in a log for checking other QSOs against it
     
@@ -298,7 +297,6 @@ class UnifiedLogProcessor:
                     if callsign_info and callsign_info['country'] not in ['United States', 'Canada']:  ## It's DX
                         result['dxcc_code'] = int(callsign_info['adif'])
                         result['dxcc_entity'] = self.dxcc_entities[result['dxcc_code']]
-                        print(f"send QTH is DX: {result['callsign']} {result['dxcc_code']} is {result['dxcc_entity']}")
                 elif key == 'name':
                     result['name'] = value
                 elif key == 'category-mode':

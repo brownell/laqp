@@ -110,11 +110,11 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		
 </style>
 
-<script src="{{ url_for('static', filename='/js/home.js' ) }}" id="twentytwenty-js-js" defer data-wp-strategy="defer"></script>
-<link rel="canonical" href="https://laqp.w5gad.org/rules/" />
-<link rel="alternate" title="oEmbed (JSON)" type="application/json+oembed" href="https://laqp.w5gad.org/wp-json/oembed/1.0/embed?url=https%3A%2F%2Flaqp.w5gad.org%2Frules%2F" />
-<link rel="alternate" title="oEmbed (XML)" type="text/xml+oembed" href="https://laqp.w5gad.org/wp-json/oembed/1.0/embed?url=https%3A%2F%2Flaqp.w5gad.org%2Frules%2F&#038;format=xml" />
-	<script>document.documentElement.className = document.documentElement.className.replace( 'no-js', 'js' );</script>
+<script src="{{ url_for('static', filename='js/home.js') }}" id="twentytwenty-js-js" defer data-wp-strategy="defer"></script>
+<script src="{{ url_for('static', filename='css/home.min.css') }}"></script>
+<link rel="canonical" href="{{url_for('rules')}}" />
+<link rel="shortlink" href="{{url_for('rules')}}" />	
+<script>document.documentElement.className = document.documentElement.className.replace( 'no-js', 'js' );</script>
 	<style id="custom-background-css">
 body.custom-background { background-color: #fdd023; }
 </style>
