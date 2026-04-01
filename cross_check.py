@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Louisiana QSO Party - Log Cross-Checking Module
 
@@ -13,21 +14,169 @@ Cross-check classifications:
 - UNIQUE: Callsign not found in any submitted log (no penalty)
 """
 
+from typing import Dict, List, Optional
 import json
 from datetime import datetime, timedelta
 from collections import defaultdict
 from pathlib import Path
-from config.config import CONTEST_YEAR, LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE, DATABASE_FILE
-from database import ContestDatabase, save_result
 from processor import UnifiedLogProcessor
-
-# Cross-check configuration
-TIME_WINDOW_MINUTES = 30  # ±30 minutes for time matching
-ENABLE_FUZZY_MATCHING = True  # Check for callsign errors
-MAX_EDIT_DISTANCE = 2  # Maximum character differences for fuzzy matching
+from config.config import CONTEST_YEAR, CW_DIGITAL_QSO_POINTS, EXTRA_BONUS_POINTS, LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE, DATABASE_FILE, TIME_WINDOW_MINUTES, ENABLE_FUZZY_MATCHING, MAX_EDIT_DISTANCE, BONUS_CALLSIGN, LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, STATES_FILE, PROVINCES_FILE, EXTRA_BONUS_YEAR, EXTRA_BONUS_CALLS, EXTRA_BONUS_POINTS, US_PREFIXES, CANADIAN_PREFIXES,QRZ_CALLSIGN, QRZ_PASSWORD, PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS, DXCC_ENTITIES_FILE, CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS, PHONE_MODES, CW_DIGITAL_MODES, CONTEST_YEAR, BAND_RANGES
+from database import ContestDatabase, save_result
 
 
-def cross_check_all_logs(year=CONTEST_YEAR):
+printout = False # printout
+all_callsigns = set() # populated in cross_check_all_logs
+processor = UnifiedLogProcessor(LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE)
+
+def score_qsos(result: Dict) -> None:
+    """Phase 3: Score QSOs and calculate multipliers"""
+    global printout, all_callsigns, processor
+    # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
+    # A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points or multipliers.
+    
+    qso_dups = []
+    mult_dups = []
+    for qso in result['qsos']:
+        # Skip QSOs flagged by cross-checking
+        if qso.get('xcheck', '') != '':
+            continue  # Error from cross-checking, skip for scoring
+    
+        band = qso['band']
+        mode_cat = qso['mode_category']
+        sent_call = qso['sent_call']
+        rcvd_call = qso['rcvd_call']
+        sent_qth = qso['sent_qth']
+
+        ## if rcvd_call is a DX, then replace rcvd_qth with DXCC code (ADIF number as string)
+        try:
+            dx_rcvd_qth  = processor.my_callinfo.get_all(rcvd_call)
+        except Exception as e:
+            result['errors'].append(f"Exception {e} getting rcvd_qth callinfo")
+            print("exception")
+        if dx_rcvd_qth and ((dx_rcvd_qth['country'] not in ['United States', 'Canada'])): # working DX station
+            rcvd_qth = processor.dxcc_entities[int(dx_rcvd_qth['adif'])]
+            dx_rcvd_qth['dxcc_entity'] = rcvd_qth
+            # print(f"rcvd_qth is dx: sender sent_qth {sent_qth} receiver {rcvd_qth}")
+        
+            ## make sure this is not DX to DX
+            if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
+                result['warnings'].append(f"Duplicate QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
+                continue
+        else:
+            rcvd_qth = qso['rcvd_qth']
+            dx_rcvd_qth = None
+
+        # NOT DX - ROVER gets a qso_check that includes his QTH because he can call same
+        # station multiple toimes from different parishes
+        if result['location_type'] == "LA-ROVER":
+                qso_check = band + mode_cat + sent_qth + rcvd_call
+                if sent_qth not in result['parishes_activated']:
+                    result['parishes_activated'].add(sent_qth)
+        else: ## MUST be LA Fixed or State or Province
+            qso_check = band + mode_cat + rcvd_call
+                
+        if qso_check in qso_dups:
+            # print(f"!!! DUPLICATEte QSO line {qso['line_num']} {result['parishes_worked_multiplier'] + result['states_worked_multiplier'] + result['provinces_worked_multiplier'] + result['dx_worked_multiplier']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+            result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+        else:  ## not a duplicate for points, so get points
+            result['valid_qsos'] += 1
+            # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+            # print(f"valid_qsos {result['valid_qsos']} qso_check {qso_check} band/sentqth/rcvd_call: {qso['band']} {qso['rcvd_qth']} {qso['rcvd_call']}")
+            qso_dups.append(qso_check)
+
+        # Track bands worked and QSO by band (for display only, does not impact score)
+        result['bands_worked'].add(band)
+        result['qsos_by_band'][band] += 1
+
+        # Track qsos by hour (2-hour blocks)
+        try:
+            hour = int(qso['time'][:2])  # hour of the qso
+            if hour in result['qsos_by_hour']:
+                result['qsos_by_hour'][hour] += 1
+        except Exception as e:
+            # print(f"Error tying to get the QSO time {e}")
+            result['warnings'].append(f"Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
+            continue
+        
+        # Award points
+        if mode_cat == 'Phone':
+            result['qso_points'] += PHONE_QSO_POINTS
+            # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
+            result['qsos_by_mode']['Phone'] += 1
+        else:  # CW/Digital
+            result['qso_points'] += CW_DIGITAL_QSO_POINTS
+            # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
+            result['qsos_by_mode']['CW/Digital'] += 1
+
+        # Check for N5LCC
+        if rcvd_call == 'N5LCC':
+            result['worked_n5lcc'] = True
+            result['num_n5lcc_contacts'] += 1
+
+        ## MULTIPLIERS
+
+        mult_check = band + mode_cat + rcvd_qth
+        if mult_check in mult_dups:
+            # print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+            result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+
+        else:
+            # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+            mult_dups.append(mult_check)
+
+            ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
+            if rcvd_qth in processor.parishes:
+                result['parishes_worked'].add(rcvd_qth)
+                result['parishes_worked_multiplier'] += 1
+            
+            # LA stations get state, province, and DX multipliers
+            if result['location_type'] == 'LA-FIXED' or result['location_type'] == 'LA-ROVER':
+                if dx_rcvd_qth:  ## DX multiplier
+                    result['dx_worked'].add(dx_rcvd_qth['dxcc_entity'])
+                    result['dx_worked_multiplier'] += 1
+                # LA: states, provinces, DX are multipliers
+                elif rcvd_qth in processor.provinces:
+                    result['provinces_worked'].add(rcvd_qth)
+                    result['provinces_worked_multiplier'] += 1
+                elif rcvd_qth in processor.states:
+                    result['states_worked'].add(rcvd_qth)
+                    # print(result['states_worked'])
+                    # print(f"rcvd_qth: {rcvd_qth}")
+                    result['states_worked_multiplier'] += 1
+
+    # print("break before points")
+    # Finished with points, now sum the individual multipliers
+    for i in ['parishes', 'states', 'provinces', 'dx']:
+        result['total_multipliers'] += result[f'{i}_worked_multiplier']
+        
+    ## score before bonuses
+    result['final_score'] = result['qso_points'] * result['total_multipliers']
+
+    ## add bonus points for one or more N5LCC contacts
+    if result['worked_n5lcc']:
+        result['final_score'] += CALLSIGN_BONUS_POINTS
+
+    ## Add rover bonus points for activated parishes
+    if result['location_type'] == 'LA-ROVER':
+        result['rover_bonus_points'] = len(result['parishes_activated']) * ROVER_PARISH_BONUS
+        result['final_score'] += result['rover_bonus_points']
+
+    ## Bonus for something outside of QSOs
+    if result['callsign'] in EXTRA_BONUS_CALLS and CONTEST_YEAR == EXTRA_BONUS_YEAR:
+        result['final_score'] += EXTRA_BONUS_POINTS
+
+    if printout:
+        print('*** results from KV5M in score_qsos')
+        for key in result:
+            if key not in ['qsos',  '_header']:
+                print(f"{key}: {result[key]}")
+        printout = True
+
+## END of score_qsos
+
+def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
+
+    global printout, all_callsigns, processor
     """
     Main cross-checking function.
     
@@ -44,11 +193,15 @@ def cross_check_all_logs(year=CONTEST_YEAR):
     Returns:
         dict: Summary statistics of cross-checking
     """
-    print(f"Cross-checking logs for {year}...")
+    # print(f"Cross-checking logs for {year}...")
     
     # Load all results
-    all_results = load_all_results(year)
+    # all_results = load_all_results(year)
     print(f"Loaded {len(all_results)} logs")
+    print(f"Total QSOs across all logs: {sum(len(r.get('qsos', [])) for r in all_results)}")
+
+    # Get all callsigns that submitted logs (for UNIQUE detection)
+    all_callsigns = set(r['callsign'] for r in all_results)
     
     # Build QSO index
     qso_index = build_qso_index(all_results)
@@ -65,59 +218,81 @@ def cross_check_all_logs(year=CONTEST_YEAR):
     }
     
     for result in all_results:
+
+        if result['callsign'] == 'KZ5D':
+            printout = True
+            print('KZ5D')
+        else:
+            printout = False
         operator_stats = cross_check_operator(result, qso_index, all_results)
         for key in stats:
             if key in operator_stats:
                 stats[key] += operator_stats[key]
+
     
     print(f"Cross-check complete:")
     print(f"  Total QSOs: {stats['total_qsos']}")
-    print(f"  Confirmed: {stats['confirmed']} ({100*stats['confirmed']/stats['total_qsos']:.1f}%)")
+    # print(f"  Confirmed: {stats['confirmed']} ({100*stats['confirmed']/stats['total_qsos']:.1f}%)")
     print(f"  NIL: {stats['nil']}")
     print(f"  Busted: {stats['busted']}")
     print(f"  Exchange errors: {stats['exchange_error']}")
     print(f"  Unique: {stats['unique']}")
+    printout = True
     
-    # Create processor instance for recalculation
-    print("\nInitializing processor for score recalculation...")
-    processor = UnifiedLogProcessor(
-        parishes_file=Path(LA_PARISHES_FILE),
-        states_file=Path(STATES_FILE),
-        provinces_file=Path(PROVINCES_FILE),
-        dxcc_entities_file=Path(DXCC_ENTITIES_FILE)
-    )
     
-    # Recalculate final scores
-    print("Recalculating final scores...")
+    # Calculate final scores
+    print("Calculating final scores...")
     for result in all_results:
-        recalculate_final_score(result, processor)
+        printout = False  
+        score_qsos(result)
+        if printout:
+            print('KZ5D')
+            print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
+            printout = True
     
     # Save updated results
     print("Saving updated results to database...")
-    for result in all_results:
-        save_result(result, DATABASE_FILE)
+            # Save to database (both valid and invalid for record-keeping)
+    
+    # saved_count = 0
+    # errors_count = 0
+    # try:
+    #     for result in all_results:
+    #         if result['xcheck'] != '':  # Show cross-check errors
+    #             print(f"✗ {result['callsign']}: {result['xcheck']}")
+    #             errors_count += 1
+    #         if save_result(result):
+    #             saved_count += 1
+    #             status = "✓" if result['is_valid'] else "✗"
+    #             # print(f"{status} {result['callsign']}: Saved to database")
+    #         else:
+    #             print(f"✗ {result['callsign']}: Database save failed")
+    # except Exception as e:
+    #     print(f"✗ {result['callsign']}: Database error - {e}")
     
     print("Cross-checking complete!")
     return stats
 
 
-def load_all_results(year):
-    """
-    Load all contest results for a given year.
+# def load_all_results(year):
+#     """
+#     Load all contest results for a given year.
     
-    Args:
-        year: Contest year
+#     Args:
+#         year: Contest year
         
-    Returns:
-        list: List of result dictionaries
-    """
-    db = ContestDatabase(DATABASE_FILE)
-    # Load ALL results (not just valid ones) for cross-checking
-    results = db.get_results_by_year(str(year), valid_only=False)
-    return results
+#     Returns:
+#         list: List of result dictionaries
+#     """
+#     db = ContestDatabase(DATABASE_FILE)
+#     # Load ALL results (not just valid ones) for cross-checking
+#     results = db.get_results_by_year(str(year), valid_only=False)
+#     return results
 
 
 def build_qso_index(all_results):
+
+    global printout, all_callsigns, processor
     """
     Build an index of all QSOs for fast cross-checking lookups.
     
@@ -128,7 +303,8 @@ def build_qso_index(all_results):
                 'operator': 'K5ABC',
                 'band': '20m',
                 'mode': 'PH',
-                'time': datetime(2026, 4, 12, 14, 30),
+                'date': '2023-04-01',
+                'time': '1430, # or 14:30`
                 'sent_qth': 'ORLEANS',
                 'rcvd_qth': 'TX',
                 'line_num': 42
@@ -154,17 +330,18 @@ def build_qso_index(all_results):
                 continue
             
             # Parse timestamp
-            try:
-                qso_time = parse_qso_timestamp(qso['date'], qso['time'])
-            except:
-                continue  # Skip QSOs with invalid timestamps
+            # try:
+            #     qso_time = parse_qso_timestamp(qso['date'], qso['time'])
+            # except:
+            #     continue  # Skip QSOs with invalid timestamps
             
             # Add to index under the callsign worked
             index[qso['rcvd_call']].append({
                 'operator': operator,
                 'band': qso['band'],
                 'mode': qso['mode'],
-                'time': qso_time,
+                'date': qso['date'],
+                'time': qso['time'],
                 'sent_call': qso['sent_call'],
                 'sent_qth': qso['sent_qth'],
                 'rcvd_qth': qso['rcvd_qth'],
@@ -175,6 +352,8 @@ def build_qso_index(all_results):
 
 
 def cross_check_operator(result, qso_index, all_results):
+
+    global printout, all_callsigns, processor
     """
     Cross-check all QSOs for a single operator.
     Marks QSOs with error codes and adds warning messages.
@@ -200,18 +379,18 @@ def cross_check_operator(result, qso_index, all_results):
         'nil': 0,
         'busted': 0,
         'exchange_error': 0,
-        'unique': 0
+        'unique': 0,
+        'had_xcheck:': 0
     }
-    
-    # Get all callsigns that submitted logs (for UNIQUE detection)
-    all_callsigns = set(r['callsign'] for r in all_results)
-    
+
     for qso in result.get('qsos', []):
         stats['total_qsos'] += 1
         
         # Skip QSOs already marked invalid (mode mismatches, etc.)
         # Check if they already have an error set during initial processing
         if 'xcheck' in qso and qso['xcheck'] != '':
+            stats['had_xcheck:'] += 1
+            stats['valid_qsos'] = min(0, stats['valid_qsos'] - 1)  # Decrement valid QSOs if already marked valid
             continue
         
         # Initialize xcheck field if not present
@@ -219,7 +398,7 @@ def cross_check_operator(result, qso_index, all_results):
             qso['xcheck'] = ''
         
         # Find matching QSO
-        match_result = find_matching_qso(operator, qso, qso_index, all_callsigns)
+        match_result = find_matching_qso(result, operator, qso, qso_index)
         
         status = match_result['status']
         stats[status] += 1
@@ -234,7 +413,7 @@ def cross_check_operator(result, qso_index, all_results):
             qso['cross_check_status'] = 'NIL'
             result['warnings'].append(
                 f"QSO at line {qso.get('line_num', '?')}: "
-                f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} at {qso['time']} - "
+                f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
                 f"Not found in {qso['rcvd_call']}'s log (NIL)"
             )
             
@@ -244,7 +423,7 @@ def cross_check_operator(result, qso_index, all_results):
             actual_call = match_result.get('actual_call', '?')
             result['warnings'].append(
                 f"QSO at line {qso.get('line_num', '?')}: "
-                f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} at {qso['time']} - "
+                f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
                 f"Callsign error, possibly {actual_call} (BUSTED)"
             )
             
@@ -253,7 +432,7 @@ def cross_check_operator(result, qso_index, all_results):
             qso['cross_check_status'] = 'EXCHANGE_ERROR'
             result['warnings'].append(
                 f"QSO at line {qso.get('line_num', '?')}: "
-                f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} at {qso['time']} - "
+                f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
                 f"Exchange mismatch (sent {qso['sent_qth']}, they logged {match_result.get('their_rcvd', '?')})"
             )
             
@@ -262,11 +441,18 @@ def cross_check_operator(result, qso_index, all_results):
             qso['xcheck'] = ''  # Valid
             qso['cross_check_status'] = 'UNIQUE'
             # No warning added
-    
+    if result['callsign'] == 'KZ5D':
+        print('*** FINAL RESULTS for KZ5D after cross-checking but not scoring')
+        for key in result:
+            if key not in ['qsos',  '_header']:
+                print(f"{key}: {result[key]}")
+        printout = True
     return stats
 
 
-def find_matching_qso(operator, qso, qso_index, all_callsigns):
+def find_matching_qso(result, operator, qso, qso_index):
+
+    global printout, all_callsigns, processor
     """
     Find a matching QSO in other logs.
     
@@ -296,42 +482,43 @@ def find_matching_qso(operator, qso, qso_index, all_callsigns):
     if rcvd_call not in all_callsigns:
         # Station didn't submit - check if similar callsign exists (BUSTED)
         if ENABLE_FUZZY_MATCHING:
-            fuzzy_match = find_fuzzy_callsign_match(rcvd_call, all_callsigns)
+            fuzzy_match = find_fuzzy_callsign_match(rcvd_call) 
             if fuzzy_match:
                 return {
                     'status': 'busted',
                     'actual_call': fuzzy_match
                 }
-        
+        if result['callsign'] == 'KZ5D':
+            print(f"*** No log found for {rcvd_call} - UNIQUE")
+            printout = True 
         # No log from this station - UNIQUE (not penalized)
         return {'status': 'unique'}
     
     # Look for reciprocal QSO in their log
     their_qsos = qso_index.get(operator, [])  # They should have worked us
-    
-    # Parse our QSO time
-    try:
-        our_time = parse_qso_timestamp(qso['date'], qso['time'])
-    except:
-        return {'status': 'nil'}  # Can't parse time, can't match
-    
+   
     # Find matching QSO
     for their_qso in their_qsos:
         # Must be from the station we're checking
         if their_qso['operator'] != rcvd_call:
+            printout = True
             continue
         
         # Band must match exactly
         if their_qso['band'] != qso['band']:
+            printout = True
             continue
         
         # Mode must match (account for mode equivalence)
         if not modes_match(qso['mode'], their_qso['mode']):
+            printout = True
             continue
         
         # Time must be within window
-        time_diff = abs((their_qso['time'] - our_time).total_seconds())
-        if time_diff > TIME_WINDOW_MINUTES * 60:
+        time_match = time_check([qso['date'], qso['time']], [their_qso['date'], their_qso['time']])
+        if not time_match:
+            result['errors'].append(f"Time mismatch: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
+            printout = True
             continue
         
         # Found a matching QSO!
@@ -344,6 +531,7 @@ def find_matching_qso(operator, qso, qso_index, all_callsigns):
         
         if our_sent != their_rcvd:
             # Exchange mismatch
+            printout = True
             return {
                 'status': 'exchange_error',
                 'their_rcvd': their_rcvd
@@ -357,6 +545,8 @@ def find_matching_qso(operator, qso, qso_index, all_callsigns):
 
 
 def modes_match(mode1, mode2):
+
+    global printout, all_callsigns, processor
     """
     Check if two modes are equivalent for matching purposes.
     
@@ -384,7 +574,8 @@ def modes_match(mode1, mode2):
     return False
 
 
-def find_fuzzy_callsign_match(callsign, all_callsigns):
+def find_fuzzy_callsign_match(callsign):
+    global printout, all_callsigns, processor
     """
     Find a similar callsign using fuzzy matching.
     Detects common errors like:
@@ -435,47 +626,99 @@ def edit_distance(s1, s2):
     
     return previous_row[-1]
 
+def parse_datetime(date_str: str, time_str: str) -> datetime:
+    """Parse a date string (YYYY-MM-DD) and a time string (HHMM or HH:MM) into a datetime object."""
+    time_str = time_str.replace(":", "")  # normalize to HHMMSS
+    return datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H%M%S")
 
-def parse_qso_timestamp(date_str, time_str):
-    """
-    Parse QSO date and time into datetime object.
+def within_60_minutes(dt1: datetime, dt2: datetime) -> bool:
+    """Return True if dt1 and dt2 are within 60 minutes of each other."""
+    delta = abs(dt2 - dt1)
+    return delta <= timedelta(minutes=60)
+
+def time_check(ours, theirs):
+    try:
+        dt1 = parse_datetime(ours[0], ours[1])
+        dt2 = parse_datetime(theirs[0], theirs[1])
+        delta = abs(dt2 - dt1)
+        return delta <= timedelta(minutes=60)
+    except Exception as e:
+        print('printout: exception', e)
+        return False
+
+
+# def parse_qso_timestamp(date_str, time_str):
+#     """
+#     Parse QSO date and time into datetime object.
     
-    Args:
-        date_str: Date string (YYYY-MM-DD)
-        time_str: Time string (HH:MM or HH:MM:SS)
+#     Args:
+#         date_str: Date string (YYYY-MM-DD)
+#         time_str: Time string (HH:MM or HH:MM:SS)
         
-    Returns:
-        datetime: Parsed timestamp
-    """
-    # Handle both HH:MM and HH:MM:SS formats
-    if len(time_str) == 5:  # HH:MM
-        time_str += ':00'
+#     Returns:
+#         datetime: Parsed timestamp
+#     """
+#     # Handle both HH:MM and HH:MM:SS formats
+#     time_str.replace(":", "")
+#     if len(time_str) == 5:  # HH:MM
+#         time_str += ':00'
+#     elif len(time_str) == 4:
+#         time_str += '00'
+#     else:
+#         return 
+
     
-    timestamp_str = f"{date_str} {time_str}"
-    return datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+#     timestamp_str = f"{date_str} {time_str}"
+#     return datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
 
 
-def recalculate_final_score(result, processor):
+def recalculate_final_score(result):
+    global printout, all_callsigns, processor
     """
-    Recalculate final score using only valid QSOs.
-    
-    This calls the existing _score_qsos() method from UnifiedLogProcessor,
-    which will skip QSOs that have a non-empty 'xcheck' field.
+    Calculate final score using only valid QSOs.
+
     
     Args:
         result: Contest result dictionary (modified in place)
-        processor: UnifiedLogProcessor instance
     """
     # Call the existing scoring function
     # It will skip QSOs where xcheck is not empty
-    processor._score_qsos(result)
+    print(f"before score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
+    printout = True
+
+    # ## reset values for rescoring
+    # result['qso_points'] = 0
+    # result['valid_qsos'] = 0 #number of qsos that are not dups and contribute to the score
+    # result['total_multipliers'] = 0
+    # result['parishes_worked'] = set()
+    # result['parishes_worked_multiplier'] = 0
+    # result['states_worked'] = set()
+    # result['states_worked_multiplier'] = 0
+    # result['provinces_worked'] = set()
+    # result['provinces_worked_multiplier'] = 0
+    # result['dx_worked'] = set()
+    # result['dx_worked_multiplier'] = 0
+    # result['parishes_activated'] = set()
+    # result['rover_bonus_points'] = 0
+    # result['worked_n5lcc'] = False
+    # result['num_n5lcc_contacts'] = 0
+    # result['qsos_by_band'] = {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0}
+    # result['qsos_by_mode'] = {'Phone': 0, 'CW/Digital': 0}
+    # result['qsos_by_hour'] = {i: 0 for i in range(12)}
+    # result['bands_worked'] = set()
+    # result['errors'] = []
+    # result['warnings'] = []
+
+    # score_qsos(result)
+    # print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
+    # printout = True
     
-    # Calculate score reduction percentage
-    if result.get('claimed_score', 0) > 0:
-        reduction = (result['claimed_score'] - result['final_score']) / result['claimed_score'] * 100
-        result['score_reduction_pct'] = round(reduction, 1)
-    else:
-        result['score_reduction_pct'] = 0
+    # # Calculate score reduction percentage
+    # if result.get('claimed_score', 0) > 0:
+    #     reduction = (result['claimed_score'] - result['final_score']) / result['claimed_score'] * 100
+    #     result['score_reduction_pct'] = round(reduction, 1)
+    # else:
+    #     result['score_reduction_pct'] = 0
 
 
 if __name__ == '__main__':

@@ -3,13 +3,15 @@ process_single_log (temp_file_path, form_data)
         ONLY called by Web upload
         creates UnifiedLogProcessor
 
-process_log_details (temp_file_path, form_data)
-        called by both Web and batch - batch has empty form_data
-        creates "result" object
-        calls in order: 
-            _validate_and_parse
-            _prepare_qsos
-            _score_qsos
+process_batch_logs
+        ONLY called by batch.py
+        process_log_details (temp_file_path, form_data)
+                called by both Web and batch - batch has empty form_data
+                creates "result" object
+                calls in order: 
+                _validate_and_parse
+                _prepare_qsos
+                _score_qsos
 
 
 _validate_and_parse(temp_file_path, result, form_data)
@@ -21,6 +23,8 @@ _log_line_by_line(log_file_object, result)
         calls _validate_qso_line
 
 _validate_qso_line
+
+
 
 
 

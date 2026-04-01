@@ -129,6 +129,14 @@ CANADIAN_PREFIXES = [
 PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
 
 # ============================================================================
+# for cross-checkiing time strings, we want to allow for some flexibility (e.g., 232034 vs 23:20) and also handle day rollover (e.g., 23:55 vs 00:25 the next day). The key is to parse both times into datetime objects and then compare them with a tolerance.
+# ============================================================================
+
+TIME_WINDOW_MINUTES = 30  # ±30 minutes for time matching
+ENABLE_FUZZY_MATCHING = False  # Check for callsign errors
+MAX_EDIT_DISTANCE = 2  # Maximum character differences for fuzzy matching
+
+# ============================================================================
 # RANKINGS - Short codes to full descriptions
 # ============================================================================
 
@@ -197,6 +205,7 @@ LEADERBOARDS = [
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['total_qsos', 'QSOs'],
+                ['qso_points', 'Points'],
                 ['total_multipliers', 'Mults'],
            ]
         },

@@ -5,6 +5,7 @@ Batch Control program to process ALL the logs in the incoming directory
 """
 
 from database import save_result
+from cross_check import cross_check_all_logs
 
 def main(contest_year: str):
     import sys
@@ -24,16 +25,17 @@ def main(contest_year: str):
     # print(f"before process_batch_logs, input_dir: {input_dir}")
     results = process_batch_logs(input_dir)
 
+    stats = cross_check_all_logs(results)
+
 
     # Save results to database (valid and invalid)
     valid_count = 0
     invalid_count = 0
     saved_count = 0
+    errors_count = 0
     
     for result in results:
-        # Add year to result
-        result['year'] = contest_year
-        
+
         # Initialize empty rankings dict
         result['rankings'] = {}
         
@@ -42,10 +44,11 @@ def main(contest_year: str):
         else:
             invalid_count += 1
             print(f"✗ {result['callsign']}: Invalid log")
-            for error in result.get('errors', [])[:5]:  # Show first 3 errors
+            for error in result.get('errors', [])[:10]:  # Show first 10 errors
                 print(f"    ERROR: {error}")
         
-        # Save to database (both valid and invalid for record-keeping)
+        # # Save to database (both valid and invalid for record-keeping)
+
         try:
             if save_result(result):
                 saved_count += 1

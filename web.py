@@ -46,7 +46,7 @@ def format_result_for_display(result):
         'callsign', 'category', 'overlay', 'location_type', 'mode_category',
         'power_level', 'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
         'total_multipliers', 'parishes_worked_multiplier', 'states_worked_multiplier',
-        'provinces_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
+        'provinces_worked_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
         'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score'
     ]
     

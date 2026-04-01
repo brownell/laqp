@@ -56,7 +56,7 @@ def test_result_formatting():
         'states_worked': set(),
         'states_worked_multiplier': 0,
         'provinces_worked': set(),
-        'provinces_multiplier': 0,
+        'provinces_worked_multiplier': 0,
         'dx_worked': set(),
         'dx_worked_multiplier': 0,
         'parishes_activated': set(),

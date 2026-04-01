@@ -59,7 +59,7 @@ class ContestDatabase:
                     states_worked TEXT,
                     states_worked_multiplier INTEGER,
                     provinces_worked TEXT,
-                    provinces_multiplier INTEGER,
+                    provinces_worked_multiplier INTEGER,
                     dx_worked TEXT,
                     dx_worked_multiplier INTEGER,
                     parishes_activated TEXT,
@@ -110,10 +110,10 @@ class ContestDatabase:
         # Simple fields
         simple_fields = [
             'year', 'callsign', 'name', 'category', 'overlay',
-            'location_type', 'mode_category', 'power_level',
+            'location_type', 'dxcc_code', 'dxcc_entity', 'mode_category', 'power_level',
             'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
             'total_multipliers', 'parishes_worked_multiplier',
-            'states_worked_multiplier', 'provinces_multiplier',
+            'states_worked_multiplier', 'provinces_worked_multiplier',
             'dx_worked_multiplier', 'rover_bonus_points',
             'num_n5lcc_contacts', 'claimed_score'
         ]

@@ -4,13 +4,7 @@
             "path": "."
         },
         {
-            "path": "../javascript_safe"
-        },
-        {
             "path": "../laqp_data"
-        },
-        {
-            "path": "../LCC_web_site"
         }
     ]
 }
