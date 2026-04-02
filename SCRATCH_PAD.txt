@@ -25,7 +25,8 @@ _log_line_by_line(log_file_object, result)
 _validate_qso_line
 
 
-
+Individual results
+results_lookup.js generates the single fields (call, name, etc)
 
 
 
@@ -192,6 +193,7 @@ result {
             '_header': {}
         }
 
+{"ALL":29,"LFL":15,"LFM":7,"WIRES":7}
 
 The next step is to create a batch app called results.py  It goes through a list of result categories - or leaderboards, that is in config.py called LEADERBOARDS. does two things. ItHere is the proposed method to do this, but if you have a better approach tell me and we can discuss it. There is a deadline for all the operators to have their logs uploaded. We will do the leaderboards on that date, using a batch program, called results.py. This program will operate as follows. For each category of ranking (which are listed below), the code will (a) get a list of all the logs in that category sorted by the operator’s total score. (b) remember the count of this list, (c) iterate through all the db records and update the “results” dict in the db record to reflect the operator’s rank in this category. Note that a single operator may be in multiple ranking categories, e.g. CW and POTA, and HIGH power, and will have a different ranking in each. 
 

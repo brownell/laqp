@@ -4,16 +4,17 @@ Louisiana QSO Party Log Upload Application
 Web interface for contestants to submit and validate Cabrillo log files
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, json, render_template, request, jsonify
 import os
 from datetime import datetime
 import tempfile
 from pathlib import Path
+from typing import Dict, List, Optional
 
 # Import the unified processor and database
 from processor import process_single_log
 from database import save_result
-from config.config import SECRET_KEY, CONTEST_YEAR, BATCH_INPUT_DIR, ALLOWED_LOG_EXTENSIONS
+from config.config import SECRET_KEY, CONTEST_YEAR, BATCH_INPUT_DIR, ALLOWED_LOG_EXTENSIONS, RANKINGS
 
 app = Flask(__name__)
 
@@ -37,7 +38,7 @@ def format_set_as_list(s):
 def format_result_for_display(result):
     """
     Convert the result dictionary to a format suitable for HTML display
-    Handles sets, dicts, and other complex types
+    Handles sets, dicts, and other complex type
     """
     display_result = {}
     
@@ -47,7 +48,7 @@ def format_result_for_display(result):
         'power_level', 'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
         'total_multipliers', 'parishes_worked_multiplier', 'states_worked_multiplier',
         'provinces_worked_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
-        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score'
+        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score', 'year', 'rankings'
     ]
     
     for field in simple_fields:
@@ -81,6 +82,15 @@ def format_result_for_display(result):
         {'hour': hour, 'count': count}
         for hour, count in sorted(qsos_by_hour.items())
     ]
+
+    #format rankings for display
+    # temp = json.dumps(display_result.get('rankings', {}))
+    # display_result['rankings'] = {}
+    # rankings = RANKINGS
+    # if temp:
+    #     temp_result = dict(sorted(temp.items(), key=lambda item: item[1]))
+    #     for key in temp_result:
+    #         display_result['rankings'][key] = rankings[key]
     
     return display_result
 
