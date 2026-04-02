@@ -143,9 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div style="display: flex; align-items: center; justify-content: center;">
-                        <img src="/static/images/fleur.svg" class="certificate-fleur" alt="Fleur de lis" onerror="this.style.display='none'">
                         <div class="certificate-callsign">${result.callsign}</div>
-                        <img src="/static/images/fleur.svg" class="certificate-fleur" alt="Fleur de lis" onerror="this.style.display='none'">
                     </div>
 
                     <div class="certificate-recognition">In Recognition of Achievement</div>
@@ -164,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="certificate-signature">
                             [Signature Placeholder]
                         </div>
-                        <img src="/static/images/sticker2.png" class="certificate-logo" alt="Jefferson Amateur Radio Club">
+                        <img src="/static/images/jarc_logo.png" class="certificate-logo" alt="Jefferson Amateur Radio Club">
                     </div>
                 </div>
             </div>

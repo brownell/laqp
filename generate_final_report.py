@@ -43,7 +43,7 @@ def generate_final_report_html(year: str, output_dir: str = FINAL_REPORTS_DIR):
     html = _create_html_document(year, sections)
     
     # Save to file
-    output_file = output_path / f"final_report_{year}_{datetime.now().strftime("%y-%m-%d %H:%M")}.html"
+    output_file = output_path / f"final_report_{year}.html"
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html)
     
