@@ -6,6 +6,8 @@ Batch Control program to process ALL the logs in the incoming directory
 
 from database import save_result
 from cross_check import cross_check_all_logs
+from generate_rankings import generate_rankings
+from generate_final_report import generate_final_report_html
 
 def main(contest_year: str):
     import sys
@@ -71,6 +73,11 @@ def main(contest_year: str):
     print("Next step: Calculate rankings and generate HTML reports")
     print()
 
+    # generate rankings from the database results
+    generate_rankings(contest_year)
+
+    generate_final_report_html(contest_year)
+    
 if __name__ == "__main__":
     import os, sys
     from datetime import datetime

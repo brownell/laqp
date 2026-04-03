@@ -35,7 +35,7 @@ def format_set_as_list(s):
     return sorted(list(s))
 
 
-def format_result_for_display(result):
+def format_result_for_display(result, rank_labels=RANKINGS):
     """
     Convert the result dictionary to a format suitable for HTML display
     Handles sets, dicts, and other complex type
@@ -83,14 +83,19 @@ def format_result_for_display(result):
         for hour, count in sorted(qsos_by_hour.items())
     ]
 
-    #format rankings for display
-    # temp = json.dumps(display_result.get('rankings', {}))
-    # display_result['rankings'] = {}
-    # rankings = RANKINGS
+    # Format rankings (convert keys to labels)
+    # temp = result.get('rankings', {})
     # if temp:
-    #     temp_result = dict(sorted(temp.items(), key=lambda item: item[1]))
-    #     for key in temp_result:
-    #         display_result['rankings'][key] = rankings[key]
+    #     sorted_rankings = dict(sorted(temp.items(), key=lambda item: item[1]))
+    #     rankings = {}
+    #     for key, value in sorted_rankings.items():
+    #         if key in rank_labels:
+    #             rankings[rank_labels[key]] = value
+
+    #     display_result['rankings'] = rankings
+    # else:
+    #     display_result['rankings'] = {}
+
     
     return display_result
 
@@ -160,25 +165,20 @@ def api_individual_results():
                 'error': f'No results found for {callsign} in {year}'
             }), 404
         
-        # Format rankings for display
-        try:
-            from config.config import RANKINGS
-        except ImportError:
-            RANKINGS = {}
-        
-        rankings_display = []
-        for code, rank in result.get('rankings', {}).items():
+        rankings_display = {}
+        sorted_rankings = dict(sorted(result.get('rankings', {}).items(), key=lambda item: item[1]))
+        for code, rank in sorted_rankings.items():
             if code in RANKINGS:
-                # Format as "#2 Louisiana - Fixed QRP Power"
-                rankings_display.append(f"#{rank} {RANKINGS[code]}")
-        
+                # Format as "Louisiana - Fixed QRP Power #2"
+                rankings_display[RANKINGS[code]] = rank
+
         # Format result for JSON (convert sets to lists)
-        json_result = format_result_for_display(result)
+        json_result = format_result_for_display(result, RANKINGS)
         
         return jsonify({
             'success': True,
             'result': json_result,
-            'rankings_display': rankings_display
+            'rankings_display': [rankings_display]
         })
     
     except Exception as e:

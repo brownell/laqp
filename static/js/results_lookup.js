@@ -133,6 +133,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const rankingsHTML = rankingsDisplay.map(r => 
             `<div class="certificate-ranking-item"><strong>${r}</strong></div>`
         ).join('');
+        console.log('Rankings Display:', rankingsDisplay);
+        console.log('Rankings HTML:', rankingsHTML);
 
         return `
             <div class="certificate">
@@ -147,7 +149,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="certificate-callsign">${result.callsign}</div>
                     </div>
 
-                    <div class="rankings">In Recognition of Achievement</div>
+                    // <div class="certificate-rankings">
+                    //     <div class="rankings-title">Category Rankings</div>
+                    //     <ul class="rankings-list">
+                        
+                    //     Object.entries(${rankingsDisplay}).forEach(([${key}, ${value}]) => {
+                    //         <li># ${key}  in  ${value}</li>
+                    //         });
+                    //     </ul>
+                        
+
+                    // </div>
+
 
                     <div class="certificate-score">
                         <strong>${result.final_score.toLocaleString()} Points</strong>

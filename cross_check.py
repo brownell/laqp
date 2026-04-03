@@ -165,12 +165,11 @@ def score_qsos(result: Dict) -> None:
     if result['callsign'] in EXTRA_BONUS_CALLS and CONTEST_YEAR == EXTRA_BONUS_YEAR:
         result['final_score'] += EXTRA_BONUS_POINTS
 
-    if printout:
-        print('*** results from KV5M in score_qsos')
-        for key in result:
-            if key not in ['qsos',  '_header']:
-                print(f"{key}: {result[key]}")
-        printout = True
+    # if printout:
+    #     print('*** results from KV5M in score_qsos')
+    #     for key in result:
+    #         if key not in ['qsos',  '_header']:
+    #             print(f"{key}: {result[key]}")
 
 ## END of score_qsos
 
@@ -184,7 +183,7 @@ def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
     1. Load all contest results for the year
     2. Build QSO index for fast lookups
     3. Cross-check each operator's QSOs
-    4. Recalculate final scores using only valid QSOs
+    4. calculate final scores using only valid QSOs
     5. Save updated results to database
     
     Args:
@@ -218,12 +217,6 @@ def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
     }
     
     for result in all_results:
-
-        if result['callsign'] == 'KZ5D':
-            printout = True
-            print('KZ5D')
-        else:
-            printout = False
         operator_stats = cross_check_operator(result, qso_index, all_results)
         for key in stats:
             if key in operator_stats:
@@ -243,32 +236,16 @@ def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
     # Calculate final scores
     print("Calculating final scores...")
     for result in all_results:
-        printout = False  
+        # printout = False  
         score_qsos(result)
-        if printout:
-            print('KZ5D')
-            print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
-            printout = True
+        # if printout:
+        #     print('KZ5D')
+        #     print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
+        #     printout = True
     
     # Save updated results
     print("Saving updated results to database...")
             # Save to database (both valid and invalid for record-keeping)
-    
-    # saved_count = 0
-    # errors_count = 0
-    # try:
-    #     for result in all_results:
-    #         if result['xcheck'] != '':  # Show cross-check errors
-    #             print(f"✗ {result['callsign']}: {result['xcheck']}")
-    #             errors_count += 1
-    #         if save_result(result):
-    #             saved_count += 1
-    #             status = "✓" if result['is_valid'] else "✗"
-    #             # print(f"{status} {result['callsign']}: Saved to database")
-    #         else:
-    #             print(f"✗ {result['callsign']}: Database save failed")
-    # except Exception as e:
-    #     print(f"✗ {result['callsign']}: Database error - {e}")
     
     print("Cross-checking complete!")
     return stats
@@ -441,12 +418,8 @@ def cross_check_operator(result, qso_index, all_results):
             qso['xcheck'] = ''  # Valid
             qso['cross_check_status'] = 'UNIQUE'
             # No warning added
-    if result['callsign'] == 'KZ5D':
-        print('*** FINAL RESULTS for KZ5D after cross-checking but not scoring')
-        for key in result:
-            if key not in ['qsos',  '_header']:
-                print(f"{key}: {result[key]}")
-        printout = True
+    
+    
     return stats
 
 
@@ -488,9 +461,6 @@ def find_matching_qso(result, operator, qso, qso_index):
                     'status': 'busted',
                     'actual_call': fuzzy_match
                 }
-        if result['callsign'] == 'KZ5D':
-            print(f"*** No log found for {rcvd_call} - UNIQUE")
-            printout = True 
         # No log from this station - UNIQUE (not penalized)
         return {'status': 'unique'}
     
@@ -501,24 +471,20 @@ def find_matching_qso(result, operator, qso, qso_index):
     for their_qso in their_qsos:
         # Must be from the station we're checking
         if their_qso['operator'] != rcvd_call:
-            printout = True
             continue
         
         # Band must match exactly
         if their_qso['band'] != qso['band']:
-            printout = True
             continue
         
         # Mode must match (account for mode equivalence)
         if not modes_match(qso['mode'], their_qso['mode']):
-            printout = True
             continue
         
         # Time must be within window
         time_match = time_check([qso['date'], qso['time']], [their_qso['date'], their_qso['time']])
         if not time_match:
             result['errors'].append(f"Time mismatch: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
-            printout = True
             continue
         
         # Found a matching QSO!
@@ -531,7 +497,6 @@ def find_matching_qso(result, operator, qso, qso_index):
         
         if our_sent != their_rcvd:
             # Exchange mismatch
-            printout = True
             return {
                 'status': 'exchange_error',
                 'their_rcvd': their_rcvd
@@ -672,44 +637,20 @@ def time_check(ours, theirs):
 #     return datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
 
 
-def recalculate_final_score(result):
-    global printout, all_callsigns, processor
-    """
-    Calculate final score using only valid QSOs.
-
+# def recalculate_final_score(result):
+#     global printout, all_callsigns, processor
+#     """
+#     Calculate final score using only valid QSOs.
     
-    Args:
-        result: Contest result dictionary (modified in place)
-    """
-    # Call the existing scoring function
-    # It will skip QSOs where xcheck is not empty
-    print(f"before score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
-    printout = True
+#     Args:
+#         result: Contest result dictionary (modified in place)
+#     """
+#     # Call the existing scoring function
+#     # It will skip QSOs where xcheck is not empty
+#     print(f"before score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
+#     printout = True
 
-    # ## reset values for rescoring
-    # result['qso_points'] = 0
-    # result['valid_qsos'] = 0 #number of qsos that are not dups and contribute to the score
-    # result['total_multipliers'] = 0
-    # result['parishes_worked'] = set()
-    # result['parishes_worked_multiplier'] = 0
-    # result['states_worked'] = set()
-    # result['states_worked_multiplier'] = 0
-    # result['provinces_worked'] = set()
-    # result['provinces_worked_multiplier'] = 0
-    # result['dx_worked'] = set()
-    # result['dx_worked_multiplier'] = 0
-    # result['parishes_activated'] = set()
-    # result['rover_bonus_points'] = 0
-    # result['worked_n5lcc'] = False
-    # result['num_n5lcc_contacts'] = 0
-    # result['qsos_by_band'] = {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0}
-    # result['qsos_by_mode'] = {'Phone': 0, 'CW/Digital': 0}
-    # result['qsos_by_hour'] = {i: 0 for i in range(12)}
-    # result['bands_worked'] = set()
-    # result['errors'] = []
-    # result['warnings'] = []
-
-    # score_qsos(result)
+#     score_qsos(result)
     # print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
     # printout = True
     
