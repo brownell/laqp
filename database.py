@@ -100,7 +100,7 @@ class ContestDatabase:
             
             conn.commit()
     
-    def _serialize_result(self, result: Dict) -> Dict:
+    def _serialize_result(self, result: Dict, contest_year: str) -> Dict:
         """
         Convert result dict to database-storable format.
         Converts sets to JSON lists, handles complex types.
@@ -213,7 +213,7 @@ class ContestDatabase:
         
         return result
     
-    def save_result(self, result: Dict) -> bool:
+    def save_result(self, contest_year: str, result: Dict) -> bool:
         """
         Save or update a contest result.
         
@@ -226,14 +226,14 @@ class ContestDatabase:
             True if saved successfully
         """
         # Ensure year is present
-        if 'year' not in result or not result['year']:
+        if 'year' not in result or (not result['year']) or result['year'] != contest_year:
             raise ValueError("Result must include 'year' field")
         
         if 'callsign' not in result or not result['callsign']:
             raise ValueError("Result must include 'callsign' field")
         
         # Serialize result
-        db_result = self._serialize_result(result)
+        db_result = self._serialize_result(result, contest_year)
         
         # Build SQL
         fields = list(db_result.keys())
@@ -417,7 +417,7 @@ class ContestDatabase:
 
 # Convenience functions
 
-def save_result(result: Dict, db_path: str = DATABASE_FILE) -> bool:
+def save_result(result: Dict, contest_year: str, db_path: str = DATABASE_FILE) -> bool:
     """
     Save a result to the database.
     
@@ -429,7 +429,7 @@ def save_result(result: Dict, db_path: str = DATABASE_FILE) -> bool:
         True if saved successfully
     """
     db = ContestDatabase(db_path)
-    return db.save_result(result)
+    return db.save_result(contest_year, result)
 
 
 def get_result(year: str, callsign: str, db_path: str = DATABASE_FILE) -> Optional[Dict]:

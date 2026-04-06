@@ -44,7 +44,6 @@ COUNTRY_FILE = REFERENCE_DATA_DIR + '/cty.plist'
 DXCC_ENTITIES_FILE = REFERENCE_DATA_DIR + '/dxcc_entities.csv'
 QRZ_CALLSIGN=os.environ.get('QRZ_CALLSIGN')
 QRZ_PASSWORD=os.environ.get('QRZ_PASSWORD')
-# WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
 
 
 # ============================================================================
@@ -60,7 +59,7 @@ FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', '/data/final_reports')
 # ============================================================================
 
 # Available years for results lookup
-CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2020,2021,2022,2023,2024,2025').split(',')
+CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2026: Available here Monday May 1 ').split(',')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
 # Log file extensions allowed for upload
@@ -77,6 +76,12 @@ ROVER_PARISH_BONUS = 50  # Bonus per parish activated (rovers only)
 EXTRA_BONUS_CALLS = os.environ.get('EXTRA_BONUS_CALLS', ['KI5ZAW', 'N5SCJ', 'K5TD'])
 EXTRA_BONUS_POINTS = os.environ.get('EXTRA_BONUS_POINTS', 25)
 EXTRA_BONUS_YEAR = os.environ.get('EXTRA_BONUS_YEAR', '2026')
+
+# ============================================================
+# for fuzzy matching of callsigns during cross-checking, we can use the Levenshtein distance to allow for minor typos. For example, if two callsigns differ by only one character (e.g., K5TD vs K5T0), we can consider them a match for cross-checking purposes. This helps catch common errors while still allowing for some flexibility in the logs.
+# ============================================================
+ENABLE_FUZZY_MATCHING = False  # Check for callsign errors
+MAX_EDIT_DISTANCE = 2  # Maximum character differences for fuzzy matching (e.g.,
 
 # ============================================================
 # BAND AND MODE DEFINITIONS
@@ -132,8 +137,8 @@ PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', '
 # for cross-checkiing time strings, we want to allow for some flexibility (e.g., 232034 vs 23:20) and also handle day rollover (e.g., 23:55 vs 00:25 the next day). The key is to parse both times into datetime objects and then compare them with a tolerance.
 # ============================================================================
 
-TIME_WINDOW_MINUTES = 30  # ±30 minutes for time matching
-ENABLE_FUZZY_MATCHING = False  # Check for callsign errors
+TIME_WINDOW_MINUTES = 60  # ±60 minutes for time matching
+ENABLE_FUZZY_MATCHING = True  # Check for callsign errors
 MAX_EDIT_DISTANCE = 2  # Maximum character differences for fuzzy matching
 
 # ============================================================================

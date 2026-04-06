@@ -130,9 +130,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate certificate HTML
     function generateCertificate(result, rankingsDisplay) {
-        const rankingsHTML = rankingsDisplay.map(r => 
-            `<div class="certificate-ranking-item"><strong>${r}</strong></div>`
-        ).join('');
+        let rankingsHTML = '<ul class="rankings-list center">';
+        for (const [key, value] of Object.entries(rankingsDisplay)) {
+            console.log(`${key} → ${value}`);
+            rankingsHTML += `<li># ${value}  in  ${key}</li>`;
+        }
+        rankingsHTML += '</ul>';
         console.log('Rankings Display:', rankingsDisplay);
         console.log('Rankings HTML:', rankingsHTML);
 
@@ -149,21 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="certificate-callsign">${result.callsign}</div>
                     </div>
 
-                    // <div class="certificate-rankings">
-                    //     <div class="rankings-title">Category Rankings</div>
-                    //     <ul class="rankings-list">
-                        
-                    //     Object.entries(${rankingsDisplay}).forEach(([${key}, ${value}]) => {
-                    //         <li># ${key}  in  ${value}</li>
-                    //         });
-                    //     </ul>
-                        
-
-                    // </div>
-
 
                     <div class="certificate-score">
-                        <strong>${result.final_score.toLocaleString()} Points</strong>
+                        <strong>Your Final Score: ${result.final_score.toLocaleString()}</strong>
                     </div>
 
                     <div class="certificate-rankings">
@@ -355,6 +346,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += `<span class="result-list-item">${band}m</span>`;
             });
             html += '</div>';
+            html += '</div>';
+        }
+
+        // errors and warnings
+        if (result.errors && result.errors.length > 0) {
+            html += '<div class="result-group">';
+            html += '<h4>Errors</h4>';
+            html += '<ul class="error-list">';
+            result.errors.forEach(error => {
+                html += `<li class="error-list-item">${error}</li>`;
+            });
+            html += '</ul>';
+            html += '</div>';
+        }
+
+        if (result.warnings && result.warnings.length > 0) {
+            html += '<div class="result-group">';
+            html += '<h4>Warnings</h4>';
+            html += '<ul class="warning-list">';
+            result.warnings.forEach(warning => {
+                html += `<li class="warning-list-item">${warning}</li>`;
+            });
+            html += '</ul>';
             html += '</div>';
         }
 

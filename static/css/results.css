@@ -45,32 +45,25 @@
 }
 
 /* Certificate Styling */
-.certificate-section {
-    margin: 30px 0;
-}
+
 
 .certificate-container {
+    max-width: 800px;
+    max-height: 990px;
+    padding:75px;
     background-origin: border-box;
     background-clip:border-box;
-    background-image: url('../images/border.png');
+    background-image: url('../images/border.jpg');
     background-size: 100% 100%;   /* stretches image to exactly fill the box */
     background-repeat: no-repeat;
-    padding: 20px;
-    /* border-radius: 8px; */
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 
 .certificate {
-    max-width: 1000px;
-    min-height:1030px;
-    margin: 0 auto;
-    padding: 40px;
-    border: 15px solid;
-    /* border-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23859969" width="100" height="100"/></svg>') 15; */
-    background-color:transparent;
+    max-width: 650px;
+    min-height:825px;;
     position: relative;
-    color:transparent;
 
 }
 
@@ -109,8 +102,9 @@
 .certificate-callsign {
     font-size: 3.5rem;
     font-weight: bold;
-    color: #008000;
+    color: black;;
     text-align: center;
+    max-height:75px;
 }
 
 .certificate-recognition {
@@ -135,10 +129,17 @@
 }
 
 .certificate-rankings {
-    text-align: center;
-    max-width:800px;
-    margin-left:auto;
-    margin-right:auto;
+    max-width:650px;
+    justify-content: center;  
+    color:black;
+}
+
+ul.rankings-list {
+    max-width:650px;
+    list-style-type: none;  
+    padding: 0 40px;            
+    margin: 0;   
+    color:black;
 }
 
 .certificate-ranking-item {
@@ -149,7 +150,7 @@
 .certificate-footer {
     display: flex;
     flex-direction: row;
-    justify-content:stretch;
+    justify-content:space-between;
     align-items: flex-end;
     margin-top: 40px;
 }

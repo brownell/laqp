@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from pathlib import Path
 from processor import UnifiedLogProcessor
-from config.config import CONTEST_YEAR, CW_DIGITAL_QSO_POINTS, EXTRA_BONUS_POINTS, LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE, DATABASE_FILE, TIME_WINDOW_MINUTES, ENABLE_FUZZY_MATCHING, MAX_EDIT_DISTANCE, BONUS_CALLSIGN, LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, STATES_FILE, PROVINCES_FILE, EXTRA_BONUS_YEAR, EXTRA_BONUS_CALLS, EXTRA_BONUS_POINTS, US_PREFIXES, CANADIAN_PREFIXES,QRZ_CALLSIGN, QRZ_PASSWORD, PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS, DXCC_ENTITIES_FILE, CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS, PHONE_MODES, CW_DIGITAL_MODES, CONTEST_YEAR, BAND_RANGES
+from config.config import CONTEST_YEAR, CW_DIGITAL_QSO_POINTS, EXTRA_BONUS_POINTS, LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE, DATABASE_FILE, TIME_WINDOW_MINUTES, ENABLE_FUZZY_MATCHING, MAX_EDIT_DISTANCE, BONUS_CALLSIGN, LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, STATES_FILE, PROVINCES_FILE, EXTRA_BONUS_YEAR, EXTRA_BONUS_CALLS, EXTRA_BONUS_POINTS, US_PREFIXES, CANADIAN_PREFIXES,QRZ_CALLSIGN, QRZ_PASSWORD, PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS, DXCC_ENTITIES_FILE, CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS, PHONE_MODES, CW_DIGITAL_MODES, BAND_RANGES
 from database import ContestDatabase, save_result
 
 
@@ -28,7 +28,7 @@ printout = False # printout
 all_callsigns = set() # populated in cross_check_all_logs
 processor = UnifiedLogProcessor(LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE)
 
-def score_qsos(result: Dict) -> None:
+def score_qsos(result: Dict, contest_year: str) -> None:
     """Phase 3: Score QSOs and calculate multipliers"""
     global printout, all_callsigns, processor
     # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
@@ -51,8 +51,9 @@ def score_qsos(result: Dict) -> None:
         try:
             dx_rcvd_qth  = processor.my_callinfo.get_all(rcvd_call)
         except Exception as e:
-            result['errors'].append(f"Exception {e} getting rcvd_qth callinfo")
-            print("exception")
+            result['errors'].append(f"Exception {e} sender {result['callsign']} cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
+            print(f"Exception {e} sender {result['callsign']} cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
+            
         if dx_rcvd_qth and ((dx_rcvd_qth['country'] not in ['United States', 'Canada'])): # working DX station
             rcvd_qth = processor.dxcc_entities[int(dx_rcvd_qth['adif'])]
             dx_rcvd_qth['dxcc_entity'] = rcvd_qth
@@ -118,7 +119,7 @@ def score_qsos(result: Dict) -> None:
         mult_check = band + mode_cat + rcvd_qth
         if mult_check in mult_dups:
             # print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
-            result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+            result['warnings'].append(f" on line {qso['line_num']} band/mode/qth worked: {band}, {mode_cat}, {sent_qth}, {rcvd_qth}")
 
         else:
             # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
@@ -162,7 +163,7 @@ def score_qsos(result: Dict) -> None:
         result['final_score'] += result['rover_bonus_points']
 
     ## Bonus for something outside of QSOs
-    if result['callsign'] in EXTRA_BONUS_CALLS and CONTEST_YEAR == EXTRA_BONUS_YEAR:
+    if result['callsign'] in EXTRA_BONUS_CALLS and contest_year == EXTRA_BONUS_YEAR:
         result['final_score'] += EXTRA_BONUS_POINTS
 
     # if printout:
@@ -173,7 +174,7 @@ def score_qsos(result: Dict) -> None:
 
 ## END of score_qsos
 
-def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
+def cross_check_all_logs(all_results, contest_year: str) -> Dict:
 
     global printout, all_callsigns, processor
     """
@@ -217,8 +218,10 @@ def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
     }
     
     for result in all_results:
-        operator_stats = cross_check_operator(result, qso_index, all_results)
+        operator_stats = cross_check_operator(result, qso_index)
         for key in stats:
+            if key == 'exchange_error' and operator_stats[key] > 0:
+                print(f"Debug: {result['callsign']} had {operator_stats[key]} exchange errors")
             if key in operator_stats:
                 stats[key] += operator_stats[key]
 
@@ -237,7 +240,7 @@ def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
     print("Calculating final scores...")
     for result in all_results:
         # printout = False  
-        score_qsos(result)
+        score_qsos(result, contest_year)
         # if printout:
         #     print('KZ5D')
         #     print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
@@ -249,22 +252,6 @@ def cross_check_all_logs(all_results, year=CONTEST_YEAR) -> Dict:
     
     print("Cross-checking complete!")
     return stats
-
-
-# def load_all_results(year):
-#     """
-#     Load all contest results for a given year.
-    
-#     Args:
-#         year: Contest year
-        
-#     Returns:
-#         list: List of result dictionaries
-#     """
-#     db = ContestDatabase(DATABASE_FILE)
-#     # Load ALL results (not just valid ones) for cross-checking
-#     results = db.get_results_by_year(str(year), valid_only=False)
-#     return results
 
 
 def build_qso_index(all_results):
@@ -328,7 +315,7 @@ def build_qso_index(all_results):
     return index
 
 
-def cross_check_operator(result, qso_index, all_results):
+def cross_check_operator(result, qso_index):
 
     global printout, all_callsigns, processor
     """
@@ -357,7 +344,7 @@ def cross_check_operator(result, qso_index, all_results):
         'busted': 0,
         'exchange_error': 0,
         'unique': 0,
-        'had_xcheck:': 0
+        'had_xcheck': 0
     }
 
     for qso in result.get('qsos', []):
@@ -366,7 +353,7 @@ def cross_check_operator(result, qso_index, all_results):
         # Skip QSOs already marked invalid (mode mismatches, etc.)
         # Check if they already have an error set during initial processing
         if 'xcheck' in qso and qso['xcheck'] != '':
-            stats['had_xcheck:'] += 1
+            stats['had_xcheck'] += 1
             stats['valid_qsos'] = min(0, stats['valid_qsos'] - 1)  # Decrement valid QSOs if already marked valid
             continue
         
@@ -388,6 +375,7 @@ def cross_check_operator(result, qso_index, all_results):
         elif status == 'NIL':
             qso['xcheck'] = 'NIL'
             qso['cross_check_status'] = 'NIL'
+            stats['had_xcheck'] += 1
             result['warnings'].append(
                 f"QSO at line {qso.get('line_num', '?')}: "
                 f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
@@ -398,6 +386,7 @@ def cross_check_operator(result, qso_index, all_results):
             qso['xcheck'] = 'B'
             qso['cross_check_status'] = 'BUSTED'
             actual_call = match_result.get('actual_call', '?')
+            stats['had_xcheck'] += 1
             result['warnings'].append(
                 f"QSO at line {qso.get('line_num', '?')}: "
                 f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
@@ -407,6 +396,7 @@ def cross_check_operator(result, qso_index, all_results):
         elif status == 'EXCHANGE_ERROR':
             qso['xcheck'] = 'XCH'
             qso['cross_check_status'] = 'EXCHANGE_ERROR'
+            stats['had_xcheck'] += 1
             result['warnings'].append(
                 f"QSO at line {qso.get('line_num', '?')}: "
                 f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
@@ -415,7 +405,6 @@ def cross_check_operator(result, qso_index, all_results):
             
         elif status == 'UNIQUE':
             # No penalty for unique - station may not have submitted log
-            qso['xcheck'] = ''  # Valid
             qso['cross_check_status'] = 'UNIQUE'
             # No warning added
     
@@ -455,7 +444,7 @@ def find_matching_qso(result, operator, qso, qso_index):
     if rcvd_call not in all_callsigns:
         # Station didn't submit - check if similar callsign exists (BUSTED)
         if ENABLE_FUZZY_MATCHING:
-            fuzzy_match = find_fuzzy_callsign_match(rcvd_call) 
+            fuzzy_match = find_fuzzy_callsign_match(all_callsigns, rcvd_call) 
             if fuzzy_match:
                 return {
                     'status': 'busted',
@@ -539,8 +528,8 @@ def modes_match(mode1, mode2):
     return False
 
 
-def find_fuzzy_callsign_match(callsign):
-    global printout, all_callsigns, processor
+def find_fuzzy_callsign_match(all_callsigns, callsign):
+    global printout, processor
     """
     Find a similar callsign using fuzzy matching.
     Detects common errors like:
@@ -610,56 +599,6 @@ def time_check(ours, theirs):
     except Exception as e:
         print('printout: exception', e)
         return False
-
-
-# def parse_qso_timestamp(date_str, time_str):
-#     """
-#     Parse QSO date and time into datetime object.
-    
-#     Args:
-#         date_str: Date string (YYYY-MM-DD)
-#         time_str: Time string (HH:MM or HH:MM:SS)
-        
-#     Returns:
-#         datetime: Parsed timestamp
-#     """
-#     # Handle both HH:MM and HH:MM:SS formats
-#     time_str.replace(":", "")
-#     if len(time_str) == 5:  # HH:MM
-#         time_str += ':00'
-#     elif len(time_str) == 4:
-#         time_str += '00'
-#     else:
-#         return 
-
-    
-#     timestamp_str = f"{date_str} {time_str}"
-#     return datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
-
-
-# def recalculate_final_score(result):
-#     global printout, all_callsigns, processor
-#     """
-#     Calculate final score using only valid QSOs.
-    
-#     Args:
-#         result: Contest result dictionary (modified in place)
-#     """
-#     # Call the existing scoring function
-#     # It will skip QSOs where xcheck is not empty
-#     print(f"before score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
-#     printout = True
-
-#     score_qsos(result)
-    # print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
-    # printout = True
-    
-    # # Calculate score reduction percentage
-    # if result.get('claimed_score', 0) > 0:
-    #     reduction = (result['claimed_score'] - result['final_score']) / result['claimed_score'] * 100
-    #     result['score_reduction_pct'] = round(reduction, 1)
-    # else:
-    #     result['score_reduction_pct'] = 0
 
 
 if __name__ == '__main__':

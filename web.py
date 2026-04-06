@@ -35,7 +35,7 @@ def format_set_as_list(s):
     return sorted(list(s))
 
 
-def format_result_for_display(result, rank_labels=RANKINGS):
+def format_result_for_display(result):
     """
     Convert the result dictionary to a format suitable for HTML display
     Handles sets, dicts, and other complex type
@@ -48,7 +48,7 @@ def format_result_for_display(result, rank_labels=RANKINGS):
         'power_level', 'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
         'total_multipliers', 'parishes_worked_multiplier', 'states_worked_multiplier',
         'provinces_worked_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
-        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score', 'year', 'rankings'
+        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score', 'year'
     ]
     
     for field in simple_fields:
@@ -83,20 +83,10 @@ def format_result_for_display(result, rank_labels=RANKINGS):
         for hour, count in sorted(qsos_by_hour.items())
     ]
 
-    # Format rankings (convert keys to labels)
-    # temp = result.get('rankings', {})
-    # if temp:
-    #     sorted_rankings = dict(sorted(temp.items(), key=lambda item: item[1]))
-    #     rankings = {}
-    #     for key, value in sorted_rankings.items():
-    #         if key in rank_labels:
-    #             rankings[rank_labels[key]] = value
+    ## errors and warnings
+    display_result['errors'] = result['errors']
+    display_result['warnings'] = result['warnings']
 
-    #     display_result['rankings'] = rankings
-    # else:
-    #     display_result['rankings'] = {}
-
-    
     return display_result
 
 
@@ -171,14 +161,15 @@ def api_individual_results():
             if code in RANKINGS:
                 # Format as "Louisiana - Fixed QRP Power #2"
                 rankings_display[RANKINGS[code]] = rank
+        print(f"Rankings for {callsign} in {year}: {rankings_display}")
 
         # Format result for JSON (convert sets to lists)
-        json_result = format_result_for_display(result, RANKINGS)
+        json_result = format_result_for_display(result)
         
         return jsonify({
             'success': True,
             'result': json_result,
-            'rankings_display': [rankings_display]
+            'rankings_display': rankings_display
         })
     
     except Exception as e:
@@ -248,16 +239,12 @@ def health():
 
 
 @app.route('/process', methods=['POST'])
-def upload_log():
+def upload_log(contest_year=CONTEST_YEAR):
     """
     Handle log file upload and validation
     Returns JSON response with validation results and formatted data
     """
 
-    # return jsonify({
-    #         'success': False,
-    #         'error': 'Not accepting log content yet for 2026.'
-    #     }), 400
     try:
         # Get form data
         form_data = {
@@ -297,7 +284,7 @@ def upload_log():
                 }), 400
             
         ## Write this to data/batch_input/<year> as {callsign}.log
-        log_file = f"{BATCH_INPUT_DIR}/{CONTEST_YEAR}/{form_data['callsign']}.log"
+        log_file = f"{BATCH_INPUT_DIR}/year/{form_data['callsign']}.log"
         with open(log_file, 'w') as f:
             f.write(log_content)
         
@@ -305,6 +292,7 @@ def upload_log():
             # Process the log file (validate, prepare, score)
             ## this function is ONLY called from the web interface
             result = process_single_log(
+                contest_year,
                 Path(log_file),
                 form_data
             )
@@ -327,7 +315,6 @@ def upload_log():
                     }), 400
             
             # Initialize empty rankings dict
-            result['rankings'] = {}
             
             # Check if processing succeeded
             if result.get('is_valid', True) and not result.get('errors'):
@@ -367,4 +354,13 @@ def upload_log():
         }), 500
 
 if __name__ == '__main__':
+    import os, sys
+    from datetime import datetime
+    from config.config import CONTEST_YEAR
+    
+    # Get year from environment or command line
+    if len(sys.argv) > 1:
+        year = sys.argv[1]
+    else:
+        year = CONTEST_YEAR
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -22,24 +22,25 @@ def main(contest_year: str):
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
     input_dir = Path(f"{BATCH_INPUT_DIR}/{contest_year}")
+    print(f"Processing logs from directory: {input_dir}")
 
     # Process all logs
     # print(f"before process_batch_logs, input_dir: {input_dir}")
-    results = process_batch_logs(input_dir)
+    results = process_batch_logs(input_dir, contest_year)
 
-    stats = cross_check_all_logs(results)
+    cross_check_all_logs(results, contest_year)
+
+    generate_rankings(contest_year)
+
+    generate_final_report_html(contest_year)
 
 
     # Save results to database (valid and invalid)
     valid_count = 0
     invalid_count = 0
     saved_count = 0
-    errors_count = 0
     
     for result in results:
-
-        # Initialize empty rankings dict
-        result['rankings'] = {}
         
         if result['is_valid']:
             valid_count += 1
@@ -52,7 +53,7 @@ def main(contest_year: str):
         # # Save to database (both valid and invalid for record-keeping)
 
         try:
-            if save_result(result):
+            if save_result(result, contest_year):
                 saved_count += 1
                 status = "✓" if result['is_valid'] else "✗"
                 # print(f"{status} {result['callsign']}: Saved to database")
@@ -74,9 +75,9 @@ def main(contest_year: str):
     print()
 
     # generate rankings from the database results
-    generate_rankings(contest_year)
+    # generate_rankings(contest_year)
 
-    generate_final_report_html(contest_year)
+    # generate_final_report_html(contest_year)
     
 if __name__ == "__main__":
     import os, sys
@@ -88,4 +89,5 @@ if __name__ == "__main__":
         year = sys.argv[1]
     else:
         year = CONTEST_YEAR
+    print(f"{'*' * 10} Processing logs for year: {year}")
     main(year)
