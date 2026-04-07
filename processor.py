@@ -271,7 +271,7 @@ class UnifiedLogProcessor:
                 has_end = True
                 continue
             
-            # Parse header fields (CALLSIGN, NAME, EMAIL, CATEGORY-POWER, CATEGORY-MODE, CATEGORY-STATION, CATEGORY-OVERLAY, CLAIMED-SCORE)
+            # Parse header fields (CALLSIGN, NAME, CLUB, EMAIL, CATEGORY-POWER, CATEGORY-MODE, CATEGORY-STATION, CATEGORY-OVERLAY, CLAIMED-SCORE)
             if ':' in line and not line.startswith('QSO:'):
                 key, value = line.split(':', 1)
                 key = key.strip().lower()
@@ -288,6 +288,8 @@ class UnifiedLogProcessor:
                         result['dxcc_entity'] = self.dxcc_entities[result['dxcc_code']]
                 elif key == 'name':
                     result['name'] = value
+                elif key == 'club':
+                    result['club'] = value
                 elif key == 'category-mode':
                     result['mode_category'] = value.upper()
                 elif key == 'email':
@@ -457,7 +459,7 @@ class UnifiedLogProcessor:
         else:
             return 'LA-FIXED'
     
-    # def _score_qsos(self, result: Dict):
+    def _score_qsos(self, result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
         # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
@@ -603,7 +605,6 @@ class UnifiedLogProcessor:
     
     ## Utility functions
 
-    # def _callsign_analyze(self, call: str)
 
     def _is_dx_callsign(self, call: str) -> bool:
         """Check if callsign is DX (not US or VE)"""

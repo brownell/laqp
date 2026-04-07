@@ -28,14 +28,10 @@ def main(contest_year: str):
     # print(f"before process_batch_logs, input_dir: {input_dir}")
     results = process_batch_logs(input_dir, contest_year)
 
-    cross_check_all_logs(results, contest_year)
-
-    generate_rankings(contest_year)
-
-    generate_final_report_html(contest_year)
+    results, stats = cross_check_all_logs(results, contest_year)
 
 
-    # Save results to database (valid and invalid)
+    #  Save results to database (valid and invalid)
     valid_count = 0
     invalid_count = 0
     saved_count = 0
@@ -61,6 +57,11 @@ def main(contest_year: str):
                 print(f"✗ {result['callsign']}: Database save failed")
         except Exception as e:
             print(f"✗ {result['callsign']}: Database error - {e}")
+
+    # Now complete all batch processing and print summary
+    generate_rankings(contest_year)
+
+    generate_final_report_html(contest_year)
     
     print()
     print("=" * 60)

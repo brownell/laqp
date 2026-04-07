@@ -130,10 +130,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate certificate HTML
     function generateCertificate(result, rankingsDisplay) {
-        let rankingsHTML = '<ul class="rankings-list center">';
+        let rankingsHTML = '<ul class="rankings-list">';
         for (const [key, value] of Object.entries(rankingsDisplay)) {
             console.log(`${key} → ${value}`);
-            rankingsHTML += `<li># ${value}  in  ${key}</li>`;
+            rankingsHTML += `<li class="rankings-item"># ${value}  in  ${key}</li>`;
         }
         rankingsHTML += '</ul>';
         console.log('Rankings Display:', rankingsDisplay);
@@ -141,32 +141,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return `
             <div class="certificate">
-                <div class="certificate-border">
-                    <div class="certificate-header">
-                    <div class="certificate-title">${result.year} Louisiana QSO Party</div>
-                        <div class="certificate-org">Jefferson Amateur Radio Club</div>
-                        <div class="certificate-subtitle">Takes pleasure in awarding this Certificate of Merit to</div>
-                    </div>
+                <div class="certificate-header">
+                <div class="certificate-title">${result.year} Louisiana QSO Party</div>
+                    <div class="certificate-org">Jefferson Amateur Radio Club</div>
+                    <div class="certificate-subtitle">Takes pleasure in awarding this Certificate of Merit to</div>
+                </div>
 
-                    <div style="display: flex; align-items: center; justify-content: center;">
-                        <div class="certificate-callsign">${result.callsign}</div>
-                    </div>
+                <div class="certificate-body">
+                    <div class="certificate-callsign">${result.callsign}</div>
+                    <div class="certificate-name">${result.name || ''}</div>
+                    <div class="certificate-club">${result.club|| ''}</div>
+                </div>
 
+                <div class="certificate-score">
+                    <strong>Final Score: ${result.final_score.toLocaleString()}</strong>
+                </div>
 
-                    <div class="certificate-score">
-                        <strong>Your Final Score: ${result.final_score.toLocaleString()}</strong>
-                    </div>
-
-                    <div class="certificate-rankings">
-                        ${rankingsHTML}
-                    </div>
-
+                <div class="certificate-rankings">
+                    ${rankingsHTML}
+                </div>
+                <div class="certificate-footer-container">
                     <div class="certificate-footer">
                         <div class="certificate-signature">
                             [Signature Placeholder]
                         </div>
-                        <img src="/static/images/jarc_logo.png" class="certificate-logo" alt="Jefferson Amateur Radio Club">
+                        <img src="/static/images/alligator_logo.png" class="certificate-logo" alt="Louisianba QSP Party">
                     </div>
+
                 </div>
             </div>
         `;

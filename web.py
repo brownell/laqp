@@ -119,13 +119,15 @@ def map():
 @app.route('/results')
 def results():
     """Render the results lookup page"""
-    # Get available years from config
+    # Get available years from query params or config
+    years = request.args.get('years', None)
+    
     try:
         from config.config import CONTEST_YEARS
     except ImportError:
         # Fallback if CONTEST_YEARS not defined
         CONTEST_YEARS = ['2026', '2025', '2024']
-    return render_template('results_lookup.html', available_years=CONTEST_YEARS)
+    return render_template('results_lookup.html', available_years=years.split(',') if years else CONTEST_YEARS)
 
 
 @app.route('/api/individual_results', methods=['POST'])

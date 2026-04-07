@@ -21,7 +21,6 @@ from collections import defaultdict
 from pathlib import Path
 from processor import UnifiedLogProcessor
 from config.config import CONTEST_YEAR, CW_DIGITAL_QSO_POINTS, EXTRA_BONUS_POINTS, LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE, DATABASE_FILE, TIME_WINDOW_MINUTES, ENABLE_FUZZY_MATCHING, MAX_EDIT_DISTANCE, BONUS_CALLSIGN, LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, STATES_FILE, PROVINCES_FILE, EXTRA_BONUS_YEAR, EXTRA_BONUS_CALLS, EXTRA_BONUS_POINTS, US_PREFIXES, CANADIAN_PREFIXES,QRZ_CALLSIGN, QRZ_PASSWORD, PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS, DXCC_ENTITIES_FILE, CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS, PHONE_MODES, CW_DIGITAL_MODES, BAND_RANGES
-from database import ContestDatabase, save_result
 
 
 printout = False # printout
@@ -119,7 +118,7 @@ def score_qsos(result: Dict, contest_year: str) -> None:
         mult_check = band + mode_cat + rcvd_qth
         if mult_check in mult_dups:
             # print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
-            result['warnings'].append(f" on line {qso['line_num']} band/mode/qth worked: {band}, {mode_cat}, {sent_qth}, {rcvd_qth}")
+            result['warnings'].append(f"DUPLICATE MULTIPLIER on line {qso['line_num']} band/mode/qth worked: {band}, {mode_cat}, {sent_qth}, {rcvd_qth}")
 
         else:
             # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
@@ -166,11 +165,6 @@ def score_qsos(result: Dict, contest_year: str) -> None:
     if result['callsign'] in EXTRA_BONUS_CALLS and contest_year == EXTRA_BONUS_YEAR:
         result['final_score'] += EXTRA_BONUS_POINTS
 
-    # if printout:
-    #     print('*** results from KV5M in score_qsos')
-    #     for key in result:
-    #         if key not in ['qsos',  '_header']:
-    #             print(f"{key}: {result[key]}")
 
 ## END of score_qsos
 
@@ -185,7 +179,6 @@ def cross_check_all_logs(all_results, contest_year: str) -> Dict:
     2. Build QSO index for fast lookups
     3. Cross-check each operator's QSOs
     4. calculate final scores using only valid QSOs
-    5. Save updated results to database
     
     Args:
         year: Contest year to process (default from config)
@@ -217,15 +210,18 @@ def cross_check_all_logs(all_results, contest_year: str) -> Dict:
         'unique': 0
     }
     
+
+    # Now that all cross-checkling is done, calculate scores using only valid QSOs and collect all the stats for the final report
     for result in all_results:
+        score_qsos(result, contest_year)
         operator_stats = cross_check_operator(result, qso_index)
         for key in stats:
             if key == 'exchange_error' and operator_stats[key] > 0:
                 print(f"Debug: {result['callsign']} had {operator_stats[key]} exchange errors")
             if key in operator_stats:
                 stats[key] += operator_stats[key]
-
     
+
     print(f"Cross-check complete:")
     print(f"  Total QSOs: {stats['total_qsos']}")
     # print(f"  Confirmed: {stats['confirmed']} ({100*stats['confirmed']/stats['total_qsos']:.1f}%)")
@@ -233,25 +229,8 @@ def cross_check_all_logs(all_results, contest_year: str) -> Dict:
     print(f"  Busted: {stats['busted']}")
     print(f"  Exchange errors: {stats['exchange_error']}")
     print(f"  Unique: {stats['unique']}")
-    printout = True
-    
-    
-    # Calculate final scores
-    print("Calculating final scores...")
-    for result in all_results:
-        # printout = False  
-        score_qsos(result, contest_year)
-        # if printout:
-        #     print('KZ5D')
-        #     print(f"after score:{result['callsign']} valid_qsos {result['valid_qsos']} qp {result['qso_points']} tm {result['total_multipliers']} parish {result['parishes_worked_multiplier']} state {result['states_worked_multiplier']}  provinces {result['provinces_worked_multiplier']}  dx {result['dx_worked_multiplier']}")
-        #     printout = True
-    
-    # Save updated results
-    print("Saving updated results to database...")
-            # Save to database (both valid and invalid for record-keeping)
-    
-    print("Cross-checking complete!")
-    return stats
+
+    return all_results, stats
 
 
 def build_qso_index(all_results):

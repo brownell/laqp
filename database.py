@@ -42,6 +42,7 @@ class ContestDatabase:
                     year TEXT NOT NULL,
                     callsign TEXT NOT NULL,
                     name TEXT,
+                    club TEXT,
                     category TEXT,
                     overlay TEXT,
                     location_type TEXT,
@@ -109,7 +110,7 @@ class ContestDatabase:
         
         # Simple fields
         simple_fields = [
-            'year', 'callsign', 'name', 'category', 'overlay',
+            'year', 'callsign', 'name', 'club', 'category', 'overlay',
             'location_type', 'dxcc_code', 'dxcc_entity', 'mode_category', 'power_level',
             'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
             'total_multipliers', 'parishes_worked_multiplier',
