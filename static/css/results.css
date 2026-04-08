@@ -97,6 +97,10 @@
     max-height:20px;
 }
 
+.certificate-body {
+    margin-bottom: 30px
+}
+
 .certificate-callsign {
     font-size: 3.5rem;
     font-weight: bold;
@@ -111,7 +115,7 @@
     text-align: center;
     max-height:60px;
     font-weight: bold;
-    margin-bottom: 30px
+    margin-bottom: 30p
 }
 
 .certificate-club {
@@ -144,8 +148,6 @@
 .certificate-rankings {
     max-width:600px;;
     color:black;
-    padding: 30px;
-    margin: auto;
 }
 
 ul.rankings-list {
@@ -162,27 +164,22 @@ ul.rankings-list {
 }
 
 .certificate-footer {
-    max-width: 65px;
+    min-width: 600px;
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
-    align-items: flex-end;
 }
 
 .certificate-signature {
-    width: 200px;
-    height: 80px;
+    width: 300px;
     background: #f0f0f0;
     border: 1px dashed #ccc;
     display: flex;
-    align-items: center;
-    justify-content: center;
     font-size: 0.8rem;
     color: #999;
 }
 
 .certificate-logo {
-    width: 150px;
+    width: 300px;
     height: auto;
 }
 

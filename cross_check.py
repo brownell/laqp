@@ -52,19 +52,25 @@ def score_qsos(result: Dict, contest_year: str) -> None:
         except Exception as e:
             result['errors'].append(f"Exception {e} sender {result['callsign']} cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
             print(f"Exception {e} sender {result['callsign']} cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
+
+        try:            
+            if dx_rcvd_qth and ((dx_rcvd_qth['country'] not in ['United States', 'Canada'])): # working DX station
+                rcvd_qth = processor.dxcc_entities[int(dx_rcvd_qth['adif'])]
+                dx_rcvd_qth['dxcc_entity'] = rcvd_qth
+                # print(f"rcvd_qth is dx: sender sent_qth {sent_qth} receiver {rcvd_qth}")
             
-        if dx_rcvd_qth and ((dx_rcvd_qth['country'] not in ['United States', 'Canada'])): # working DX station
-            rcvd_qth = processor.dxcc_entities[int(dx_rcvd_qth['adif'])]
-            dx_rcvd_qth['dxcc_entity'] = rcvd_qth
-            # print(f"rcvd_qth is dx: sender sent_qth {sent_qth} receiver {rcvd_qth}")
-        
-            ## make sure this is not DX to DX
-            if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
-                result['warnings'].append(f"Duplicate QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
-                continue
-        else:
+                ## make sure this is not DX to DX
+                if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
+                    result['warnings'].append(f"Duplicate QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
+                    continue
+            else:
+                rcvd_qth = qso['rcvd_qth']
+                dx_rcvd_qth = None
+        except Exception as e:
             rcvd_qth = qso['rcvd_qth']
             dx_rcvd_qth = None
+            result['errors'].append(f"Exception {e} sender {result['callsign']} cannot determine if rcvd_qth is DX for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
+            print(f"Exception {e} sender {result['callsign']} cannot determine if rcvd_qth is DX for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
 
         # NOT DX - ROVER gets a qso_check that includes his QTH because he can call same
         # station multiple toimes from different parishes
@@ -216,8 +222,6 @@ def cross_check_all_logs(all_results, contest_year: str) -> Dict:
         score_qsos(result, contest_year)
         operator_stats = cross_check_operator(result, qso_index)
         for key in stats:
-            if key == 'exchange_error' and operator_stats[key] > 0:
-                print(f"Debug: {result['callsign']} had {operator_stats[key]} exchange errors")
             if key in operator_stats:
                 stats[key] += operator_stats[key]
     

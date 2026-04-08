@@ -45,6 +45,7 @@ K5M	165740	159180	699	1640	101
 Individual results
 results_lookup.js generates the single fields (call, name, etc)
 
+put ../laqp_data/final_reports/final_report_2020.html /data/final_reports/final_report_2020.html
 
 
 CROSS_CHECKING

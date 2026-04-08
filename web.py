@@ -48,7 +48,7 @@ def format_result_for_display(result):
         'power_level', 'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
         'total_multipliers', 'parishes_worked_multiplier', 'states_worked_multiplier',
         'provinces_worked_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
-        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score', 'year'
+        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'club', 'claimed_score', 'year'
     ]
     
     for field in simple_fields:
@@ -167,7 +167,7 @@ def api_individual_results():
 
         # Format result for JSON (convert sets to lists)
         json_result = format_result_for_display(result)
-        
+        app.json.sort_keys = False
         return jsonify({
             'success': True,
             'result': json_result,
@@ -365,4 +365,5 @@ if __name__ == '__main__':
         year = sys.argv[1]
     else:
         year = CONTEST_YEAR
+    app.json.sort_keys = False
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -20,7 +20,7 @@ def main(contest_year: str):
 
     # Add project to path
     sys.path.insert(0, str(Path(__file__).parent.parent))
-
+    
     input_dir = Path(f"{BATCH_INPUT_DIR}/{contest_year}")
     print(f"Processing logs from directory: {input_dir}")
 
@@ -58,9 +58,11 @@ def main(contest_year: str):
         except Exception as e:
             print(f"✗ {result['callsign']}: Database error - {e}")
 
-    # Now complete all batch processing and print summary
+    # generate rankings from the database results
+    # generate_rankings(contest_year)
     generate_rankings(contest_year)
 
+    # generate_final_report_html(contest_year)
     generate_final_report_html(contest_year)
     
     print()
@@ -72,13 +74,6 @@ def main(contest_year: str):
     print(f"Invalid logs: {invalid_count}")
     print(f"Saved to database: {saved_count}")
     print()
-    print("Next step: Calculate rankings and generate HTML reports")
-    print()
-
-    # generate rankings from the database results
-    # generate_rankings(contest_year)
-
-    # generate_final_report_html(contest_year)
     
 if __name__ == "__main__":
     import os, sys
