@@ -298,11 +298,9 @@ small {
 
 .result-item {
     max-height:20px;
-    display: grid;
     margin-left:100px;
     grid-template-columns: 150px 1fr;
-    padding: 12px 0;
-    border-bottom: 1px solid #e0e0e0;
+    padding: 30px 0;
 }
 
 .result-item:last-child {
@@ -316,6 +314,7 @@ small {
 
 .result-value {
     color: #555;
+    font-weight:bold;
 }
 
 .result-value.highlight {

@@ -94,7 +94,7 @@ class UnifiedLogProcessor:
             'num_n5lcc_contacts': 0,
             'qsos_by_band': {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0},
             'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
-            'qsos_by_hour': {i: 0 for i in range(12)},
+            'qsos_by_hour': {i: 0 for i in range(24)},  # Hour of day (0-23)
             'bands_worked': set(),
             'claimed_score': 0,
             'errors': [],
@@ -492,7 +492,7 @@ class UnifiedLogProcessor:
             
                 ## make sure this is not DX to DX
                 if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
-                    result['warnings'].append(f"Duplicate QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
+                    result['warnings'].append(f"DUPLICATE QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
                     continue
             else:
                 rcvd_qth = qso['rcvd_qth']
@@ -508,24 +508,19 @@ class UnifiedLogProcessor:
                 qso_check = band + mode_cat + rcvd_call
                     
             if qso_check in qso_dups:
-                # print(f"!!! DUPLICATEte QSO line {qso['line_num']} {result['parishes_worked_multiplier'] + result['states_worked_multiplier'] + result['provinces_worked_multiplier'] + result['dx_worked_multiplier']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
-                result['warnings'].append(f"Duplicate QSO on line {qso['line_num']} band/mode/call worked:  {band}m, {mode_cat}, {rcvd_call}")
+                result['warnings'].append(f"DUPLICATE QSO on line {qso['line_num']} band/mode/call worked:  {band}m, {mode_cat}, {rcvd_call}")
                 qso['xcheck'] = 'DQ'
             else:  ## not a duplicate for points, so get points
                 result['valid_qsos'] += 1
-                # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
-                # print(f"valid_qsos {result['valid_qsos']} qso_check {qso_check} band/sentqth/rcvd_call: {qso['band']} {qso['rcvd_qth']} {qso['rcvd_call']}")
                 qso_dups.append(qso_check)
 
             # Track bands worked and QSO by band (for display only, does not impact score)
             result['bands_worked'].add(band)
             result['qsos_by_band'][band] += 1
 
-            # Track qsos by hour (2-hour blocks)
+            # Track qsos by hour (1-hour blocks)
             try:
-                hour = int(qso['time'][:2])  # hour of the qso
-                if hour in result['qsos_by_hour']:
-                    result['qsos_by_hour'][hour] += 1
+                result['qsos_by_hour'][str(int(qso['time'][:2]))] += 1
             except Exception as e:
                 # print(f"Error tying to get the QSO time {e}")
                 result['warnings'].append(f"Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
@@ -550,8 +545,7 @@ class UnifiedLogProcessor:
 
             mult_check = band + mode_cat + rcvd_qth
             if mult_check in mult_dups:
-                # print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
-                result['warnings'].append(f"Duplicate Multiplier on line {qso['line_num']} band/mode/qth worked: {band}m, {mode_cat}, {sent_qth}, {rcvd_qth}")
+                result['warnings'].append(f"DUPLICATE Multiplier on line {qso['line_num']} band/mode/qth worked: {band}m, {mode_cat}, {sent_qth}, {rcvd_qth}")
                 qso['xcheck'] = 'DM'
 
             else:

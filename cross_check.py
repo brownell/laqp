@@ -61,7 +61,7 @@ def score_qsos(result: Dict, contest_year: str) -> None:
             
                 ## make sure this is not DX to DX
                 if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
-                    result['warnings'].append(f"Duplicate QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
+                    result['warnings'].append(f"DUPLICATE QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
                     continue
             else:
                 rcvd_qth = qso['rcvd_qth']
@@ -82,8 +82,7 @@ def score_qsos(result: Dict, contest_year: str) -> None:
             qso_check = band + mode_cat + rcvd_call
                 
         if qso_check in qso_dups:
-            # print(f"!!! DUPLICATEte QSO line {qso['line_num']} {result['parishes_worked_multiplier'] + result['states_worked_multiplier'] + result['provinces_worked_multiplier'] + result['dx_worked_multiplier']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
-            result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+            result['warnings'].append(f"DUPLICATE QSO line {qso['line_num']} band/mode/call worked:  {band}, {mode_cat}, {rcvd_call}")
         else:  ## not a duplicate for points, so get points
             result['valid_qsos'] += 1
             # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
@@ -456,7 +455,7 @@ def find_matching_qso(result, operator, qso, qso_index):
         # Time must be within window
         time_match = time_check([qso['date'], qso['time']], [their_qso['date'], their_qso['time']])
         if not time_match:
-            result['errors'].append(f"Time mismatch: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
+            result['warnings'].append(f"Time mismatch: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
             continue
         
         # Found a matching QSO!

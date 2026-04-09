@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Provinces worked (for LA stations)
         if (result.provinces_worked && result.provinces_worked.length > 0) {
-            html += renderResultItem('Provinces Worked', result.provinces_multiplier);
+            html += renderResultItem('Provinces Worked', result.provinces_worked_multiplier);
             html += '<div class="result-list">';
             result.provinces_worked.forEach(province => {
                 html += `<span class="result-list-item">${province}</span>`;

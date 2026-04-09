@@ -193,12 +193,12 @@ ul.rankings-list {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    margin-top:20px;
 }
 
 /* Final Report */
 .final-report-container {
     background: #fff;
-    padding: 30px;
     border-radius: 8px;
 }
 
@@ -252,7 +252,8 @@ ul.rankings-list {
     /* Print certificate only */
     body.print-certificate .statistics-section,
     body.print-certificate .final-report-section,
-    body.print-certificate .lookup-section {
+    body.print-certificate .lookup-section
+    {
         display: none !important;
     }
 

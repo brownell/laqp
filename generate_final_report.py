@@ -158,6 +158,8 @@ def _generate_table_html(table: dict) -> str:
     for row in table['rows']:
         html_parts.append("                        <tr>\n")
         for i, value in enumerate(row):
+            if value == -1:
+                value = "N/A"  # Empty cell for -1
             # First column (Rank) centered, rest left-aligned
             cell_class = "rank-cell" if i == 0 else "data-cell"
             html_parts.append(f'                            <td class="{cell_class}">{value}</td>\n')
