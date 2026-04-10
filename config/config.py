@@ -38,12 +38,12 @@ CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 REFERENCE_DATA_DIR = os.environ.get('REFERENCE_DATA_DIR', '/app/reference_data')
 # Reference files
 LA_PARISHES_FILE = REFERENCE_DATA_DIR + '/la_parishes.txt'
-# STATES_FILE = REFERENCE_DATA_DIR + '/states.txt'
-# PROVINCES_FILE = REFERENCE_DATA_DIR + '/provinces.txt'
+STATES_FILE = REFERENCE_DATA_DIR + '/states.txt'
+PROVINCES_FILE = REFERENCE_DATA_DIR + '/provinces.txt'
 COUNTRY_FILE = REFERENCE_DATA_DIR + '/cty.plist'
-QRZ_CALLSIGN='KJ5BYZ'
+DXCC_ENTITIES_FILE = REFERENCE_DATA_DIR + '/dxcc_entities.csv'
+QRZ_CALLSIGN=os.environ.get('QRZ_CALLSIGN')
 QRZ_PASSWORD=os.environ.get('QRZ_PASSWORD')
-# WVE_ABBREVS_FILE = REFERENCE_DATA_DIR + '/wve_abbrevs.txt'
 
 
 # ============================================================================
@@ -59,7 +59,7 @@ FINAL_REPORTS_DIR = os.environ.get('FINAL_REPORTS_DIR', '/data/final_reports')
 # ============================================================================
 
 # Available years for results lookup
-CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2026,2025,2024,2023').split(',')
+CONTEST_YEARS = os.environ.get('CONTEST_YEARS', '2024,2025,2026: Available here Monday May 1 ').split(',')
 CONTEST_YEAR = os.environ.get('CONTEST_YEAR', '2026')
 
 # Log file extensions allowed for upload
@@ -73,6 +73,15 @@ CW_DIGITAL_QSO_POINTS = 4
 BONUS_CALLSIGN = 'N5LCC'  # Bonus for working N5LCC (Louisiana Contest Club)
 CALLSIGN_BONUS_POINTS = 100  # Bonus for working N5LCC (Louisiana Contest Club)
 ROVER_PARISH_BONUS = 50  # Bonus per parish activated (rovers only)
+EXTRA_BONUS_CALLS = os.environ.get('EXTRA_BONUS_CALLS', ['KI5ZAW', 'N5SCJ', 'K5TD'])
+EXTRA_BONUS_POINTS = os.environ.get('EXTRA_BONUS_POINTS', 25)
+EXTRA_BONUS_YEAR = os.environ.get('EXTRA_BONUS_YEAR', '2026')
+
+# ============================================================
+# for fuzzy matching of callsigns during cross-checking, we can use the Levenshtein distance to allow for minor typos. For example, if two callsigns differ by only one character (e.g., K5TD vs K5T0), we can consider them a match for cross-checking purposes. This helps catch common errors while still allowing for some flexibility in the logs.
+# ============================================================
+ENABLE_FUZZY_MATCHING = False  # Check for callsign errors
+MAX_EDIT_DISTANCE = 2  # Maximum character differences for fuzzy matching (e.g.,
 
 # ============================================================
 # BAND AND MODE DEFINITIONS
@@ -123,6 +132,14 @@ CANADIAN_PREFIXES = [
 ]
 
 PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
+
+# ============================================================================
+# for cross-checkiing time strings, we want to allow for some flexibility (e.g., 232034 vs 23:20) and also handle day rollover (e.g., 23:55 vs 00:25 the next day). The key is to parse both times into datetime objects and then compare them with a tolerance.
+# ============================================================================
+
+TIME_WINDOW_MINUTES = 60  # ±60 minutes for time matching
+ENABLE_FUZZY_MATCHING = True  # Check for callsign errors
+MAX_EDIT_DISTANCE = 2  # Maximum character differences for fuzzy matching
 
 # ============================================================================
 # RANKINGS - Short codes to full descriptions
@@ -193,99 +210,100 @@ LEADERBOARDS = [
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['total_qsos', 'QSOs'],
+                ['qso_points', 'Points'],
                 ['total_multipliers', 'Mults'],
            ]
         },
         {'title': 'ALL', 'ands': []}
     ],
     
-    # # Section 1: Louisiana Stations
-    # [
+    # Section 1: Louisiana Stations
+    [
 
-    #     # Section header
-    #     {
-    #         'section_title': 'Louisiana Stations',
-    #         'show': [
-    #             ['callsign', 'CallSign'],
-    #             ['final_score', 'Score'],
-    #             ['claimed_score', 'Claimed'],
-    #             ['name', 'Name'],
-    #             ['location_type', 'Location'],
-    #         ]
-    #     },
+        # Section header
+        {
+            'section_title': 'Louisiana Stations',
+            'show': [
+                ['callsign', 'CallSign'],
+                ['final_score', 'Score'],
+                ['claimed_score', 'Claimed'],
+                ['name', 'Name'],
+                ['location_type', 'Location'],
+            ]
+        },
 
         
-    #     # Tables in this section
-    #     {'title': 'LFQ', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
-    #     {'title': 'LFL', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
-    #     {'title': 'LFH', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
-    #     {'title': 'LFC', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'CW-DIGITAL']]},
-    #     {'title': 'LFS', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'PHONE']]},
-    #     {'title': 'LFM', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
+        # Tables in this section
+        {'title': 'LFQ', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
+        {'title': 'LFL', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
+        {'title': 'LFH', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
+        {'title': 'LFC', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'CW-DIGITAL']]},
+        {'title': 'LFS', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'PHONE']]},
+        {'title': 'LFM', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
         
-    #     {'title': 'LRQ', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
-    #     {'title': 'LRL', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
-    #     {'title': 'LRH', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
-    #     {'title': 'LRC', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'CW-DIGITAL']]},
-    #     {'title': 'LRS', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'PHONE']]},
-    #     {'title': 'LRM', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]},
-    # ],
+        {'title': 'LRQ', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
+        {'title': 'LRL', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
+        {'title': 'LRH', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
+        {'title': 'LRC', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'CW-DIGITAL']]},
+        {'title': 'LRS', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'PHONE']]},
+        {'title': 'LRM', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]},
+    ],
     
-    # # Section 2: Non-Louisiana Stations
-    # [
-    #     {
-    #         'section_title': 'Non-Louisiana Stations',
-    #         'show': [
-    #             ['callsign', 'CallSign'],
-    #             ['final_score', 'Score'],
-    #             ['name', 'Name'],
-    #             ['location_type', 'Location'],
-    #         ]
-    #     },
+    # Section 2: Non-Louisiana Stations
+    [
+        {
+            'section_title': 'Non-Louisiana Stations',
+            'show': [
+                ['callsign', 'CallSign'],
+                ['final_score', 'Score'],
+                ['name', 'Name'],
+                ['location_type', 'Location'],
+            ]
+        },
         
-    #     {'title': 'NQ', 'ands': [['location_type', 'NON-LA'], ['power_level', 'QRP']]},
-    #     {'title': 'NL', 'ands': [['location_type', 'NON-LA'], ['power_level', 'LOW']]},
-    #     {'title': 'NH', 'ands': [['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
-    #     {'title': 'NC', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'CW-DIGITAL']]},
-    #     {'title': 'NS', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'PHONE']]},
-    #     {'title': 'NM', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'MIXED']]},
-    # ],
+        {'title': 'NQ', 'ands': [['location_type', 'NON-LA'], ['power_level', 'QRP']]},
+        {'title': 'NL', 'ands': [['location_type', 'NON-LA'], ['power_level', 'LOW']]},
+        {'title': 'NH', 'ands': [['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
+        {'title': 'NC', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'CW-DIGITAL']]},
+        {'title': 'NS', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'PHONE']]},
+        {'title': 'NM', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'MIXED']]},
+    ],
     
-    # # Section 3: DX Stations
-    # [
-    #     {
-    #         'section_title': 'DX Stations',
-    #         'show': [
-    #             ['callsign', 'CallSign'],
-    #             ['final_score', 'Score'],
-    #             ['name', 'Name'],
-    #             ['location_type', 'Location'],
-    #         ]
-    #     },
+    # Section 3: DX Stations
+    [
+        {
+            'section_title': 'DX Stations',
+            'show': [
+                ['callsign', 'CallSign'],
+                ['final_score', 'Score'],
+                ['name', 'Name'],
+                ['location_type', 'Location'],
+            ]
+        },
         
-    #     {'title': 'DQ', 'ands': [['location_type', 'DX'], ['power_level', 'QRP']]},
-    #     {'title': 'DL', 'ands': [['location_type', 'DX'], ['power_level', 'LOW']]},
-    #     {'title': 'DH', 'ands': [['location_type', 'DX'], ['power_level', 'HIGH']]},
-    #     {'title': 'DC', 'ands': [['location_type', 'DX'], ['mode_category', 'CW-DIGITAL']]},
-    #     {'title': 'DS', 'ands': [['location_type', 'DX'], ['mode_category', 'PHONE']]},
-    #     {'title': 'DM', 'ands': [['location_type', 'DX'], ['mode_category', 'MIXED']]},
-    # ],
+        {'title': 'DQ', 'ands': [['location_type', 'DX'], ['power_level', 'QRP']]},
+        {'title': 'DL', 'ands': [['location_type', 'DX'], ['power_level', 'LOW']]},
+        {'title': 'DH', 'ands': [['location_type', 'DX'], ['power_level', 'HIGH']]},
+        {'title': 'DC', 'ands': [['location_type', 'DX'], ['mode_category', 'CW-DIGITAL']]},
+        {'title': 'DS', 'ands': [['location_type', 'DX'], ['mode_category', 'PHONE']]},
+        {'title': 'DM', 'ands': [['location_type', 'DX'], ['mode_category', 'MIXED']]},
+    ],
     
-    # # Section 4: Special Categories
-    # [
-    #     {
-    #         'section_title': 'Special Categories',
-    #         'show': [
-    #             ['callsign', 'CallSign'],
-    #             ['final_score', 'Score'],
-    #             ['overlay', 'Overlay'],
-    #         ]
-    #     },
+    # Section 4: Special Categories
+    [
+        {
+            'section_title': 'Special Categories',
+            'show': [
+                ['callsign', 'CallSign'],
+                ['final_score', 'Score'],
+                ['overlay', 'Overlay'],
+            ]
+        },
         
-    #     {'title': 'WIRES', 'ands': [['overlay', 'WIRES']]},
-    #     {'title': 'TB-WIRES', 'ands': [['overlay', 'TB-WIRES']]},
-    #     {'title': 'POTA', 'ands': [['overlay', 'POTA']]},
-    # ],
+        {'title': 'WIRES', 'ands': [['overlay', 'WIRES']]},
+        {'title': 'TB-WIRES', 'ands': [['overlay', 'TB-WIRES']]},
+        {'title': 'POTA', 'ands': [['overlay', 'POTA']]},
+    ],
 ]
 
 # ============================================================================

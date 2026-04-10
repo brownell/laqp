@@ -4,16 +4,17 @@ Louisiana QSO Party Log Upload Application
 Web interface for contestants to submit and validate Cabrillo log files
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, json, render_template, request, jsonify
 import os
 from datetime import datetime
 import tempfile
 from pathlib import Path
+from typing import Dict, List, Optional
 
 # Import the unified processor and database
 from processor import process_single_log
 from database import save_result
-from config.config import SECRET_KEY, CONTEST_YEAR, BATCH_INPUT_DIR, ALLOWED_LOG_EXTENSIONS
+from config.config import SECRET_KEY, CONTEST_YEAR, BATCH_INPUT_DIR, ALLOWED_LOG_EXTENSIONS, RANKINGS
 
 app = Flask(__name__)
 
@@ -34,24 +35,10 @@ def format_set_as_list(s):
     return sorted(list(s))
 
 
-def format_multipliers_by_band_mode(mult_dict):
-    """Format the multipliers_by_band_mode dictionary for display"""
-    if not mult_dict:
-        return []
-    
-    result = []
-    for key, value in sorted(mult_dict.items()):
-        result.append({
-            'band_mode': key,
-            'multipliers': sorted(list(value)) if isinstance(value, set) else value
-        })
-    return result
-
-
 def format_result_for_display(result):
     """
     Convert the result dictionary to a format suitable for HTML display
-    Handles sets, dicts, and other complex types
+    Handles sets, dicts, and other complex type
     """
     display_result = {}
     
@@ -60,8 +47,8 @@ def format_result_for_display(result):
         'callsign', 'category', 'overlay', 'location_type', 'mode_category',
         'power_level', 'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
         'total_multipliers', 'parishes_worked_multiplier', 'states_worked_multiplier',
-        'provinces_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
-        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'claimed_score'
+        'provinces_worked_multiplier', 'dx_worked_multiplier', 'rover_bonus_points',
+        'worked_n5lcc', 'num_n5lcc_contacts', 'name', 'club', 'claimed_score', 'year'
     ]
     
     for field in simple_fields:
@@ -89,18 +76,21 @@ def format_result_for_display(result):
         for mode, count in qsos_by_mode.items()
     ]
     
+
     # Format QSOs by hour
-    qsos_by_hour = result.get('qsos_by_hour', {})
-    display_result['qsos_by_hour'] = [
-        {'hour': hour, 'count': count}
-        for hour, count in sorted(qsos_by_hour.items())
-    ]
+    try:
+        temp = result.get('qsos_by_hour', {})
+        display_result['qsos_by_hour'] = {}
+        for key in temp:
+            display_result['qsos_by_hour'][key] =  temp[key]
+    except Exception as e:
+        print(f"Error formatting qsos_by_hour for display: {e}")
+        display_result['qsos_by_hour'] = []
     
-    # Format multipliers by band/mode
-    display_result['multipliers_by_band_mode'] = format_multipliers_by_band_mode(
-        result.get('multipliers_by_band_mode', {})
-    )
-    
+    ## errors and warnings
+    display_result['errors'] = result['errors']
+    display_result['warnings'] = result['warnings']
+
     return display_result
 
 
@@ -124,22 +114,24 @@ def map():
     """ parish map """
     return render_template('map.html')
 
-@app.route('/operations')
-def operations():
-    """  operations """
-    return render_template('operations.html')
+# @app.route('/operations')
+# def operations():
+#     """  operations """
+#     return render_template('operations.html')
 
 
 @app.route('/results')
 def results():
     """Render the results lookup page"""
-    # Get available years from config
+    # Get available years from query params or config
+    years = request.args.get('years', None)
+    
     try:
         from config.config import CONTEST_YEARS
     except ImportError:
         # Fallback if CONTEST_YEARS not defined
         CONTEST_YEARS = ['2026', '2025', '2024']
-    return render_template('results_lookup.html', available_years=CONTEST_YEARS)
+    return render_template('results_lookup.html', available_years=years.split(',') if years else CONTEST_YEARS)
 
 
 @app.route('/api/individual_results', methods=['POST'])
@@ -169,21 +161,17 @@ def api_individual_results():
                 'error': f'No results found for {callsign} in {year}'
             }), 404
         
-        # Format rankings for display
-        try:
-            from config.config import RANKINGS
-        except ImportError:
-            RANKINGS = {}
-        
-        rankings_display = []
-        for code, rank in result.get('rankings', {}).items():
+        rankings_display = {}
+        sorted_rankings = dict(sorted(result.get('rankings', {}).items(), key=lambda item: item[1]))
+        for code, rank in sorted_rankings.items():
             if code in RANKINGS:
-                # Format as "#2 Louisiana - Fixed QRP Power"
-                rankings_display.append(f"#{rank} {RANKINGS[code]}")
-        
+                # Format as "Louisiana - Fixed QRP Power #2"
+                rankings_display[RANKINGS[code]] = rank
+        print(f"Rankings for {callsign} in {year}: {rankings_display}")
+
         # Format result for JSON (convert sets to lists)
         json_result = format_result_for_display(result)
-        
+        app.json.sort_keys = False
         return jsonify({
             'success': True,
             'result': json_result,
@@ -257,16 +245,12 @@ def health():
 
 
 @app.route('/process', methods=['POST'])
-def upload_log():
+def upload_log(contest_year=CONTEST_YEAR):
     """
     Handle log file upload and validation
     Returns JSON response with validation results and formatted data
     """
 
-    # return jsonify({
-    #         'success': False,
-    #         'error': 'Not accepting log content yet for 2026.'
-    #     }), 400
     try:
         # Get form data
         form_data = {
@@ -306,7 +290,7 @@ def upload_log():
                 }), 400
             
         ## Write this to data/batch_input/<year> as {callsign}.log
-        log_file = f"{BATCH_INPUT_DIR}/{CONTEST_YEAR}/{form_data['callsign']}.log"
+        log_file = f"{BATCH_INPUT_DIR}/year/{form_data['callsign']}.log"
         with open(log_file, 'w') as f:
             f.write(log_content)
         
@@ -314,6 +298,7 @@ def upload_log():
             # Process the log file (validate, prepare, score)
             ## this function is ONLY called from the web interface
             result = process_single_log(
+                contest_year,
                 Path(log_file),
                 form_data
             )
@@ -336,7 +321,6 @@ def upload_log():
                     }), 400
             
             # Initialize empty rankings dict
-            result['rankings'] = {}
             
             # Check if processing succeeded
             if result.get('is_valid', True) and not result.get('errors'):
@@ -376,4 +360,14 @@ def upload_log():
         }), 500
 
 if __name__ == '__main__':
+    import os, sys
+    from datetime import datetime
+    from config.config import CONTEST_YEAR
+    
+    # Get year from environment or command line
+    if len(sys.argv) > 1:
+        year = sys.argv[1]
+    else:
+        year = CONTEST_YEAR
+    app.json.sort_keys = False
     app.run(debug=True, host='0.0.0.0', port=5000)

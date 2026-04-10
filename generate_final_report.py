@@ -87,7 +87,7 @@ def _create_html_document(year: str, sections: list) -> str:
         <header class="report-header">
             <h1>Louisiana QSO Party {year}</h1>
             <h2>Final Results</h2>
-            <p class="generated-date">Generated: {datetime.now().strftime('%B %d, %Y')}</p>
+            <p class="generated-date">Generated: {datetime.now().strftime('%B %d')}</p>
         </header>
         
         <div class="report-intro">
@@ -158,6 +158,8 @@ def _generate_table_html(table: dict) -> str:
     for row in table['rows']:
         html_parts.append("                        <tr>\n")
         for i, value in enumerate(row):
+            if value == -1:
+                value = "N/A"  # Empty cell for -1
             # First column (Rank) centered, rest left-aligned
             cell_class = "rank-cell" if i == 0 else "data-cell"
             html_parts.append(f'                            <td class="{cell_class}">{value}</td>\n')

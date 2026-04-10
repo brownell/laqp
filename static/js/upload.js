@@ -119,7 +119,7 @@ function generateResultsHTML(result) {
 
     // Provinces worked (for LA stations)
     if (result.provinces_worked && result.provinces_worked.length > 0) {
-        html += renderResultItem('Provinces Worked', result.provinces_multiplier);
+        html += renderResultItem('Provinces Worked', result.provinces_worked_multiplier);
         html += '<div class="result-list">';
         result.provinces_worked.forEach(province => {
             html += `<span class="result-list-item">${province}</span>`;
@@ -138,27 +138,6 @@ function generateResultsHTML(result) {
     }
 
     html += '</div>';
-
-    // Multipliers by Band/Mode
-    if (result.multipliers_by_band_mode && result.multipliers_by_band_mode.length > 0) {
-        html += '<div class="result-group">';
-        html += '<h4>Multipliers by Band/Mode</h4>';
-        html += '<div class="multipliers-grid">';
-        result.multipliers_by_band_mode.forEach(item => {
-            html += '<div class="multiplier-card">';
-            html += `<h5>${item.band_mode}</h5>`;
-            html += '<div class="multiplier-list">';
-            if (Array.isArray(item.multipliers)) {
-                html += item.multipliers.join(', ');
-            } else {
-                html += item.multipliers;
-            }
-            html += '</div>';
-            html += '</div>';
-        });
-        html += '</div>';
-        html += '</div>';
-    }
 
     // Bonuses
     let hasBonuses = false;
@@ -230,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageBox = document.getElementById('messageBox');
     const resultsSection = document.getElementById('resultsSection');
     const resultsContent = document.getElementById('resultsContent');
+    const statsHeader = document.getElementById('statsHeader');
     const fileInput = document.getElementById('logfile');
     const textArea = document.getElementById('log_text');
 

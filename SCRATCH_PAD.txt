@@ -3,13 +3,15 @@ process_single_log (temp_file_path, form_data)
         ONLY called by Web upload
         creates UnifiedLogProcessor
 
-process_log_details (temp_file_path, form_data)
-        called by both Web and batch - batch has empty form_data
-        creates "result" object
-        calls in order: 
-            _validate_and_parse
-            _prepare_qsos
-            _score_qsos
+process_batch_logs
+        ONLY called by batch.py
+        process_log_details (temp_file_path, form_data)
+                called by both Web and batch - batch has empty form_data
+                creates "result" object
+                calls in order: 
+                _validate_and_parse
+                _prepare_qsos
+                _score_qsos
 
 
 _validate_and_parse(temp_file_path, result, form_data)
@@ -21,6 +23,60 @@ _log_line_by_line(log_file_object, result)
         calls _validate_qso_line
 
 _validate_qso_line
+
+2024
+K5M	165740	159180	699	1640	101
+2	KC5DI	154100	151420	670	1340	115
+3	KZ5D	145796	145332	314	1256	116
+4	WW5L	131990	127150	605	1210	109
+5	K5VV	92120	88908	490	980	94
+6	K5ARC
+2025
+	CallSign	Score	Claimed	QSOs	Points	Mults
+1	W5GAD	109816	104580	339	1036	106
+2	WW5L	80352	78526	558	1116	72
+3	KC5DI	70784	66992	632	1264	56
+4	W5WZ	47432	46970	223	616	77
+5	KG5YPN	46800	46800	325	650	72
+6	W5LA	40992	39284	168	672	61
+7	N5YS	36736	36836	275	574	64
+8	AD5VC	36696	36696	139	556
+
+Individual results
+results_lookup.js generates the single fields (call, name, etc)
+
+put ../laqp_data/final_reports/final_report_2020.html /data/final_reports/final_report_2020.html
+
+
+CROSS_CHECKING
+A QSO looks like this:
+QSO: 14252 PH 2023-04-01 1514 AA0FO         59  KS      K5LSU         59  EBR
+the CHECK QSO would look like this:
+QSO: 14252 PH 2023-04-01 1517 K5LSU         59  EBR     AA0FO         59  KS
+
+General approach. Process all QSO's as if they cross-checked and write their results into the DB. A match for this QSO is looked for in the "xcheck" table. If there was no match in the table, or the two QSOs fail to match, record that fact. If they do match, then don't record anything for the sending op and remove any record of this QSO for the receiving op in the table.
+
+Once all logs are processed, we need to go through the xcheck and for each callsign in there, we need to adjust their stats in the DB. We reduce qso points and potentially mults
+
+The two contacts must match EXACTLY on the two callsigns and the frequency. So when encountering the first QSO, we need to look for a QSO in the cross-check Dict table of seen QSOs that has this key: remote operator's callsign. The value for this key is a list of Dict's. Each element in te list represents a QSO of his that was processed without a corresponding cross-check QSO. The keys in each Dict are receiving callsign, time (not date), and whether this QSO was provisionally couned as a MULT in addition to its QSO points.
+
+If that record is in the table, we check that the times are within 10 minutes (???) of each other. 
+IF they are, then the QSO currently beoing processed "CHECKS" and can count for points. The record for the QSO of the receiving operator is removed. If that was the last un-matched QSO for that callsign, the entire record for that callsign is removed.
+
+If they do not check, then we do a few things:
+(1) count this QSO for the current user for points and mults and continue processing. 
+(2) write this unmatched QSO for the current op in the table.
+(2) the remote opoerator (EBR) needs to be reprocessed because he was given provisional 
+
+If that record is NOT in the table, then this QSO is PROVISIONALLY counted for points
+
+
+
+
+
+
+
+The matching
 
 body > div.menu-modal.cover-modal.header-footer-group.show-modal.active
 
@@ -155,6 +211,14 @@ result {
             '_header': {}
         }
 
+
+
+Object.entries(rankingsDisplay).forEach(([key, value]) => {console.log(`${key}: ${value}`);}
+
+for (const [key, value] of Object.entries(rankingsDisplay)) {
+  console.log(`${key} → ${value}`);
+  html += '#${value}  in  ${key}'
+}
 
 The next step is to create a batch app called results.py  It goes through a list of result categories - or leaderboards, that is in config.py called LEADERBOARDS. does two things. ItHere is the proposed method to do this, but if you have a better approach tell me and we can discuss it. There is a deadline for all the operators to have their logs uploaded. We will do the leaderboards on that date, using a batch program, called results.py. This program will operate as follows. For each category of ranking (which are listed below), the code will (a) get a list of all the logs in that category sorted by the operator’s total score. (b) remember the count of this list, (c) iterate through all the db records and update the “results” dict in the db record to reflect the operator’s rank in this category. Note that a single operator may be in multiple ranking categories, e.g. CW and POTA, and HIGH power, and will have a different ranking in each. 
 

@@ -13,7 +13,7 @@
             "python": "${workspaceFolder}/venv/bin/python"
         },
         {
-            "name": "Gen Final Rpt batch app",
+            "name": "Gen Final Rpt (batch)",
             "type": "debugpy",
             "request": "launch",
             "program": "generate_final_report.py",
@@ -25,6 +25,14 @@
             "type": "debugpy",
             "request": "launch",
             "program": "generate_rankings.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python"
+        },
+        {
+            "name": "Cross Check (batch)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "cross_check.py",
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/venv/bin/python"
         },

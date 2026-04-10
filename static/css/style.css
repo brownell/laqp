@@ -1616,6 +1616,7 @@ ul.primary-menu {
 
 .primary-menu li {
 	font-size: inherit;
+	color: #1fdf42;
 	line-height: 1.25;
 	position: relative;
 }

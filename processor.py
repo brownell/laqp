@@ -18,17 +18,17 @@ from typing import Dict, List, Set, Optional
 from datetime import datetime
 from unittest import result
 from pyhamtools import LookupLib, Callinfo
-import pycountry
+import csv
 
 # Import your existing modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.config import (
     BONUS_CALLSIGN, LA_PARISHES_FILE, OVERLAY_VALUE_OPTIONS, POWER_VALUE_OPTIONS, STATION_VALUE_OPTIONS, 
-    # STATES_FILE, PROVINCES_FILE, 
-    US_PREFIXES, CANADIAN_PREFIXES, QRZ_PASSWORD,
-    PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS,
+    STATES_FILE, PROVINCES_FILE, EXTRA_BONUS_YEAR, EXTRA_BONUS_CALLS, EXTRA_BONUS_POINTS,
+    US_PREFIXES, CANADIAN_PREFIXES, QRZ_CALLSIGN, QRZ_PASSWORD,
+    PHONE_QSO_POINTS, CW_DIGITAL_QSO_POINTS, DXCC_ENTITIES_FILE,
     CALLSIGN_BONUS_POINTS, ROVER_PARISH_BONUS,
-    PHONE_MODES, CW_DIGITAL_MODES, PROVINCES, CONTEST_YEAR, BAND_RANGES
+    PHONE_MODES, CW_DIGITAL_MODES, BAND_RANGES
 )
 
 
@@ -37,38 +37,44 @@ class UnifiedLogProcessor:
     Unified processor that combines validation, preparation, and scoring.
     """
     
-    def __init__(self, parish_file: Path):   ## , states_file: Path, provinces_file: Path):
+    def __init__(self, parishes_file: Path, states_file: Path, provinces_file: Path, dxcc_entities_file: Path):
         """Initialize with reference data files"""
-        # Load parishes
-        with open(parish_file, 'r') as f:
+        # Load parishes, states, and provinces
+        with open(parishes_file, 'r') as f:
             self.parishes = set(line.strip().upper() for line in f if line.strip())
+
+        with open(states_file, 'r') as f:
+            self.states = set(line.strip().upper() for line in f if line.strip())
+
+        with open(provinces_file, 'r') as f:
+            self.provinces = set(line.strip().upper() for line in f if line.strip())
         
-        # to get 2-digit country code from callsign
-        self.my_callinfo = Callinfo(LookupLib(lookuptype='countryfile', filename='./reference_data/cty.plist', username='KJ5BYZ', pwd=QRZ_PASSWORD))
+        # to get country name and ADIF number from callsign
+        my_lookup_lib = LookupLib(lookuptype='countryfile', filename='./reference_data/cty.plist', username=QRZ_CALLSIGN, pwd=QRZ_PASSWORD)
+        self.my_callinfo = Callinfo(my_lookup_lib)
+
+        ## create DXCC code (same as ADIF number) to DXCC entity. Needed for DX mults
+        self.dxcc_entities = [None] * 750
+        with open(dxcc_entities_file, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                self.dxcc_entities[int(row[0])] = row[1].split('  ')[0]
         
-        # # Load states/
-        # with open(states_file, 'r') as f:
-        #     self.states = set(line.strip().upper() for line in f if line.strip())
-        
-        # # Load states/provinces
-        # with open(state_province_file, 'r') as f:
-        #     self.states_provinces = set(line.strip().upper() for line in f if line.strip())
-        
-        # Ambiguous QTH that need DX suffix
-        self.ambiguous_dx_qth = {"ON", "PA", "CT", "TN", "LA", "HI", "OK", "CO", "OH"}
         self.first_call_qth = None  # To track the sent QTH in a log for checking other QSOs against it
     
-    def _init_result(self) -> Dict:
+    def _init_result(self, contest_year: str) -> Dict:
         """Initialize result dictionary with standardized structure"""
         return {
-            'year': CONTEST_YEAR,
+            'year': contest_year,
             'callsign': '',
             'name': '',
+            'club': '',
             'overlay': None,  # 'WIRES', 'TB-WIRES', 'POTA', or None
             'location_type': 'NON-LA',  # 'DX', 'NON-LA', 'LA-FIXED', 'LA-ROVER'
+            'dxcc_code': 0,
+            'dxcc_entity': '',
             'mode_category': 'MIXED',  # 'PHONE', 'CW/DIGITAL', 'MIXED'
             'power_level': 'LOW',  # 'QRP', 'LOW', 'HIGH'
-            'is_rover': False,
             'final_score': 0,
             'qso_points': 0,
             'total_qsos': 0, # total number validated, whether dups or not
@@ -88,24 +94,22 @@ class UnifiedLogProcessor:
             'num_n5lcc_contacts': 0,
             'qsos_by_band': {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0},
             'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
-            'qsos_by_hour': {i: 0 for i in range(12)},
+            'qsos_by_hour': {i: 0 for i in range(1400,2600, 100)},  # Hour of day (1400 - 2500)
             'bands_worked': set(),
-            'multipliers_by_band_mode': {},
             'claimed_score': 0,
             'errors': [],
             'warnings': [],
-            'has_valid_power': True,
-            'has_valid_operator': True,
-            'has_email': False,
             'is_valid': True,
-            # Store raw QSO lines for processing
-            '_qso_lines': [],
+            'qsos': [],
+            # for processing the Cabrillo header records
             '_header': {}
         }
     
     def process_log_details(self,
+        contest_year: str,
         log_path: Path = None,
-        form_data: Dict = None) -> Dict:
+        form_data: Dict = None
+        ) -> Dict:
 
         """
         Complete processing pipeline: validate → prepare → score
@@ -118,7 +122,7 @@ class UnifiedLogProcessor:
             Complete result dictionary with all statistics
         """
         # Initialize result with your standardized structure
-        result = self._init_result()
+        result = self._init_result(contest_year)
         
         # Phase 1: Validate and parse
         try:
@@ -126,6 +130,8 @@ class UnifiedLogProcessor:
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f"Validation failed: {str(e)}")
+
+            print(f"validate and parse failed {result['callsign']} {result['errors']}")
             return result
         
         # If validation failed, return early
@@ -135,28 +141,43 @@ class UnifiedLogProcessor:
         #############################################
         # Phase 2: Prepare QSOs (in memory)
         #############################################
-        print("BREAK")
+        # print("BREAK")
         try:
-            prepared_qsos = self._prepare_qsos(result)
+            qso_lines = result['qsos']
+            result['qsos'] = []
+            self._prepare_qsos(qso_lines, result)
         except Exception as e:
             result['is_valid'] = False
             result['errors'].append(f": {str(e)}")
+            print(f"prepare_qsos failed {result['callsign']} {result['errors']}")
             return result
         
         #############################################
         # Phase 3: Score
+        # Try NOT scoring during initial pass, but only after cross-checking.
+        # instead do the cross-checking, which will do the scoring as part of its process
         #############################################
-        try:
-            self._score_qsos(prepared_qsos, result)
-        except Exception as e:
-            result['is_valid'] = False
-            result['errors'].append(f"Scoring failed: {str(e)}")
 
-            # pprint(f"Done scoring: {result}")
-            # print("BREAKPOINT")
-            return result
+        # try:
+        #     self._score_qsos(result)
+        # except Exception as e:
+        #     result['is_valid'] = False
+        #     result['errors'].append(f"Scoring failed: {str(e)}")
+
+        #     print(f"scoring failed failed {result['callsign']} {result['errors']}")
+
+        #     # pprint(f"Done scoring: {result}")
+        #     # print("BREAKPOINT")
+        #     return result
         
         return result
+    
+    def _get_dx_info(self, callsign):
+        callinfo = self.my_callinfo.get_all(callsign)
+        if callinfo and callinfo['country'] in ['United States', 'Canada']:
+            return None
+        else:
+            return [callinfo['adif'], callinfo['country']]
     
     def _validate_and_parse(self,
             log_path: Path,
@@ -216,9 +237,9 @@ class UnifiedLogProcessor:
                 result['errors'].append("Station is missing from log or form:")
                 result['is_valid'] = False
 
-            if form_data['overlay'] and result['location_type']:
-                if form_data['station_type'] and result['location_type'].lower() != form_data['station_type'].lower():
-                    result['errors'].append(f"Station mismatch: log has {result['location_type'].upper()}, form has {form_data['station_type'].upper()}")
+            if form_data['overlay'] and result['overlay']:
+                if form_data['station_type'] and result['overlay'].lower() != form_data['station_type'].lower():
+                    result['errors'].append(f"Station mismatch: log has {result['overlay'].upper()}, form has {form_data['station_type'].upper()}")
                     result['is_valid'] = False
 
         ## Done with Cabrillo Header, now do QSOs
@@ -229,19 +250,6 @@ class UnifiedLogProcessor:
 
         if not result['is_valid']:
             return
-        
-        # Determine mode category from actual QSOs
-        ################### TODO FIXIT NOOOOO do not want to do it this way, we want to get the mode category from the header and then check for consistency with the modes in the QSOs.  If there is a violation, we should mark this as an error and reject the log.  We do not want to categorize a log as MIXED just because it has some phone and some cw/digital QSOs if the header says it is PHONE or CW-DIGITAL.  The header should be the source of truth for categorization, and the QSOs should be checked against that for consistency.
-        
-        ## I think we would rather just get the mode from the stated mode in the Cabrillo File
-        ## if a QSO has a mode that violates this, I think we mark this as an error and reject the log
-
-        # if has_phone and has_cw_digital:
-        #     result['mode_category'] = 'MIXED'
-        # elif has_phone:
-        #     result['mode_category'] = 'PHONE'
-        # elif has_cw_digital:
-        #     result['mode_category'] = 'CW-DIGITAL'
 
     # END of _validate_and_parse
 
@@ -249,7 +257,6 @@ class UnifiedLogProcessor:
         
         has_start = False
         has_end = False
-        first_qso_line = True
         
         for line_num, line in enumerate(log_path, 1):
             line = line.strip()
@@ -264,7 +271,7 @@ class UnifiedLogProcessor:
                 has_end = True
                 continue
             
-            # Parse header fields (CALLSIGN, NAME, EMAIL, CATEGORY-POWER, CATEGORY-MODE, CATEGORY-STATION, CATEGORY-OVERLAY, CLAIMED-SCORE)
+            # Parse header fields (CALLSIGN, NAME, CLUB, EMAIL, CATEGORY-POWER, CATEGORY-MODE, CATEGORY-STATION, CATEGORY-OVERLAY, CLAIMED-SCORE)
             if ':' in line and not line.startswith('QSO:'):
                 key, value = line.split(':', 1)
                 key = key.strip().lower()
@@ -273,8 +280,16 @@ class UnifiedLogProcessor:
                 
                 if key == 'callsign':
                     result['callsign'] = value.upper()
+                    callsign_info = self.my_callinfo.get_all(result['callsign'])
+                    # if result['callsign'] == 'OM2VL':
+                    #     print('halt')
+                    if callsign_info and callsign_info['country'] not in ['United States', 'Canada']:  ## It's DX
+                        result['dxcc_code'] = int(callsign_info['adif'])
+                        result['dxcc_entity'] = self.dxcc_entities[result['dxcc_code']]
                 elif key == 'name':
                     result['name'] = value
+                elif key == 'club':
+                    result['club'] = value
                 elif key == 'category-mode':
                     result['mode_category'] = value.upper()
                 elif key == 'email':
@@ -311,16 +326,15 @@ class UnifiedLogProcessor:
             
             # Validate QSO lines and collect them for later processing
             if line.startswith('QSO:'):
-                qso_ok = self._validate_qso_line(result, line, line_num, first_qso_line)
+                qso_ok = self._validate_qso_line(result, line, line_num)
                 if qso_ok:
-                    result['_qso_lines'].append((line_num, line))
+                    result['qsos'].append((line_num, line))
                     result['total_qsos'] += 1
-                first_qso_line = False
 
         return
     ## END of _log_line_by_line
     
-    def _validate_qso_line(self, result, line: str, line_num: int, first_qso_line: bool) -> Optional[bool]:
+    def _validate_qso_line(self, result, line: str, line_num: int) -> Optional[bool]:
 
         parts = line.split()
         if len(parts) < 11:
@@ -352,21 +366,20 @@ class UnifiedLogProcessor:
             result['warnings'].append(f"QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
             return False
         
-        if first_qso_line:
-            self.first_call_qth = parts[7]
-        else:
-            if parts[7] != self.first_call_qth:
-                result['warnings'].append(f"QSO at line {line_num}: {line} Sent QTH {parts[7]} does not match first QSO sent QTH {self.first_call_qth}")
-                return False
+        ## TODO makd sure this is what we want
+        # if first_qso_line:
+        #     self.first_call_qth = parts[7]
+        # else:
+        #     if parts[7] != self.first_call_qth:
+        #         result['warnings'].append(f"QSO at line {line_num}: {line} Sent QTH {parts[7]} does not match first QSO sent QTH {self.first_call_qth}")
+        #         return False
    
         return True
     
-    def _prepare_qsos(self, result: Dict) -> List[Dict]:
+    def _prepare_qsos(self, qso_lines, result: Dict) -> List[Dict]:
         """Phase 2: Prepare QSOs (convert freq, expand multi-parish, etc.)"""
-        prepared = []
-        # print(f"Initial prepared: {id(prepared)}")
         
-        for line_num, qso_line in result['_qso_lines']:
+        for line_num, qso_line in qso_lines:
             parts = qso_line.split()
             if len(parts) < 11:
                 print("break qso loop")
@@ -393,26 +406,8 @@ class UnifiedLogProcessor:
             if mode in PHONE_MODES:
                 mode_cat = 'Phone'
             else:
-                mode_cat = 'CW/Digital'
-            
-            # TODO check what this means and when it happens
-            # Handle multi-parish QTH (split on /)
-            rcvd_qth_list = rcvd_qth.split('/')
-            
-            for qth in rcvd_qth_list:
-                qth = qth.strip()
-                
-                # Check if DX suffix needed
-                sent_qth_final = sent_qth
-                rcvd_qth_final = qth
-                if self._is_dx_callsign(sent_call) and sent_qth in self.ambiguous_dx_qth:
-                    sent_qth_final = sent_qth + 'DX'
-                if self._is_dx_callsign(rcvd_call) and qth in self.ambiguous_dx_qth:
-                    rcvd_qth_final = qth + 'DX'
-
-                # TODO check if sender in state or province
-                
-            prepared.append({
+                mode_cat = 'CW/Digital'  
+            new_qso = {
                 'band': band,
                 'mode': mode,
                 'mode_category': mode_cat,
@@ -420,127 +415,143 @@ class UnifiedLogProcessor:
                 'time': time,
                 'sent_call': sent_call,
                 'sent_rst': sent_rst,
-                'sent_qth': sent_qth_final,
+                'sent_qth': sent_qth,
                 'rcvd_call': rcvd_call,
                 'rcvd_rst': rcvd_rst,
-                'rcvd_qth': rcvd_qth_final,
-                'line_num': line_num
-            })
+                'rcvd_qth': rcvd_qth,
+                'line_num': line_num,
+                'xcheck': ''
+            }    
+            result['qsos'].append(new_qso)
         
         # Get info that is NOT specific to each QSO but is needed for scoring (e.g., location type)
         # Determine location type from prepared QSOs
-        result['location_type'] = self._determine_location_type(result, prepared, result['_header'])
-        result['is_rover'] = (result['location_type'] == 'LA-ROVER')
+        result['location_type'] = self._determine_location_type(result)
         
-        return prepared
     
     ## END of prepare_qsos
     
     # get location type of a QSO's sender
-    def _determine_location_type(self, result, qsos: List[Dict], header: Dict) -> str:
+    def _determine_location_type(self, result: Dict) -> str:
         """Determine location type from QSOs"""
-        sent_qths = []
         
-        for qso in qsos:
+        for qso in result['qsos']:
             sent_qth = qso['sent_qth'].replace('DX', '')
             sent_call = qso['sent_call']
             
             
             # Check if DX
-            if self._is_dx_callsign(sent_call):
+            callinfo = self.my_callinfo.get_all(sent_call)
+            if callinfo and callinfo['country'] not in ['United States', 'Canada']:
                 return 'DX'
             
             # Check if non-LA
-            if sent_qth in self.states_provinces:
+            if (sent_qth in self.states) or (sent_qth in self.provinces):
                 return 'NON-LA'
-            
-            # Must be LA
-            if sent_qth in self.parishes:
-                sent_qths.append(sent_qth)
         
         # Determine if fixed or rover
-        unique_parishes = list(set(sent_qths))
         station = result['location_type']  # Get station type
         
         if station in ('MOBILE', 'ROVER'):
             return 'LA-ROVER'
         elif station in ('FIXED', 'PORTABLE'):
             return 'LA-FIXED'
-        elif len(unique_parishes) > 1:
-            return 'LA-ROVER'
         else:
             return 'LA-FIXED'
     
-    def _score_qsos(self, qsos: List[Dict], result: Dict):
+    def _score_qsos(self, result: Dict):
         """Phase 3: Score QSOs and calculate multipliers"""
         
-        # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These sqso points but not  multipliers.  
+        # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
         # A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points or multipliers.
         mult_dups = []
         qso_dups = []
         # pprint(f"QSO Scoring for {result['callsign'].upper()}")
-        for qso in qsos:
+        for qso in result['qsos']:
+            # Skip QSOs flagged by cross-checking
+            if qso.get('xcheck', '') != '':
+                continue  # This QSO is NIL, B, or XCH - skip it
+        
             band = qso['band']
             mode_cat = qso['mode_category']
             sent_call = qso['sent_call']
             rcvd_call = qso['rcvd_call']
             sent_qth = qso['sent_qth']
-            rcvd_qth = qso['rcvd_qth'].replace('DX', '')
+
+            ## if rcvd_call is a DX, then replace rcvd_qth with DXCC code (ADIF number as string)
+            try:
+                dx_rcvd_qth  = self.my_callinfo.get_all(rcvd_call)
+            except Exception as e:
+                result['errors'].append(f"Exception {e} getting rcvd_qth callinfo")
+                print_result(result)
+                print("exception")
+            if dx_rcvd_qth and ((dx_rcvd_qth['country'] not in ['United States', 'Canada'])): # working DX station
+                rcvd_qth = self.dxcc_entities[int(dx_rcvd_qth['adif'])]
+                dx_rcvd_qth['dxcc_entity'] = rcvd_qth
+                # print(f"rcvd_qth is dx: sender sent_qth {sent_qth} receiver {rcvd_qth}")
             
-            # if not a duplicate for QSO points purposes, get the points. Else add to the dup list and skip points
-            if result['location_type'] == "LA-ROVER":
-                qso_check = band + mode_cat + sent_qth + rcvd_call
-                if sent_qth not in result['parishes_activated']:
-                    result['parishes_activated'].add(sent_qth)
+                ## make sure this is not DX to DX
+                if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
+                    result['warnings'].append(f"DUPLICATE QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
+                    continue
             else:
+                rcvd_qth = qso['rcvd_qth']
+                dx_rcvd_qth = None
+
+            # NOT DX - ROVER gets a qso_check that includes his QTH because he can call same
+            # station multiple toimes from different parishes
+            if result['location_type'] == "LA-ROVER":
+                    qso_check = band + mode_cat + sent_qth + rcvd_call
+                    if sent_qth not in result['parishes_activated']:
+                        result['parishes_activated'].add(sent_qth)
+            else: ## MUST be LA Fixed or State or Province
                 qso_check = band + mode_cat + rcvd_call
+                    
             if qso_check in qso_dups:
-                # print(f"!!! DUPLICATEte QSO line {qso['line_num']} {result['parishes_worked_multiplier'] + result['states_worked_multiplier'] + result['provinces_worked_multiplier'] + result['dx_worked_multiplier']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
-                result['warnings'].append(f"Duplicate QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
+                result['warnings'].append(f"DUPLICATE QSO on line {qso['line_num']} band/mode/call worked:  {band}m, {mode_cat}, {rcvd_call}")
+                qso['xcheck'] = 'DQ'
             else:  ## not a duplicate for points, so get points
                 result['valid_qsos'] += 1
-                # print(f"NOT DUP QSO line {qso['line_num']} band/mode/call worked:  {band}/{mode_cat}/{rcvd_call}")
-                print(f"valid_qsos {result['valid_qsos']} qso_check {qso_check} band/sentqth/rcvd_call: {qso['band']} {qso['rcvd_qth']} {qso['rcvd_call']}")
                 qso_dups.append(qso_check)
 
-                # Track bands worked and QSO by band (for display only, does not impact score)
-                result['bands_worked'].add(band)
-                result['qsos_by_band'][band] += 1
+            # Track bands worked and QSO by band (for display only, does not impact score)
+            result['bands_worked'].add(band)
+            result['qsos_by_band'][band] += 1
 
-                # Track qsos by hour (2-hour blocks)
-                try:
-                    hour = int(qso['time'][:2])  # hour of the qso
-                    if hour in result['qsos_by_hour']:
-                        result['qsos_by_hour'][hour] += 1
-                except:
-                    print("fatal error?")
-                
-                # Award points
-                if mode_cat == 'Phone':
-                    result['qso_points'] += PHONE_QSO_POINTS
-                    # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
-                    result['qsos_by_mode']['Phone'] += 1
-                else:  # CW/Digital
-                    result['qso_points'] += CW_DIGITAL_QSO_POINTS
-                    # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
-                    result['qsos_by_mode']['CW/Digital'] += 1
+            # Track qsos by hour (1-hour blocks)
+            try:
+                result['qsos_by_hour'][qso['time']] += 1
+            except Exception as e:
+                # print(f"Error tying to get the QSO time {e}")
+                result['warnings'].append(f"Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
+                continue
+            
+            # Award points
+            if mode_cat == 'Phone':
+                result['qso_points'] += PHONE_QSO_POINTSFqsos
+                # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
+                result['qsos_by_mode']['Phone'] += 1
+            else:  # CW/Digital
+                result['qso_points'] += CW_DIGITAL_QSO_POINTS
+                # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
+                result['qsos_by_mode']['CW/Digital'] += 1
 
-                # Check for N5LCC
-                if rcvd_call == 'N5LCC':
-                    result['worked_n5lcc'] = True
-                    result['num_n5lcc_contacts'] += 1
-            ## add to correct multiplier list even if a dup for points, but check for mult dup first and warn if so.  This allows the multiplier to be counted for the first QSO but not for subsequent dup QSOs.
-            if result['location_type'] == "LA-ROVER":
-                mult_check = band + mode_cat + rcvd_qth
-            else:
-                mult_check = band + mode_cat + rcvd_qth
+            # Check for N5LCC
+            if rcvd_call == 'N5LCC':
+                result['worked_n5lcc'] = True
+                result['num_n5lcc_contacts'] += 1
+
+            ## MULTIPLIERS
+
+            mult_check = band + mode_cat + rcvd_qth
             if mult_check in mult_dups:
-                print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
-                result['warnings'].append(f"Duplicate Multiplier line {qso['line_num']} band/mode/qth worked: {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+                result['warnings'].append(f"DUPLICATE Multiplier on line {qso['line_num']} band/mode/qth worked: {band}m, {mode_cat}, {sent_qth}, {rcvd_qth}")
+                qso['xcheck'] = 'DM'
 
             else:
-                print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+                # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
                 mult_dups.append(mult_check)
+
                 ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
                 if rcvd_qth in self.parishes:
                     result['parishes_worked'].add(rcvd_qth)
@@ -548,22 +559,20 @@ class UnifiedLogProcessor:
                 
                 # LA stations get state, province, and DX multipliers
                 if result['location_type'] == 'LA-FIXED' or result['location_type'] == 'LA-ROVER':
-                    # LA: states, provinces, DX are multipliers
-                    if rcvd_qth in self.states_provinces:
-                        if rcvd_qth in PROVINCES:
-                            result['provinces_worked'].add(rcvd_qth)
-                            result['provinces_worked_multiplier'] += 1
-                        else:
-                            result['states_worked'].add(rcvd_qth)
-                            print(result['states_worked'])
-                            print(f"rcvd_qth: {rcvd_qth}")
-                            result['states_worked_multiplier'] += 1
-
-                    elif rcvd_qth not in self.parishes:
-                        result['dx_worked'].add(rcvd_qth)
+                    if dx_rcvd_qth:  ## DX multiplier
+                        result['dx_worked'].add(dx_rcvd_qth['dxcc_entity'])
                         result['dx_worked_multiplier'] += 1
+                    # LA: states, provinces, DX are multipliers
+                    elif rcvd_qth in self.provinces:
+                        result['provinces_worked'].add(rcvd_qth)
+                        result['provinces_worked_multiplier'] += 1
+                    elif rcvd_qth in self.states:
+                        result['states_worked'].add(rcvd_qth)
+                        # print(result['states_worked'])
+                        # print(f"rcvd_qth: {rcvd_qth}")
+                        result['states_worked_multiplier'] += 1
 
-        print("break before points")
+        # print("break before points")
         # Finished with points, now sum the individual multipliers
         for i in ['parishes', 'states', 'provinces', 'dx']:
             result['total_multipliers'] += result[f'{i}_worked_multiplier']
@@ -581,11 +590,15 @@ class UnifiedLogProcessor:
             result['rover_bonus_points'] = len(result['parishes_activated']) * ROVER_PARISH_BONUS
             result['final_score'] += result['rover_bonus_points']
 
+        ## Bonus for something outside of QSOs
+        if result['callsign'] in EXTRA_BONUS_CALLS and result['year'] == EXTRA_BONUS_YEAR:
+            result['final_score'] += EXTRA_BONUS_POINTS
+    
+
     ## END of score_qsos
     
     ## Utility functions
 
-    # def _callsign_analyze(self, call: str)
 
     def _is_dx_callsign(self, call: str) -> bool:
         """Check if callsign is DX (not US or VE)"""
@@ -614,46 +627,38 @@ class UnifiedLogProcessor:
                 else:
                     return call[:i]
         return call
-
-    def _get_country(self, callsign):
-        cic = Callinfo(self.my_lookuplib)
-        details = cic.get_all(callsign)
-        try:
-            cty = pycountry.countries.search_fuzzy(details.get('country', '')[0])
-            return cty.alpha_2
-        except LookupError:
-            return details.get('country', '')
-        
-
-        
     
 ## End of UnifiedLogProcessor class
 
 # Convenience functions for single log processing in WEB app ONLY (not used for batch processing)
 def process_single_log(
+        contest_year: str,
         log_path: Path = None,
         form_data: Dict = None,
         log_content: str = None,
-        parish_file: Path = Path(LA_PARISHES_FILE)) -> Dict:
-        # states_file: Path = Path(STATES_FILE),
-        # provinces_file: Path = Path(PROVINCES_FILE)) -> Dict:
+        parishes_file: Path = Path(LA_PARISHES_FILE),
+        states_file: Path = Path(STATES_FILE),
+        provinces_file: Path = Path(PROVINCES_FILE),
+        dxcc_entities_file: Path = Path(DXCC_ENTITIES_FILE)) -> Dict:
     """
     Process a single log file (for web uploads ONLY).
     
     Args:
         log_path: Path to log file
-        parish_file: Path to parish abbreviations (optional, uses default)
+        parishes_file: Path to parish abbreviations (optional, uses default)
         state_province_file: Path to state/province abbreviations (optional, uses default)
         **form_data: Optional form fields (email, mode, power, station, overlay)
     
     Returns:
         Result dictionary
     """
-    processor = UnifiedLogProcessor(parish_file)  ## , states_file, provinces_file)
+    processor = UnifiedLogProcessor(parishes_file, states_file, provinces_file, dxcc_entities_file)
 
     return processor.process_log_details(
+        contest_year,
         log_path,
-        form_data)
+        form_data
+        )
 
 def print_result(result):
     """Utility function to print result in a readable format"""
@@ -670,7 +675,7 @@ def print_result(result):
     print(f"Final Score: {result['final_score']} (Claimed: {result['claimed_score']})")
     print(f"Total QSOs: {result['total_qsos']}  Valid QSOs: {result['valid_qsos']}  QSO Points: {result['qso_points']}")
     print(f"Total Multipliers: {result['total_multipliers']} (Parishes: {result['parishes_worked_multiplier']}, States: {result['states_worked_multiplier']}, Provinces: {result['provinces_worked_multiplier']}, DX: {result['dx_worked_multiplier']})")
-    if result['is_rover']:
+    if result['location_type'] == 'LA_ROVER':
         print(f"Rover Bonus Points: {result['rover_bonus_points']} for activating parishes: {', '.join(result['parishes_activated'])}")
     if result['worked_n5lcc']:
         print(f"N5LCC Contacts: {result['num_n5lcc_contacts']} (Bonus points applied)")
@@ -695,34 +700,27 @@ def print_result(result):
             for e in result['errors']:
                 print(f"{e}")
 
-def process_batch_logs(log_dir: Path,
-    parish_file: Path = None,
-    state_province_file: Path = None) -> Dict:
+def process_batch_logs(log_dir: Path, contest_year: str) -> Dict:
     """
     Process multiple log files (for batch processing).
     
     Args:
         log_dir: Directory containing log files
-        parish_file: Path to parish abbreviations (optional, uses default)
+        parishes_file: Path to parish abbreviations (optional, uses default)
         state_province_file: Path to state/province abbreviations (optional, uses default)
     
     Returns:
         List of result dictionaries
     """
-
-    if parish_file is None:
-        parish_file = Path(LA_PARISHES_FILE)
-    if state_province_file is None:
-        state_province_file = Path(WVE_ABBREVS_FILE)
     
-    processor = UnifiedLogProcessor(parish_file, state_province_file)
+    processor = UnifiedLogProcessor(LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, DXCC_ENTITIES_FILE)
 
     results = []
     # print(f"ready to process_log_details for logs in {log_dir}")
     for log_path in log_dir.glob('*.log'):
-        result = processor.process_log_details(log_path)
+        result = processor.process_log_details(contest_year, log_path)
         # print(f"Finished processing {log_path.name}: Score {result['final_score']} Mult: {result['total_multipliers']} qso points: Errors: {len(result['errors'])} Warnings: {len(result['warnings'])}")
-        print_result(result)
+        # print_result(result)
         results.append(result)
     
     return results

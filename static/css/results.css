@@ -45,66 +45,88 @@
 }
 
 /* Certificate Styling */
-.certificate-section {
-    margin: 30px 0;
-}
+
 
 .certificate-container {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
+    max-width: 800px;
+    max-height: 990px;
+    padding:75px;
+    background-origin: border-box;
+    background-clip:border-box;
+    background-image: url('../images/border.jpg');
+    background-size: 100% 100%;   /* stretches image to exactly fill the box */
+    background-repeat: no-repeat;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.certificate {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 40px;
-    border: 15px solid;
-    border-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23859969" width="100" height="100"/></svg>') 15;
-    background: #fff;
-    position: relative;
-}
 
-.certificate-border {
-    border: 3px double #859969;
-    padding: 30px;
+.certificate {
+    max-width: 650px;
+    min-height:825px;;
+    position: relative;
+    padding: 10px 30px;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
 }
 
 .certificate-header {
     text-align: center;
     margin-bottom: 20px;
+    margin-top:40px;
+}
+
+.certificate-title {
+    font-size: 2.5rem;
+    color: #461D7C;
+    font-weight: bold;
 }
 
 .certificate-org {
-    font-family: 'Georgia', serif;
-    font-style: italic;
-    font-size: 2rem;
+    font-size: 1.4rem;
     color: #000;
     margin-bottom: 10px;
+    max-height:20px;
 }
 
 .certificate-subtitle {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: #333;
-    margin-bottom: 20px;
+    max-height:20px;
 }
 
-.certificate-fleur {
-    width: 100px;
-    height: auto;
-    margin: 0 20px;
+.certificate-body {
+    margin-bottom: 30px
 }
 
 .certificate-callsign {
     font-size: 3.5rem;
     font-weight: bold;
-    color: #008000;
-    margin: 20px 0;
+    color: black;;
     text-align: center;
+    max-height:75px;
+}
+
+.certificate-name {
+    font-size: 1.7rem;
+    color: black;
+    text-align: center;
+    max-height:60px;
+    font-weight: bold;
+    margin-bottom: 30p
+}
+
+.certificate-club {
+    font-size: 1.5rem;
+    color: black;
+    text-align: center;
+    max-height:40px;
 }
 
 .certificate-recognition {
+    color:black;
     text-align: center;
     font-size: 1.1rem;
     margin: 20px 0;
@@ -120,42 +142,56 @@
 
 .certificate-score {
     text-align: center;
-    font-size: 1.3rem;
-    margin: 15px 0;
+    font-size: 2rem;
 }
 
 .certificate-rankings {
-    text-align: center;
-    margin: 20px 0;
+    max-width:600px;;
+    color:black;
 }
 
-.certificate-ranking-item {
-    font-size: 1.1rem;
+ul.rankings-list {
+    list-style-type: none; 
+}
+
+.rankings-item {
+    font-size: 1.2rem;
     margin: 5px 0;
 }
 
+.certificate-footer-container {
+    margin-top: auto;
+}
+
 .certificate-footer {
+    min-width: 600px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    margin-top: 40px;
 }
 
 .certificate-signature {
-    width: 200px;
-    height: 80px;
-    background: #f0f0f0;
-    border: 1px dashed #ccc;
+    width: 300px;
     display: flex;
-    align-items: center;
-    justify-content: center;
     font-size: 0.8rem;
     color: #999;
 }
 
 .certificate-logo {
-    width: 150px;
+    width: 300px;
     height: auto;
+}
+
+.signature {
+    width: 200px;;
+    height: auto;
+}
+
+.worked {
+    margin-bottom: 20px;
+    border-top: 2px solid black;
+    display:flex;
+    justify-content: flex-start;
+    gap: 1rem;
 }
 
 /* Statistics Section */
@@ -168,12 +204,12 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    margin-top:20px;
 }
 
 /* Final Report */
 .final-report-container {
     background: #fff;
-    padding: 30px;
     border-radius: 8px;
 }
 
@@ -227,7 +263,8 @@
     /* Print certificate only */
     body.print-certificate .statistics-section,
     body.print-certificate .final-report-section,
-    body.print-certificate .lookup-section {
+    body.print-certificate .lookup-section
+    {
         display: none !important;
     }
 

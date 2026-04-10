@@ -289,7 +289,7 @@ small {
 }
 
 .result-group h4 {
-    color: #FDD023;
+    color: #461D7C;;
     font-size: 1.3rem;
     margin-bottom: 15px;
     padding-bottom: 8px;
@@ -298,9 +298,10 @@ small {
 
 .result-item {
     display: grid;
-    grid-template-columns: 250px 1fr;
-    padding: 8px 0;
-    border-bottom: 1px solid #e0e0e0;
+    gap: 10px;
+    max-height:20px;
+    margin-left:100px;
+    grid-template-columns: 150px 1fr;
 }
 
 .result-item:last-child {
@@ -314,11 +315,11 @@ small {
 
 .result-value {
     color: #555;
+    font-weight:bold;
 }
 
 .result-value.highlight {
-    color: #FDD023;
-    font-weight: bold;
+    color: black;
     font-size: 1.1rem;
 }
 
@@ -340,22 +341,24 @@ small {
 
 /* Table displays */
 .result-table {
-    width: 100%;
+    max-width: 400px;
     margin-top: 10px;
     border-collapse: collapse;
 }
 
-.result-table th,
-.result-table td {
+.result-table th{
     padding: 8px 12px;
     text-align: left;
     border: 1px solid #ddd;
-}
-
-.result-table th {
     background: #FDD023;
-    color: #fff;
+    color: #461D7C;
     font-weight: bold;
+}
+.result-table td {
+    padding: 4px 12px;
+    text-align: right;
+    border: 1px solid #ddd;
+    max-height:20px;
 }
 
 .result-table tr:nth-child(even) {

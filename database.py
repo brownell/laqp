@@ -42,12 +42,14 @@ class ContestDatabase:
                     year TEXT NOT NULL,
                     callsign TEXT NOT NULL,
                     name TEXT,
+                    club TEXT,
                     category TEXT,
                     overlay TEXT,
                     location_type TEXT,
+                    dxcc_code INTEGER,
+                    dxcc_entity TEXT,
                     mode_category TEXT,
                     power_level TEXT,
-                    is_rover INTEGER,
                     final_score INTEGER,
                     qso_points INTEGER,
                     total_qsos INTEGER,
@@ -58,7 +60,7 @@ class ContestDatabase:
                     states_worked TEXT,
                     states_worked_multiplier INTEGER,
                     provinces_worked TEXT,
-                    provinces_multiplier INTEGER,
+                    provinces_worked_multiplier INTEGER,
                     dx_worked TEXT,
                     dx_worked_multiplier INTEGER,
                     parishes_activated TEXT,
@@ -69,14 +71,11 @@ class ContestDatabase:
                     qsos_by_mode TEXT,
                     qsos_by_hour TEXT,
                     bands_worked TEXT,
-                    multipliers_by_band_mode TEXT,
                     claimed_score INTEGER,
                     errors TEXT,
                     warnings TEXT,
-                    has_valid_power INTEGER,
-                    has_valid_operator INTEGER,
-                    has_email INTEGER,
                     is_valid INTEGER,
+                    qsos TEXT,
                     rankings TEXT,
                     created_at TEXT,
                     updated_at TEXT,
@@ -102,7 +101,7 @@ class ContestDatabase:
             
             conn.commit()
     
-    def _serialize_result(self, result: Dict) -> Dict:
+    def _serialize_result(self, result: Dict, contest_year: str) -> Dict:
         """
         Convert result dict to database-storable format.
         Converts sets to JSON lists, handles complex types.
@@ -111,11 +110,11 @@ class ContestDatabase:
         
         # Simple fields
         simple_fields = [
-            'year', 'callsign', 'name', 'category', 'overlay',
-            'location_type', 'mode_category', 'power_level',
+            'year', 'callsign', 'name', 'club', 'category', 'overlay',
+            'location_type', 'dxcc_code', 'dxcc_entity', 'mode_category', 'power_level',
             'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
             'total_multipliers', 'parishes_worked_multiplier',
-            'states_worked_multiplier', 'provinces_multiplier',
+            'states_worked_multiplier', 'provinces_worked_multiplier',
             'dx_worked_multiplier', 'rover_bonus_points',
             'num_n5lcc_contacts', 'claimed_score'
         ]
@@ -125,8 +124,8 @@ class ContestDatabase:
         
         # Boolean fields (convert to 0/1)
         bool_fields = [
-            'is_rover', 'worked_n5lcc', 'has_valid_power',
-            'has_valid_operator', 'has_email', 'is_valid'
+            'worked_n5lcc',
+              'is_valid'
         ]
         
         for field in bool_fields:
@@ -145,21 +144,20 @@ class ContestDatabase:
         
         # Dict/list fields (convert to JSON)
         json_fields = [
-            'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour',
-            'multipliers_by_band_mode'
+            'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour', 'qsos'
         ]
         
         for field in json_fields:
             value = result.get(field, {})
             # Convert sets in dict values to lists
-            if field == 'multipliers_by_band_mode':
-                value = {k: sorted(list(v)) if isinstance(v, set) else v 
-                        for k, v in value.items()}
             db_result[field] = json.dumps(value)
         
         # List fields (convert to JSON)
         db_result['errors'] = json.dumps(result.get('errors', []))
         db_result['warnings'] = json.dumps(result.get('warnings', []))
+
+        # QSOs field (NEW - ADD THIS)
+        db_result['qsos'] = json.dumps(result.get('qsos', []))
         
         # Rankings field (empty dict initially)
         db_result['rankings'] = json.dumps(result.get('rankings', {}))
@@ -184,8 +182,8 @@ class ContestDatabase:
         
         # Convert boolean fields back
         bool_fields = [
-            'is_rover', 'worked_n5lcc', 'has_valid_power',
-            'has_valid_operator', 'has_email', 'is_valid'
+            'worked_n5lcc',
+            'is_valid'
         ]
         
         for field in bool_fields:
@@ -197,7 +195,7 @@ class ContestDatabase:
             'parishes_worked', 'states_worked', 'provinces_worked',
             'dx_worked', 'parishes_activated', 'bands_worked',
             'qsos_by_band', 'qsos_by_mode', 'qsos_by_hour',
-            'multipliers_by_band_mode', 'errors', 'warnings', 'rankings'
+            'errors', 'warnings', 'rankings', 'qsos'
         ]
         
         for field in json_fields:
@@ -210,17 +208,13 @@ class ContestDatabase:
                                'provinces_worked', 'dx_worked', 
                                'parishes_activated', 'bands_worked']:
                         result[field] = set(result[field])
-                    
-                    # Convert multipliers_by_band_mode lists back to sets
-                    if field == 'multipliers_by_band_mode':
-                        result[field] = {k: set(v) if isinstance(v, list) else v 
-                                       for k, v in result[field].items()}
+
                 except json.JSONDecodeError:
                     result[field] = [] if field in ['errors', 'warnings'] else {}
         
         return result
     
-    def save_result(self, result: Dict) -> bool:
+    def save_result(self, contest_year: str, result: Dict) -> bool:
         """
         Save or update a contest result.
         
@@ -233,14 +227,14 @@ class ContestDatabase:
             True if saved successfully
         """
         # Ensure year is present
-        if 'year' not in result or not result['year']:
+        if 'year' not in result or (not result['year']) or result['year'] != contest_year:
             raise ValueError("Result must include 'year' field")
         
         if 'callsign' not in result or not result['callsign']:
             raise ValueError("Result must include 'callsign' field")
         
         # Serialize result
-        db_result = self._serialize_result(result)
+        db_result = self._serialize_result(result, contest_year)
         
         # Build SQL
         fields = list(db_result.keys())
@@ -424,7 +418,7 @@ class ContestDatabase:
 
 # Convenience functions
 
-def save_result(result: Dict, db_path: str = DATABASE_FILE) -> bool:
+def save_result(result: Dict, contest_year: str, db_path: str = DATABASE_FILE) -> bool:
     """
     Save a result to the database.
     
@@ -436,7 +430,7 @@ def save_result(result: Dict, db_path: str = DATABASE_FILE) -> bool:
         True if saved successfully
     """
     db = ContestDatabase(db_path)
-    return db.save_result(result)
+    return db.save_result(contest_year, result)
 
 
 def get_result(year: str, callsign: str, db_path: str = DATABASE_FILE) -> Optional[Dict]:
