@@ -94,7 +94,7 @@ class UnifiedLogProcessor:
             'num_n5lcc_contacts': 0,
             'qsos_by_band': {'160': 0, '80': 0, '40': 0, '20': 0, '15': 0, '10': 0, '6': 0, '2': 0},
             'qsos_by_mode': {'Phone': 0, 'CW/Digital': 0},
-            'qsos_by_hour': {i: 0 for i in range(24)},  # Hour of day (0-23)
+            'qsos_by_hour': {i: 0 for i in range(1400,2600, 100)},  # Hour of day (1400 - 2500)
             'bands_worked': set(),
             'claimed_score': 0,
             'errors': [],
@@ -520,7 +520,7 @@ class UnifiedLogProcessor:
 
             # Track qsos by hour (1-hour blocks)
             try:
-                result['qsos_by_hour'][str(int(qso['time'][:2]))] += 1
+                result['qsos_by_hour'][qso['time']] += 1
             except Exception as e:
                 # print(f"Error tying to get the QSO time {e}")
                 result['warnings'].append(f"Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
@@ -528,7 +528,7 @@ class UnifiedLogProcessor:
             
             # Award points
             if mode_cat == 'Phone':
-                result['qso_points'] += PHONE_QSO_POINTS
+                result['qso_points'] += PHONE_QSO_POINTSFqsos
                 # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
                 result['qsos_by_mode']['Phone'] += 1
             else:  # CW/Digital

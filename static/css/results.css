@@ -183,6 +183,14 @@ ul.rankings-list {
     height: auto;
 }
 
+.worked {
+    margin-bottom: 20px;
+    border-top: 2px solid black;
+    display:flex;
+    justify-content: flex-start;
+    gap: 1rem;
+}
+
 /* Statistics Section */
 .statistics-section {
     margin: 30px 0;

@@ -14,6 +14,7 @@ Cross-check classifications:
 - UNIQUE: Callsign not found in any submitted log (no penalty)
 """
 
+import math
 from typing import Dict, List, Optional
 import json
 from datetime import datetime, timedelta
@@ -29,7 +30,7 @@ processor = UnifiedLogProcessor(LA_PARISHES_FILE, STATES_FILE, PROVINCES_FILE, D
 
 def score_qsos(result: Dict, contest_year: str) -> None:
     """Phase 3: Score QSOs and calculate multipliers"""
-    global printout, all_callsigns, processor
+    global all_callsigns, processor
     # A mult dup is when a QSO is a duplicate for multiplier purposes (same band/mode/rcvd_qth) but not a point dup (different rcvd_call).  These get qso points (if otherwise valid) but not  multipliers.  
     # A qso dup is when all of band/mode/rcvd_call are the same, in which case it should not count for points or multipliers.
     
@@ -95,11 +96,12 @@ def score_qsos(result: Dict, contest_year: str) -> None:
 
         # Track qsos by hour (2-hour blocks)
         try:
-            hour = int(qso['time'][:2])  # hour of the qso
-            if hour in result['qsos_by_hour']:
-                result['qsos_by_hour'][hour] += 1
+            temp = int(qso['time'][:2] + "00")
+            if temp < 999 or temp > 2600:
+                temp = 2400
+            result['qsos_by_hour'][temp] += 1
         except Exception as e:
-            # print(f"Error tying to get the QSO time {e}")
+            print(f"Error tying to get the QSO time {e}")
             result['warnings'].append(f"Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
             continue
         

@@ -76,13 +76,17 @@ def format_result_for_display(result):
         for mode, count in qsos_by_mode.items()
     ]
     
-    # Format QSOs by hour
-    qsos_by_hour = result.get('qsos_by_hour', {})
-    display_result['qsos_by_hour'] = [
-        {'hour': hour, 'count': count}
-        for hour, count in sorted(qsos_by_hour.items())
-    ]
 
+    # Format QSOs by hour
+    try:
+        temp = result.get('qsos_by_hour', {})
+        display_result['qsos_by_hour'] = {}
+        for key in temp:
+            display_result['qsos_by_hour'][key] =  temp[key]
+    except Exception as e:
+        print(f"Error formatting qsos_by_hour for display: {e}")
+        display_result['qsos_by_hour'] = []
+    
     ## errors and warnings
     display_result['errors'] = result['errors']
     display_result['warnings'] = result['warnings']

@@ -246,57 +246,20 @@ document.addEventListener('DOMContentLoaded', function() {
         html += `<div class="result-item"><div class="result-label">Valid QSOs:</div><div class="result-value ">${result.valid_qsos.toLocaleString()}</div></div>`;
         html += '</div>';
 
-        // QSOs by Band
-        if (result.qsos_by_band && result.qsos_by_band.length > 0) {
-            html += '<div class="result-group">';
-            html += '<h4>QSOs by Band</h4>';
-            html += '<table class="result-table">';
-            html += '<thead><tr><th>Band</th><th>Count</th></tr></thead>';
-            html += '<tbody>';
-            result.qsos_by_band.forEach(item => {
-                if (item.count > 0) {
-                    html += `<tr><td>${item.band}m</td><td>${item.count}</td></tr>`;
-                }
-            });
-            html += '</tbody></table>';
-            html += '</div>';
-        }
-
-        // QSOs by Mode
-        if (result.qsos_by_mode && result.qsos_by_mode.length > 0) {
-            html += '<div class="result-group">';
-            html += '<h4>QSOs by Mode</h4>';
-            html += '<table class="result-table">';
-            html += '<thead><tr><th>Mode</th><th>Count</th></tr></thead>';
-            html += '<tbody>';
-            result.qsos_by_mode.forEach(item => {
-                if (item.count > 0) {
-                    html += `<tr><td>${item.mode}</td><td>${item.count}</td></tr>`;
-                }
-            });
-            html += '</tbody></table>';
-            html += '</div>';
-        }
-
-        // QSOs by Hour
-        if (result.qsos_by_hour && result.qsos_by_hour.length > 0) {
-            html += '<div class="result-group">';
-            html += '<h4>QSOs by Hour</h4>';
-            html += '<table class="result-table">';
-            html += '<thead><tr><th>Hour</th><th>Count</th></tr></thead>';
-            html += '<tbody>';
-            result.qsos_by_hour.forEach(item => {
-                if (item.count > 0) {
-                    html += `<tr><td>Hour ${item.hour + 1}</td><td>${item.count}</td></tr>`;
-                }
-            });
-            html += '</tbody></table>';
-            html += '</div>';
-        }
-
-                // Multipliers
+        // Multipliers
         html += '<div class="result-group">';
         html += '<h4>Multipliers</h4>';
+        html += '<table class="result-table">';
+        html += '<thead><tr><th>Multiplier Type</th><th>Count</th></tr></thead>';
+        html += '<tbody>';
+        html += `<tr><td>Total Multipliers</td><td>${result.total_multipliers}</td></tr>`;
+        html += `<tr><td>Parish Multiplier</td><td>${result.parishes_worked_multiplier}</td></tr>`;
+        html += `<tr><td>State Multiplier</td><td>${result.states_worked_multiplier}</td></tr>`;
+        html += `<tr><td>Province Multiplier</td><td>${result.provinces_worked_multiplier}</td></tr>`;
+        html += `<tr><td>DX Multiplier</td><td>${result.dx_worked_multiplier}</td></tr>`;
+        html += '</tbody></table>';
+        html += '</div>';
+
         
         // Parishes worked (for NON-LA stations)
         if (result.parishes_worked && result.parishes_worked.length > 0) {
@@ -337,6 +300,59 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             html += '</div>';
         }
+
+        // QSOs by Band
+        if (result.qsos_by_band && result.qsos_by_band.length > 0) {
+            html += '<div class="result-group">';
+            html += '<h4>QSOs by Band</h4>';
+            html += '<table class="result-table">';
+            html += '<thead><tr><th>Band</th><th>Count</th></tr></thead>';
+            html += '<tbody>';
+            result.qsos_by_band.forEach(item => {
+                if (item.count > 0) {
+                    html += `<tr><td>${item.band}m</td><td>${item.count}</td></tr>`;
+                }
+            });
+            html += '</tbody></table>';
+            html += '</div>';
+        }
+
+        // QSOs by Mode
+        if (result.qsos_by_mode) {
+            html += '<div class="result-group">';
+            html += '<h4>QSOs by Mode</h4>';
+            html += '<table class="result-table">';
+            html += '<thead><tr><th>Mode</th><th>Count</th></tr></thead>';
+            html += '<tbody>';
+            result.qsos_by_mode.forEach(item => {
+                if (item.count > 0) {
+                    html += `<tr><td>${item.mode}</td><td>${item.count}</td></tr>`;
+                }
+            });
+            html += '</tbody></table>';
+            html += '</div>';
+        }
+
+        // QSOs by Hour
+        if (result.qsos_by_hour) {
+            html += '<div class="result-group">';
+            html += '<h4>QSOs by Hour</h4>';
+            html += '<table class="result-table">';
+            html += '<thead><tr><th>Hour (1400 April 4 through 0200 April 5)</th><th>Count</th></tr></thead>';
+            html += '<tbody>';
+            for (const [key, value] of Object.entries(result['qsos_by_hour'])) {
+                let temp = key;
+                if (key > 2400) {
+                    temp = key - 2400;
+                }
+                if (value > 0) {
+                    html += `<tr><td>${temp}</td><td>${value}</td></tr>`;
+                }
+            }
+            html += '</tbody></table>';
+            html += '</div>';
+        }
+
 
         // Bands Worked
         if (result.bands_worked && result.bands_worked.length > 0) {
@@ -381,8 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderResultItem(label, value, highlight = false) {
         const highlightClass = highlight ? ' highlight' : '';
         return `
-            <div class="result-item">
-                <div class="result-label">${label}:</div>
+            <div class="result-item, worked">
+                <div class="result-label">${label}:<span>  </span></div>
                 <div class="result-value${highlightClass}">${value}</div>
             </div>
         `;
