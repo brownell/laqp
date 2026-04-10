@@ -209,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageBox = document.getElementById('messageBox');
     const resultsSection = document.getElementById('resultsSection');
     const resultsContent = document.getElementById('resultsContent');
+    const statsHeader = document.getElementById('statsHeader');
     const fileInput = document.getElementById('logfile');
     const textArea = document.getElementById('log_text');
 

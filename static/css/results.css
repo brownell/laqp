@@ -64,7 +64,7 @@
     max-width: 650px;
     min-height:825px;;
     position: relative;
-    padding: 30px;
+    padding: 10px 30px;
     display:flex;
     flex-direction: column;
     justify-content: center;
@@ -171,8 +171,6 @@ ul.rankings-list {
 
 .certificate-signature {
     width: 300px;
-    background: #f0f0f0;
-    border: 1px dashed #ccc;
     display: flex;
     font-size: 0.8rem;
     color: #999;
@@ -180,6 +178,11 @@ ul.rankings-list {
 
 .certificate-logo {
     width: 300px;
+    height: auto;
+}
+
+.signature {
+    width: 200px;;
     height: auto;
 }
 

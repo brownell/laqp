@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageBox = document.getElementById('messageBox');
     const individualResults = document.getElementById('individualResults');
     const finalReport = document.getElementById('finalReport');
+    // const statsH3 = document.getElementById('statsH3');
 
     // Auto-uppercase callsign
     callsignInput.addEventListener('input', function() {
@@ -19,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     showIndividualBtn.addEventListener('click', async function() {
         const year = yearSelect.value.trim();
         const callsign = callsignInput.value.trim().toUpperCase();
+        // statsH3.innerText = `Score & Statistics for ${year} Louisiana QSO Party`;
+
 
         if (!year) {
             showMessage('Please select a contest year', 'error');
@@ -113,6 +116,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Generate statistics (reuse existing format function from upload.js)
         const statisticsHTML = generateStatisticsHTML(result);
         document.getElementById('statisticsContent').innerHTML = statisticsHTML;
+        year = result.year;
+        document.getElementById('statsH3').innerHTML = `Your Statistics for ${year} Louisiana QSO Party`;
+
 
         // Show individual results section
         individualResults.style.display = 'block';
@@ -163,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="certificate-footer-container">
                     <div class="certificate-footer">
                         <div class="certificate-signature">
-                            [Signature Placeholder]
+                            <img src="/static/images/signatures.png" class="signature" alt="Signatures">
                         </div>
                         <img src="/static/images/alligator_logo.png" class="certificate-logo" alt="Louisianba QSP Party">
                     </div>
