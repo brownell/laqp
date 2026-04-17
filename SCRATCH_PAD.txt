@@ -24,6 +24,14 @@ _log_line_by_line(log_file_object, result)
 
 _validate_qso_line
 
+To FIX:
+Add real location for non-LA
+- do the right 18 categories for leaderboards - more to do
+- re-do 2024 adn 25
+- get results for n5lcc
+
+
+
 2024
 K5M	165740	159180	699	1640	101
 2	KC5DI	154100	151420	670	1340	115

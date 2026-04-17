@@ -51,7 +51,7 @@ def score_qsos(result: Dict, contest_year: str) -> None:
         try:
             dx_rcvd_qth  = processor.my_callinfo.get_all(rcvd_call)
         except Exception as e:
-            result['errors'].append(f"Exception {e} sender {result['callsign']} cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
+            result['warnings'].append(f"ERROR QSO: cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
             print(f"Exception {e} sender {result['callsign']} cannot get rcvd_qth for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
 
         try:            
@@ -70,7 +70,7 @@ def score_qsos(result: Dict, contest_year: str) -> None:
         except Exception as e:
             rcvd_qth = qso['rcvd_qth']
             dx_rcvd_qth = None
-            result['errors'].append(f"Exception {e} sender {result['callsign']} cannot determine if rcvd_qth is DX for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
+            result['warnings'].append(f"ERROR QSO: cannot determine if rcvd_qth is DX for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
             print(f"Exception {e} sender {result['callsign']} cannot determine if rcvd_qth is DX for callsign on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_call}")
 
         # NOT DX - ROVER gets a qso_check that includes his QTH because he can call same
@@ -81,6 +81,9 @@ def score_qsos(result: Dict, contest_year: str) -> None:
                     result['parishes_activated'].add(sent_qth)
         else: ## MUST be LA Fixed or State or Province
             qso_check = band + mode_cat + rcvd_call
+
+        if result['location_type'] == "LA-FIXED" and sent_qth not in result['parishes_activated']:
+            result['parishes_activated'].add(sent_qth)
                 
         if qso_check in qso_dups:
             result['warnings'].append(f"DUPLICATE QSO line {qso['line_num']} band/mode/call worked:  {band}, {mode_cat}, {rcvd_call}")
@@ -123,12 +126,7 @@ def score_qsos(result: Dict, contest_year: str) -> None:
         ## MULTIPLIERS
 
         mult_check = band + mode_cat + rcvd_qth
-        if mult_check in mult_dups:
-            # print(f"!!! DUPLICATEte MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
-            result['warnings'].append(f"DUPLICATE MULTIPLIER on line {qso['line_num']} band/mode/qth worked: {band}, {mode_cat}, {sent_qth}, {rcvd_qth}")
-
-        else:
-            # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+        if mult_check not in mult_dups:
             mult_dups.append(mult_check)
 
             ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
@@ -457,7 +455,7 @@ def find_matching_qso(result, operator, qso, qso_index):
         # Time must be within window
         time_match = time_check([qso['date'], qso['time']], [their_qso['date'], their_qso['time']])
         if not time_match:
-            result['warnings'].append(f"Time mismatch: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
+            result['warnings'].append(f"QSO removed - send and receive had different times: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
             continue
         
         # Found a matching QSO!
