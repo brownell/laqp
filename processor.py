@@ -69,6 +69,7 @@ class UnifiedLogProcessor:
             'callsign': '',
             'name': '',
             'club': '',
+            'exchange': '',     # from first QSO in this operator's log
             'overlay': None,  # 'WIRES', 'TB-WIRES', 'POTA', or None
             'location_type': 'NON-LA',  # 'DX', 'NON-LA', 'LA-FIXED', 'LA-ROVER'
             'dxcc_code': 0,
@@ -242,14 +243,14 @@ class UnifiedLogProcessor:
                     result['errors'].append(f"Station mismatch: log has {result['overlay'].upper()}, form has {form_data['station_type'].upper()}")
                     result['is_valid'] = False
 
-        ## Done with Cabrillo Header, now do QSOs
+        # ## Done with Cabrillo Header, now do QSOs
         
-        if result['total_qsos'] == 0:
-            result['errors'].append("No valid QSOs found in log")
-            result['is_valid'] = False
+        # if result['total_qsos'] == 0:
+        #     result['errors'].append("No valid QSOs found in log")
+        #     result['is_valid'] = False
 
-        if not result['is_valid']:
-            return
+        # if not result['is_valid']:
+        #     return
 
     # END of _validate_and_parse
 
@@ -338,7 +339,7 @@ class UnifiedLogProcessor:
 
         parts = line.split()
         if len(parts) < 11:
-            result['warnings'].append(f"Line {line_num}: {line} Insufficient number of QSO fields")
+            result['warnings'].append(f"ERROR QSO Line {line_num}: {line} Insufficient number of QSO fields")
             return False
         self.first_call_qth = parts[7]
         # Validate frequency
@@ -346,33 +347,25 @@ class UnifiedLogProcessor:
             freq = int(parts[1])
             band = freq_to_band(freq)
             if band == 0:
-                result['warnings'].append(f"Line {line_num}: {line} Invalid frequency {freq} kHz")
+                result['warnings'].append(f"ERROR QSO Line {line_num}: {line} Invalid frequency {freq} kHz")
                 return False
         except (ValueError, IndexError):
-            result['warnings'].append(f"Line {line_num}: {line} Invalid frequency format")
+            result['warnings'].append(f"ERROR QSO Line {line_num}: {line} Invalid frequency format")
             return False
         
         # Validate mode
         mode = parts[2]
         if mode not in PHONE_MODES and mode not in CW_DIGITAL_MODES and mode != 'MIXED':
-            result['warnings'].append(f"QSO at line {line_num}: {line} Unrecognized mode {mode}")
+            result['warnings'].append(f"ERROR QSO at line {line_num}: {line} Unrecognized mode {mode}")
             return False
             
         if result['mode_category'] == 'SSB' and mode not in PHONE_MODES and mode != 'MIXED':
-            result['warnings'].append(f"QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
+            result['warnings'].append(f"ERROR QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
             return False
             
         if result['mode_category'] == 'CW/DIGITAL' and mode not in CW_DIGITAL_MODES and mode != 'MIXED':
-            result['warnings'].append(f"QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
+            result['warnings'].append(f"ERROR QSO at line {line_num}: {line} Mode {mode} does not match header CATEGORY-MODE {result['mode_category']}")
             return False
-        
-        ## TODO makd sure this is what we want
-        # if first_qso_line:
-        #     self.first_call_qth = parts[7]
-        # else:
-        #     if parts[7] != self.first_call_qth:
-        #         result['warnings'].append(f"QSO at line {line_num}: {line} Sent QTH {parts[7]} does not match first QSO sent QTH {self.first_call_qth}")
-        #         return False
    
         return True
     
@@ -435,9 +428,15 @@ class UnifiedLogProcessor:
     def _determine_location_type(self, result: Dict) -> str:
         """Determine location type from QSOs"""
         
+        initial_qso = True
+
         for qso in result['qsos']:
             sent_qth = qso['sent_qth'].replace('DX', '')
             sent_call = qso['sent_call']
+
+            if initial_qso:
+                initial_qso = False
+                result['exchange'] = sent_qth
             
             
             # Check if DX
@@ -492,7 +491,7 @@ class UnifiedLogProcessor:
             
                 ## make sure this is not DX to DX
                 if len(result['dxcc_entity']) > 0: # call from one DX to another -> invalid
-                    result['warnings'].append(f"DUPLICATE QSO line one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
+                    result['warnings'].append(f"ERROR QSO from one DX station to another {qso['line_num']} band: {band} mode: {mode_cat} sender: {sent_call} sender QTH: {result['dxcc_entity']} remote op: {rcvd_call} remote QTH: {rcvd_qth}")
                     continue
             else:
                 rcvd_qth = qso['rcvd_qth']
@@ -523,12 +522,12 @@ class UnifiedLogProcessor:
                 result['qsos_by_hour'][qso['time']] += 1
             except Exception as e:
                 # print(f"Error tying to get the QSO time {e}")
-                result['warnings'].append(f"Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
+                result['warnings'].append(f"ERROR QSO Bad time value on line {qso['line_num']} WORKED: band {band} mode {mode_cat} remote op {rcvd_qth}")
                 continue
             
             # Award points
             if mode_cat == 'Phone':
-                result['qso_points'] += PHONE_QSO_POINTSFqsos
+                result['qso_points'] += PHONE_QSO_POINTS
                 # print(f"qso_points {result['qso_points']} total_qsos {result['total_qsos']} valid_qsos {result['valid_qsos']}")
                 result['qsos_by_mode']['Phone'] += 1
             else:  # CW/Digital
@@ -544,12 +543,7 @@ class UnifiedLogProcessor:
             ## MULTIPLIERS
 
             mult_check = band + mode_cat + rcvd_qth
-            if mult_check in mult_dups:
-                result['warnings'].append(f"DUPLICATE Multiplier on line {qso['line_num']} band/mode/qth worked: {band}m, {mode_cat}, {sent_qth}, {rcvd_qth}")
-                qso['xcheck'] = 'DM'
-
-            else:
-                # print(f"NOT DUP MULT: line {qso['line_num']} mult_check  {band}/{mode_cat}/{sent_qth}/{rcvd_qth}")
+            if mult_check not in mult_dups:
                 mult_dups.append(mult_check)
 
                 ## Everyone gets parish multiplier for parishes, but only LA stations get state/province/DX multipliers
@@ -692,13 +686,12 @@ def print_result(result):
                     q += 1
                 else:
                     m += 1
-            print(f"Warnings: {q} duplicate QSOs, {m} duplicate multipliers")
+            print(f"Warnings: {q} duplicate QSOs")
 
-    if result['errors'] and len(result['errors']) < 10:
-        if len(result['errors']) < 10:
-            print("Errors:")
-            for e in result['errors']:
-                print(f"{e}")
+    if result['errors'] and result['callsign']:
+        print("Errors:")
+        for e in result['errors']:
+            print(f"{e}")
 
 def process_batch_logs(log_dir: Path, contest_year: str) -> Dict:
     """

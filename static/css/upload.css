@@ -301,7 +301,7 @@ small {
     gap: 10px;
     max-height:20px;
     margin-left:100px;
-    grid-template-columns: 150px 1fr;
+    grid-template-columns: 200px 1fr;
 }
 
 .result-item:last-child {
@@ -311,6 +311,7 @@ small {
 .result-label {
     font-weight: bold;
     color: #333;
+    text-align: right;
 }
 
 .result-value {
@@ -329,6 +330,7 @@ small {
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 5px;
+    margin-bottom: 10px;
 }
 
 .result-list-item {

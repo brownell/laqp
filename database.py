@@ -43,7 +43,7 @@ class ContestDatabase:
                     callsign TEXT NOT NULL,
                     name TEXT,
                     club TEXT,
-                    category TEXT,
+                    exchange TEXT,
                     overlay TEXT,
                     location_type TEXT,
                     dxcc_code INTEGER,
@@ -90,8 +90,13 @@ class ContestDatabase:
             ''')
             
             cursor.execute('''
-                CREATE INDEX IF NOT EXISTS idx_category 
-                ON contest_results(year, category)
+                CREATE INDEX IF NOT EXISTS idx_location_type 
+                ON contest_results(year, location_type)
+            ''')
+            
+            cursor.execute('''
+                CREATE INDEX IF NOT EXISTS idx_mode_category 
+                ON contest_results(year, mode_category)
             ''')
             
             cursor.execute('''
@@ -110,7 +115,7 @@ class ContestDatabase:
         
         # Simple fields
         simple_fields = [
-            'year', 'callsign', 'name', 'club', 'category', 'overlay',
+            'year', 'callsign', 'name', 'club', 'exchange', 'overlay',
             'location_type', 'dxcc_code', 'dxcc_entity', 'mode_category', 'power_level',
             'final_score', 'qso_points', 'total_qsos', 'valid_qsos',
             'total_multipliers', 'parishes_worked_multiplier',
@@ -283,60 +288,60 @@ class ContestDatabase:
                 return self._deserialize_result(row, columns)
             return None
     
-    def get_results_by_year(self, year: str, valid_only: bool = True) -> List[Dict]:
-        """
-        Get all results for a specific year.
+    # def get_results_by_year(self, year: str, valid_only: bool = True) -> List[Dict]:
+    #     """
+    #     Get all results for a specific year.
         
-        Args:
-            year: Contest year
-            valid_only: If True, only return valid logs
+    #     Args:
+    #         year: Contest year
+    #         valid_only: If True, only return valid logs
             
-        Returns:
-            List of result dicts, sorted by score descending
-        """
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
+    #     Returns:
+    #         List of result dicts, sorted by score descending
+    #     """
+    #     with sqlite3.connect(self.db_path) as conn:
+    #         cursor = conn.cursor()
             
-            sql = '''
-                SELECT * FROM contest_results
-                WHERE year = ?
-            '''
+    #         sql = '''
+    #             SELECT * FROM contest_results
+    #             WHERE year = ?
+    #         '''
             
-            if valid_only:
-                sql += ' AND is_valid = 1'
+    #         if valid_only:
+    #             sql += ' AND is_valid = 1'
             
-            sql += ' ORDER BY final_score DESC'
+    #         sql += ' ORDER BY final_score DESC'
             
-            cursor.execute(sql, (year,))
+    #         cursor.execute(sql, (year,))
             
-            rows = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
+    #         rows = cursor.fetchall()
+    #         columns = [desc[0] for desc in cursor.description]
             
-            return [self._deserialize_result(row, columns) for row in rows]
+    #         return [self._deserialize_result(row, columns) for row in rows]
     
-    def get_results_by_category(self, year: str, category: str) -> List[Dict]:
-        """
-        Get all results for a specific year and category.
+    # def get_results_by_category(self, year: str, mode_category: str) -> List[Dict]:
+    #     """
+    #     Get all results for a specific year and mode_category.
         
-        Args:
-            year: Contest year
-            category: Category code (e.g., 'nl_ph_lo')
+    #     Args:
+    #         year: Contest year
+    #         category: mode_category code (e.g., 'LA-ROVER')
             
-        Returns:
-            List of result dicts, sorted by score descending
-        """
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM contest_results
-                WHERE year = ? AND category = ? AND is_valid = 1
-                ORDER BY final_score DESC
-            ''', (year, category))
+    #     Returns:
+    #         List of result dicts, sorted by score descending
+    #     """
+    #     with sqlite3.connect(self.db_path) as conn:
+    #         cursor = conn.cursor()
+    #         cursor.execute('''
+    #             SELECT * FROM contest_results
+    #             WHERE year = ? AND mode_category = ? AND is_valid = 1
+    #             ORDER BY final_score DESC
+    #         ''', (year, mode_category))
             
-            rows = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
+    #         rows = cursor.fetchall()
+    #         columns = [desc[0] for desc in cursor.description]
             
-            return [self._deserialize_result(row, columns) for row in rows]
+    #         return [self._deserialize_result(row, columns) for row in rows]
     
     def update_rankings(self, year: str, rankings_dict: Dict[str, Dict[str, int]]):
         """

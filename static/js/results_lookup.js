@@ -189,16 +189,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (result.name) {
             html += `<div class="result-item"><div class="result-label">Operator Name:</div><div class="result-value">${result.name}</div></div>`;
         }
-        if (result.category) {
-        html += `<div class="result-item"><div class="result-label">Category:</div><div class="result-value">${result.category}</div></div>`;
-        } else {
-            html += `<div class="result-item"><div class="result-label">Category:</div><div class="result-value">None - Not in rankings</div></div>`;
-        }
         if (result.overlay) {
             html += `<div class="result-item"><div class="result-label">Overlay:</div><div class="result-value">${result.overlay}</div></div>`;
         }
         html += `<div class="result-item"><div class="result-label">Location Type:</div><div class="result-value">${result.location_type}</div></div>`;
-        html += `<div class="result-item"><div class="result-label">Mode Category:</div><div class="result-value">${result.mode_category}</div></div>`;
+        if (result.location_type != 'LA-FIXED' && result.location_type != 'LA-ROVER') {
+            html += `<div class="result-item"><div class="result-label">Exchange (from QSOs):</div><div class="result-value">${result.exchange}</div></div>`;
+        }
+        html += `<div class="result-item"><div class="result-label">Mode:</div><div class="result-value">${result.mode_category}</div></div>`;
         html += `<div class="result-item"><div class="result-label">Power Level:</div><div class="result-value">${result.power_level}</div></div>`;
         html += '</div>';
 
@@ -224,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        if (result.parishes_activated && result.parishes_activated.length > 0) {
+        if (result.location_type == 'LA_ROVER' && result.parishes_activated && result.parishes_activated.length > 0) {
             hasBonuses = true;
             bonusesHTML += renderResultItem('Parishes Activated (Rover)', result.parishes_activated.length);
             bonusesHTML += '<div class="result-list">';
@@ -266,6 +264,16 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '</tbody></table>';
         html += '</div>';
 
+
+        // parishes activated for LA-FIXED
+        if (result.location_type == 'LA-FIXED' && result.parishes_activated && result.parishes_activated.length > 0) {
+            html += renderResultItem('Parish Activated', result.parishes_activated.length);
+            html += '<div class="result-list">';
+            result.parishes_activated.forEach(parish => {
+                html += `<span class="result-list-item">${parish}</span>`;
+            });
+            html += '</div>';
+        }
         
         // Parishes worked (for NON-LA stations)
         if (result.parishes_worked && result.parishes_worked.length > 0) {
@@ -386,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (result.warnings && result.warnings.length > 0) {
             html += '<div class="result-group">';
-            html += '<h4>Warnings</h4>';
+            html += '<h4>QSOS with ERRORS - Not scored</h4>';
             html += '<ul class="warning-list">';
             result.warnings.forEach(warning => {
                 html += `<li class="warning-list-item">${warning}</li>`;

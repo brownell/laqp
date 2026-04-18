@@ -18,11 +18,12 @@ function generateResultsHTML(result) {
     if (result.name && result.name !== 'N/A') {
         html += renderResultItem('Operator Name', result.name);
     }
-    html += renderResultItem('Category', result.category);
+    html += renderResultItem('Location Type', result.location_type);
+    html += renderResultItem('Exchange', result.exchange);
+
     if (result.overlay && result.overlay !== 'N/A' && result.overlay !== null) {
         html += renderResultItem('Overlay', result.overlay);
     }
-    html += renderResultItem('Location Type', result.location_type);
     html += renderResultItem('Mode Category', result.mode_category);
     html += renderResultItem('Power Level', result.power_level);
     html += '</div>';

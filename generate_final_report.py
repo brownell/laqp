@@ -87,11 +87,11 @@ def _create_html_document(year: str, sections: list) -> str:
         <header class="report-header">
             <h1>Louisiana QSO Party {year}</h1>
             <h2>Final Results</h2>
-            <p class="generated-date">Generated: {datetime.now().strftime('%B %d')}</p>
+            <p class="generated-date">Generated: {datetime.now().strftime('%B %d, %Y')}</p>
         </header>
         
         <div class="report-intro">
-            <p>{FINAL_REPORT_TXT if FINAL_REPORT_TXT else 'Congratulations to all participants!'}</p>
+            {FINAL_REPORT_TXT if FINAL_REPORT_TXT else '<p>Congratulations to all participants!</p>'}
         </div>
 """)
     
