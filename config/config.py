@@ -153,6 +153,7 @@ RANKINGS = {
     # 'NQ': 'Non Louisiana - QRP Power',
     # 'NL': 'Non Louisiana - LOW Power',
     # 'NH': 'Non Louisiana - HIGH Power',
+    'NA': 'Non Louisiana - All Stations',
     'NS': 'Non Louisiana - SSB (phone) Mode',
     'NC': 'Non Louisiana - CW/Digital Mode',
     'NM': 'Non Louisiana - MIXED Modes (SSB, CW, Digital)',
@@ -162,6 +163,7 @@ RANKINGS = {
     # 'LFQ': 'Louisiana - Fixed QRP Power',
     # 'LFL': 'Louisiana - Fixed LOW Power',
     # 'LFH': 'Louisiana - Fixed HIGH Power',
+    'LFA': 'Louisiana - Fixed - All Stations',
     'LFS': 'Louisiana - Fixed SSB (phone) Mode',
     'LFC': 'Louisiana - Fixed CW/Digital Mode',
     'LFM': 'Louisiana - Fixed MIXED Modes (SSB, CW, Digital)',
@@ -170,6 +172,7 @@ RANKINGS = {
     # 'LRQ': 'Louisiana - Rover QRP Power',
     # 'LRL': 'Louisiana - Rover LOW Power',
     # 'LRH': 'Louisiana - Rover HIGH Power',
+    'LRA': 'Louisiana - Rover - All Stations ',
     'LRS': 'Louisiana - Rover SSB (phone) Mode',
     'LRC': 'Louisiana - Rover CW/Digital Mode',
     'LRM': 'Louisiana - Rover MIXED Modes (SSB, CW, Digital)',
@@ -184,19 +187,21 @@ RANKINGS = {
     
     # Overlays
     # WIRES': 'WIRES Overlay'
+    'WA': 'WIRES Overlay - All Stations',
     'WS': 'WIRES Overlay - SSB (phone) Mode',
     'WC': 'WIRES Overlay - CW/Digital Mode',
     'WM': 'WIRES Overlay - MIXED Modes (SSB, CW, Digital)',
 
-   # 'TB-WIRES': 'TB-WIRES Overlay'
+    'TA': 'TB-WIRES Overlay - All Stations',
     'TS': 'TB-WIRES Overlay - SSB (phone) Mode',
     'TC': 'TB-WIRES Overlay - CW/Digital Mode',
     'TM': 'TB-WIRES Overlay - MIXED Modes (SSB, CW, Digital)',
    
     # 'POTA': 'Parks on the Air Overlay'
-    'PS': 'WIRES Overlay - SSB (phone) Mode',
-    'PC': 'WIRES Overlay - CW/Digital Mode',
-    'PM': 'WIRES Overlay - MIXED Modes (SSB, CW, Digital)',
+    'PA': 'POTA Overlay - All Stations',
+    'PS': 'POTA Overlay - SSB (phone) Mode',
+    'PC': 'POTA Overlay - CW/Digital Mode',
+    'PM': 'POTA Overlay - MIXED Modes (SSB, CW, Digital)',
 }
 
 # ============================================================================
@@ -226,6 +231,8 @@ LEADERBOARDS = [
                 ['total_qsos', 'QSOs'],
                 ['qso_points', 'Points'],
                 ['total_multipliers', 'Mults'],
+                ['mode_category', 'Mode'],
+                ['exchange', 'Exchange'],
            ]
         },
         {'title': 'ALL', 'ands': []}
@@ -238,17 +245,19 @@ LEADERBOARDS = [
             'show': [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
+                ['claimed_score', 'Claimed'],
                 ['name', 'Name'],
-                ['location_type', 'Location'],
+                ['exchange', 'Exchange'],
             ]
         },
         
         # {'title': 'NQ', 'ands': [['location_type', 'NON-LA'], ['power_level', 'QRP']]},
         # {'title': 'NL', 'ands': [['location_type', 'NON-LA'], ['power_level', 'LOW']]},
         # {'title': 'NH', 'ands': [['location_type', 'NON-LA'], ['power_level', 'HIGH']]},
-        {'title': 'NC', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'CW-DIGITAL']]},
-        {'title': 'NS', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'PHONE']]},
-        {'title': 'NM', 'ands': [['location_type', 'NON-LA'], ['mode_category', 'MIXED']]},
+        {'title': 'NA', 'ands': [["location_type in ('NON-LA', 'DX')"]]},
+        {'title': 'NS', 'ands': [["location_type in ('NON-LA', 'DX')"], ['mode_category', 'SSB']]},
+        {'title': 'NC', 'ands': [["location_type in ('NON-LA', 'DX')"], ['mode_category', 'CW/DIGITAL']]},
+        {'title': 'NM', 'ands': [["location_type in ('NON-LA', 'DX')"], ['mode_category', 'MIXED']]},
     ],
     
     # Section 2: Louisiana FIXED Stations
@@ -262,7 +271,7 @@ LEADERBOARDS = [
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['name', 'Name'],
-                ['location_type', 'Location'],
+                ['exchange', 'Exchange'],
             ]
         },
 
@@ -271,8 +280,9 @@ LEADERBOARDS = [
         # {'title': 'LFQ', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'QRP']]},
         # {'title': 'LFL', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'LOW']]},
         # {'title': 'LFH', 'ands': [['location_type', 'LA-FIXED'], ['power_level', 'HIGH']]},
-        {'title': 'LFS', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'PHONE']]},
-        {'title': 'LFC', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'CW-DIGITAL']]},
+        {'title': 'LFA', 'ands': [['location_type', 'LA-FIXED']]},
+        {'title': 'LFS', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'SSB']]},
+        {'title': 'LFC', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'CW/DIGITAL']]},
         {'title': 'LFM', 'ands': [['location_type', 'LA-FIXED'], ['mode_category', 'MIXED']]},
     ],
 
@@ -281,21 +291,22 @@ LEADERBOARDS = [
 
         # Section header
         {
-            'section_title': 'Louisiana Fixed Stations',
+            'section_title': 'Louisiana Rover Stations',
             'show': [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['name', 'Name'],
-                ['location_type', 'Location'],
+                ['exchange', 'First Exchange']
             ]
         },
         
         # {'title': 'LRQ', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'QRP']]},
         # {'title': 'LRL', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'LOW']]},
         # {'title': 'LRH', 'ands': [['location_type', 'LA-ROVER'], ['power_level', 'HIGH']]},
-        {'title': 'LRS', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'PHONE']]},
-        {'title': 'LRC', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'CW-DIGITAL']]},
+        {'title': 'LRA', 'ands': [['location_type', 'LA-ROVER']]},
+        {'title': 'LRS', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'SSB']]},
+        {'title': 'LRC', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'CW/DIGITAL']]},
         {'title': 'LRM', 'ands': [['location_type', 'LA-ROVER'], ['mode_category', 'MIXED']]},
     ],
     
@@ -314,8 +325,8 @@ LEADERBOARDS = [
     #     {'title': 'DQ', 'ands': [['location_type', 'DX'], ['power_level', 'QRP']]},
     #     {'title': 'DL', 'ands': [['location_type', 'DX'], ['power_level', 'LOW']]},
     #     {'title': 'DH', 'ands': [['location_type', 'DX'], ['power_level', 'HIGH']]},
-    #     {'title': 'DS', 'ands': [['location_type', 'DX'], ['mode_category', 'PHONE']]},
-    #     {'title': 'DC', 'ands': [['location_type', 'DX'], ['mode_category', 'CW-DIGITAL']]},
+    #     {'title': 'DS', 'ands': [['location_type', 'DX'], ['mode_category', 'SSB']]},
+    #     {'title': 'DC', 'ands': [['location_type', 'DX'], ['mode_category', 'CW/DIGITAL']]},
     #     {'title': 'DM', 'ands': [['location_type', 'DX'], ['mode_category', 'MIXED']]},
     # ],
     
@@ -328,13 +339,18 @@ LEADERBOARDS = [
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['name', 'Name'],
-                ['location_type', 'Location'],
+                ['exchange', 'Exchange'],
             ]
         },
+
+        {'title': 'WA', 'ands': [['overlay', 'WIRES']]},
+        {'title': 'WS', 'ands': [['overlay', 'WIRES'], ['mode_category', 'SSB']]},
+        {'title': 'WC', 'ands': [['overlay', 'WIRES'], ['mode_category', 'CW/DIGITAL']]},
+        {'title': 'WM', 'ands': [['overlay', 'WIRES'], ['mode_category', 'MIXED']]},
         
-        {'title': 'WIRES', 'ands': [['overlay', 'WIRES']]},
-        {'title': 'TB-WIRES', 'ands': [['overlay', 'TB-WIRES']]},
-        {'title': 'POTA', 'ands': [['overlay', 'POTA']]},
+        # {'title': 'WIRES', 'ands': [['overlay', 'WIRES']]},
+        # {'title': 'TB-WIRES', 'ands': [['overlay', 'TB-WIRES']]},
+        # {'title': 'POTA', 'ands': [['overlay', 'POTA']]},
     ],
 
     [
@@ -345,22 +361,32 @@ LEADERBOARDS = [
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['name', 'Name'],
-                ['location_type', 'Location'],
+                ['exchange', 'Exchange'],
             ]
         },
+
+        {'title': 'TA', 'ands': [['overlay', 'TB-WIRES']]},
+        {'title': 'TS', 'ands': [['overlay', 'TB-WIRES'], ['mode_category', 'SSB']]},
+        {'title': 'TC', 'ands': [['overlay', 'TB-WIRES'], ['mode_category', 'CW/DIGITAL']]},
+        {'title': 'TM', 'ands': [['overlay', 'TB-WIRES'], ['mode_category', 'MIXED']]},
 
     ],
     [
         {
-            'section_title': 'Parks on the Air Overlay',
+            'section_title': 'Parks on the Air (POTA) Overlay',
             'show': [
                 ['callsign', 'CallSign'],
                 ['final_score', 'Score'],
                 ['claimed_score', 'Claimed'],
                 ['name', 'Name'],
-                ['location_type', 'Location'],
+                ['exchange', 'Exchange'],
             ]
         },
+
+        {'title': 'PA', 'ands': [['overlay', 'POTA']]},
+        {'title': 'PS', 'ands': [['overlay', 'POTA'], ['mode_category', 'SSB']]},
+        {'title': 'PC', 'ands': [['overlay', 'POTA'], ['mode_category', 'CW/DIGITAL']]},
+        {'title': 'PM', 'ands': [['overlay', 'POTA'], ['mode_category', 'MIXED']]},
 
     ]
 ]
@@ -370,11 +396,11 @@ LEADERBOARDS = [
 # ============================================================================
 
 FINAL_REPORT_TXT = """
-Congratulations to all participants in the Louisiana QSO Party!
+<p class=final-intro>Congratulations to all participants in the Louisiana QSO Party!</p>
 
-The Jefferson Amateur Radio Club is proud to present the final results.
-Thank you for your participation and we look forward to seeing you next year!
-
-73,
-Jefferson Amateur Radio Club
+<p class=final-intro>The Jefferson Amateur Radio Club is proud to present the final results.
+Thank you for your participation and we look forward to seeing you next year!</p>
+<p></p>
+<p class=final-intro>73,</p>
+<p class=final-intro>Jefferson Amateur Radio Club</p>
 """

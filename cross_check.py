@@ -359,7 +359,7 @@ def cross_check_operator(result, qso_index):
             qso['cross_check_status'] = 'NIL'
             stats['had_xcheck'] += 1
             result['warnings'].append(
-                f"QSO at line {qso.get('line_num', '?')}: "
+                f"ERROR QSO at line {qso.get('line_num', '?')}: "
                 f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
                 f"Not found in {qso['rcvd_call']}'s log (NIL)"
             )
@@ -370,7 +370,7 @@ def cross_check_operator(result, qso_index):
             actual_call = match_result.get('actual_call', '?')
             stats['had_xcheck'] += 1
             result['warnings'].append(
-                f"QSO at line {qso.get('line_num', '?')}: "
+                f"ERROR QSO at line {qso.get('line_num', '?')}: "
                 f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
                 f"Callsign error, possibly {actual_call} (BUSTED)"
             )
@@ -380,7 +380,7 @@ def cross_check_operator(result, qso_index):
             qso['cross_check_status'] = 'EXCHANGE_ERROR'
             stats['had_xcheck'] += 1
             result['warnings'].append(
-                f"QSO at line {qso.get('line_num', '?')}: "
+                f"ERROR QSO at line {qso.get('line_num', '?')}: "
                 f"{qso['rcvd_call']} on {qso['band']} {qso['mode']} on {qso['date']} at {qso['time']} - "
                 f"Exchange mismatch (sent {qso['sent_qth']}, they logged {match_result.get('their_rcvd', '?')})"
             )
@@ -455,7 +455,7 @@ def find_matching_qso(result, operator, qso, qso_index):
         # Time must be within window
         time_match = time_check([qso['date'], qso['time']], [their_qso['date'], their_qso['time']])
         if not time_match:
-            result['warnings'].append(f"QSO removed - send and receive had different times: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
+            result['warnings'].append(f"ERROR QSO - send and receive had different times: {operator}: {qso['date']} {qso['time']} vs {rcvd_call}: {their_qso['date']} {their_qso['time']} for QSO at line {qso.get('line_num', '?')}")
             continue
         
         # Found a matching QSO!

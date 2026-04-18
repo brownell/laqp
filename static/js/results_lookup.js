@@ -193,6 +193,9 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<div class="result-item"><div class="result-label">Overlay:</div><div class="result-value">${result.overlay}</div></div>`;
         }
         html += `<div class="result-item"><div class="result-label">Location Type:</div><div class="result-value">${result.location_type}</div></div>`;
+        if (result.location_type != 'LA-FIXED' && result.location_type != 'LA-ROVER') {
+            html += `<div class="result-item"><div class="result-label">Exchange (from QSOs):</div><div class="result-value">${result.exchange}</div></div>`;
+        }
         html += `<div class="result-item"><div class="result-label">Mode:</div><div class="result-value">${result.mode_category}</div></div>`;
         html += `<div class="result-item"><div class="result-label">Power Level:</div><div class="result-value">${result.power_level}</div></div>`;
         html += '</div>';

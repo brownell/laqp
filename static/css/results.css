@@ -208,6 +208,11 @@ ul.rankings-list {
 }
 
 /* Final Report */
+
+.final-intro {
+    margin: 0;
+}
+
 .final-report-container {
     background: #fff;
     border-radius: 8px;

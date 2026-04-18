@@ -69,6 +69,7 @@ class UnifiedLogProcessor:
             'callsign': '',
             'name': '',
             'club': '',
+            'exchange': '',     # from first QSO in this operator's log
             'overlay': None,  # 'WIRES', 'TB-WIRES', 'POTA', or None
             'location_type': 'NON-LA',  # 'DX', 'NON-LA', 'LA-FIXED', 'LA-ROVER'
             'dxcc_code': 0,
@@ -427,9 +428,15 @@ class UnifiedLogProcessor:
     def _determine_location_type(self, result: Dict) -> str:
         """Determine location type from QSOs"""
         
+        initial_qso = True
+
         for qso in result['qsos']:
             sent_qth = qso['sent_qth'].replace('DX', '')
             sent_call = qso['sent_call']
+
+            if initial_qso:
+                initial_qso = False
+                result['exchange'] = sent_qth
             
             
             # Check if DX
