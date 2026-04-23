@@ -209,8 +209,9 @@ ul.rankings-list {
 
 /* Final Report */
 
-.final-intro {
+.final-intro{
     margin: 0;
+    white-space: pre-line;
 }
 
 .final-report-container {

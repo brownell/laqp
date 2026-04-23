@@ -192,7 +192,7 @@ def api_final_report(year):
     """
     Get final contest report HTML for a year.
     """
-    temp_year = ''
+    temp_year = year
     if len(year) > 4:
         temp_year = year[:4]
     try:
@@ -203,6 +203,7 @@ def api_final_report(year):
             FINAL_REPORTS_DIR = 'data/final_reports'
         
         report_file = os.path.join(FINAL_REPORTS_DIR, f'final_report_{temp_year}.html')
+        print(f'**********  report_file: {report_file}')
         
         if not os.path.exists(report_file):
             return jsonify({

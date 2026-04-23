@@ -28,6 +28,10 @@ To FIX:
 - Add real location for non-LA
 - re-do 2024 adn 25
 
+fly ssh sftp put ../laqp_data/final_reports/final_report_2026.html /data/final_reports/final_report_2026.html
+fly ssh sftp put ../laqp_data/final_reports/final_report_2025.html /data/final_reports/final_report_2025.html
+fly ssh sftp put ../laqp_data/final_reports/final_report_2024.html /data/final_reports/final_report_2024.html
+
 1	K5TD	484441	435974	900	2088	232	MIXED	LIVI
 2	AD5VC	133320	130896	303	1212	110	MIXED	EBR
 3	W6FB	114456	111000	273	1004	114	MIXED	CALC
