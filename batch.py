@@ -47,7 +47,6 @@ def main(contest_year: str):
                 print(f"    ERROR: {error}")
         
         # # Save to database (both valid and invalid for record-keeping)
-
         try:
             if save_result(result, contest_year):
                 saved_count += 1
@@ -59,7 +58,6 @@ def main(contest_year: str):
             print(f"✗ {result['callsign']}: Database error - {e}")
 
     # generate rankings from the database results
-    # generate_rankings(contest_year)
     generate_rankings(contest_year)
 
     # generate_final_report_html(contest_year)

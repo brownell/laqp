@@ -143,6 +143,8 @@ def api_individual_results():
     try:
         data = request.get_json()
         year = data.get('year', '').strip()
+        if len(year) > 4:
+            year = year[:4]
         callsign = data.get('callsign', '').strip().upper()
         
         if not year or not callsign:
@@ -190,6 +192,9 @@ def api_final_report(year):
     """
     Get final contest report HTML for a year.
     """
+    temp_year = year
+    if len(year) > 4:
+        temp_year = year[:4]
     try:
         # Path to final report HTML
         try:
@@ -197,7 +202,8 @@ def api_final_report(year):
         except ImportError:
             FINAL_REPORTS_DIR = 'data/final_reports'
         
-        report_file = os.path.join(FINAL_REPORTS_DIR, f'final_report_{year}.html')
+        report_file = os.path.join(FINAL_REPORTS_DIR, f'final_report_{temp_year}.html')
+        print(f'**********  report_file: {report_file}')
         
         if not os.path.exists(report_file):
             return jsonify({

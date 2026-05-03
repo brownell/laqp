@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate certificate HTML
     function generateCertificate(result, rankingsDisplay) {
-        let rankingsHTML = '<ul class="rankings-list">';
+        rankingsHTML = '<ul class="rankings-list">';
         for (const [key, value] of Object.entries(rankingsDisplay)) {
             console.log(`${key} → ${value}`);
             rankingsHTML += `<li class="rankings-item"># ${value}  in  ${key}</li>`;

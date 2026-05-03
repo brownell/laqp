@@ -343,6 +343,14 @@ body {
 
 /* Print styles */
 @media print {
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .no-print { display: none; }
+
     body {
         background: #fff;
         padding: 0;
