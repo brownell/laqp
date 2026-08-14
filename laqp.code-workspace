@@ -4,7 +4,7 @@
             "path": "."
         },
         {
-            "path": "../laqp_data"
+            "path": "../tqp_data"
         }
     ]
 }
